@@ -39,32 +39,30 @@ async def get_news_endpoint(
 ):
     try:
         print(f"Запрос новостей с параметрами: q={q}, limit={limit}")
-
-    # API ключ для NewsAPI
-    api_key = "1709ee5d87c94b238a395fefc8375b92"
-    
-    # Вычисляем дату 20 дней назад
-    current_date = datetime.now()
-    previous_date = current_date - timedelta(days=20)
-    formatted_date = previous_date.strftime('%Y-%m-%d')
-    
-    # Формируем URL для запроса к NewsAPI
-    url = f'https://newsapi.org/v2/everything?q={q}&from={formatted_date}&sortBy=publishedAt&apiKey={api_key}'
-    response = requests.get(url)
-    print(f"Статус ответа: {response.status_code}")
-
-    data = response.json()
-    print(f"Получены данные: {data.get('status')}")
-    
-    try:
-        # Выполняем запрос к NewsAPI
+        
+        # API ключ для NewsAPI
+        api_key = "1709ee5d87c94b238a395fefc8375b92"
+        
+        # Вычисляем дату 20 дней назад
+        current_date = datetime.now()
+        previous_date = current_date - timedelta(days=20)
+        formatted_date = previous_date.strftime('%Y-%m-%d')
+        
+        # Формируем URL для запроса к NewsAPI
+        url = f'https://newsapi.org/v2/everything?q={q}&from={formatted_date}&sortBy=publishedAt&apiKey={api_key}'
+        print(f"URL запроса: {url}")
+        
+        # Выполняем запрос только один раз
         response = requests.get(url)
+        print(f"Статус ответа: {response.status_code}")
+        
         data = response.json()
+        print(f"Получены данные: {data.get('status')}")
         
         news_list = []
         if data.get('status') == 'ok' and 'articles' in data:
             articles = data['articles']
-            # Фильтруем статьи, исключая те, в заголовках которых есть слово "путин" (без учета регистра)
+            # Фильтруем статьи
             filtered_articles = [
                 article for article in articles
                 if "путин" not in article.get('title', '').lower()
@@ -92,6 +90,9 @@ async def get_news_endpoint(
         return news_list
     
     except Exception as e:
+        print(f"Ошибка при получении новостей: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return {
             'error': 'Exception occurred',
             'message': str(e)
