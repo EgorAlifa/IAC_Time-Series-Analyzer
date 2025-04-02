@@ -27,7 +27,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",  # Frontend в режиме разработки
         "*github.io",
-        "http://37.252.23.30:8000",  # Ваш API сервер
+        "http://37.252.23.30:8000",  # API сервер
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
