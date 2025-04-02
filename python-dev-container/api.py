@@ -137,58 +137,6 @@ async def get_news_endpoint(
             'error': 'Exception occurred',
             'message': str(e)
         }
-@app.get("/generate-charts")
-async def generate_charts(
-    file_id: str = Query(..., description="ID загруженного файла"),
-    column: str = Query(..., description="Название колонки"),
-    date_column: str = Query("Дата", description="Название столбца с датами")
-):
-    """
-    Генерация графиков для выбранной колонки
-    
-    - **file_id**: Идентификатор файла
-    - **column**: Название колонки для анализа
-    - **date_column**: Название столбца с датами (по умолчанию "Дата")
-    """
-    file_path = TEMP_FILES_DIR / file_id
-    
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Файл не найден или срок его хранения истек")
-    
-    try:
-        # Определяем тип файла по расширению
-        file_extension = os.path.splitext(str(file_path))[1].lower()
-        
-        # Чтение данных из файла
-        if file_extension == '.csv':
-            df = pd.read_csv(file_path)
-        elif file_extension in ['.xlsx', '.xls']:
-            df = pd.read_excel(file_path)
-        else:
-            raise HTTPException(status_code=400, detail="Неподдерживаемый формат файла")
-        
-        # Проверка наличия столбца с датами
-        if date_column not in df.columns:
-            raise HTTPException(status_code=400, detail=f"Столбец {date_column} не найден в файле")
-        
-        # Преобразование столбца даты
-        df[date_column] = pd.to_datetime(df[date_column])
-        df.set_index(date_column, inplace=True)
-        
-        # Проверка наличия колонки
-        if column not in df.columns:
-            raise HTTPException(status_code=400, detail=f"Колонка {column} не найдена в файле")
-        
-        # Генерация графиков
-        charts = generate_time_series_plots_for_variable(df, column)
-        
-        return {
-            "charts": charts,
-            "column": column
-        }
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ошибка при генерации графиков: {str(e)}")
 
 @app.post("/upload-temp-file")
 async def upload_temp_file(file: UploadFile = File(...)):
