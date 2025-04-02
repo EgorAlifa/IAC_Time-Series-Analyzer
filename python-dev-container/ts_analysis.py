@@ -379,7 +379,16 @@ def analyze_data(df, endogenous_vars=None):
     
     # Если эндогенные переменные не указаны, используем все числовые колонки
     if endogenous_vars is None:
-        endogenous_vars = [col for col in df.columns if df[col].dtype in [np.float64, np.int64]][:2]
+        # Получаем все числовые колонки
+        all_numeric_columns = [col for col in df.columns if df[col].dtype in [np.float64, np.int64]]
+        
+        # Если не указаны эндогенные, берем первые две как эндогенные
+        endogenous_vars = all_numeric_columns[:2]
+    else:
+        # Получаем все числовые колонки, исключая эндогенные
+        all_numeric_columns = [col for col in df.columns 
+                                if df[col].dtype in [np.float64, np.int64] 
+                                and col not in endogenous_vars]
     
     # Проверяем, что эндогенные переменные существуют в датафрейме
     endogenous_vars = [var for var in endogenous_vars if var in df.columns]
@@ -389,7 +398,17 @@ def analyze_data(df, endogenous_vars=None):
         d_value, test_outputs = analyze_differences(df[column], column, max_diff=4)
         results['variable_results'][column] = {
             'd_value': d_value,
-            'test_outputs': test_outputs
+            'test_outputs': test_outputs,
+            'type': 'endogenous'
+        }
+    
+    # Анализ экзогенных переменных
+    for column in all_numeric_columns:
+        d_value, test_outputs = analyze_differences(df[column], column, max_diff=4)
+        results['variable_results'][column] = {
+            'd_value': d_value,
+            'test_outputs': test_outputs,
+            'type': 'exogenous'
         }
     
     # Анализ коинтеграции
@@ -425,7 +444,6 @@ def analyze_data(df, endogenous_vars=None):
         }
     
     return results
-
 # Функция создания отчета Word
 def create_word_report(results, df):
     """
