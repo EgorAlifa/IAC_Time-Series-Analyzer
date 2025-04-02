@@ -26,6 +26,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",  # Frontend в режиме разработки
+        "*github.io",
         "http://37.252.23.30:8000",  # Ваш API сервер
     ],
     allow_credentials=True,
