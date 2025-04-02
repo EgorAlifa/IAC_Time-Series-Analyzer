@@ -16,7 +16,6 @@ import shutil
 import threading
 import time
 from pathlib import Path
-from ts_analysis import generate_time_series_plots_for_variable
 
 from ts_analysis import analyze_data, create_word_report
 
