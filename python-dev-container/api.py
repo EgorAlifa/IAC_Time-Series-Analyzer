@@ -137,7 +137,50 @@ async def get_news_endpoint(
             'error': 'Exception occurred',
             'message': str(e)
         }
-
+@app.post("/get-time-series-data")
+async def get_time_series_data(
+    file_id: str = Form(...),
+    date_column: str = Form("Дата"),
+    column: str = Form(...)
+):
+    """
+    Получение данных временного ряда для построения графиков
+    """
+    file_path = TEMP_FILES_DIR / file_id
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Файл не найден")
+        
+    try:
+        # Чтение данных из файла
+        if file_path.suffix.lower() == '.csv':
+            df = pd.read_csv(file_path)
+        else:
+            df = pd.read_excel(file_path)
+            
+        # Проверка наличия столбцов
+        if date_column not in df.columns or column not in df.columns:
+            return JSONResponse(
+                status_code=400, 
+                content={"error": f"Столбцы не найдены"}
+            )
+            
+        # Преобразование даты и сортировка
+        df[date_column] = pd.to_datetime(df[date_column])
+        df = df.sort_values(by=date_column)
+        
+        # Формирование данных временного ряда
+        time_series_data = []
+        for _, row in df.iterrows():
+            time_series_data.append({
+                "date": row[date_column].strftime("%Y-%m-%d"),
+                "value": float(row[column])
+            })
+            
+        return time_series_data
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка при получении данных: {str(e)}")
 @app.post("/upload-temp-file")
 async def upload_temp_file(file: UploadFile = File(...)):
     """
