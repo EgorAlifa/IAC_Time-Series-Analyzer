@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тесты на стационарность - Аналитическая система</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Подключение Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Дополнительные стили для страницы анализа */
+        .analysis-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .page-subtitle {
+            font-size: 16px;
+            color: #64748b;
+            margin-top: 8px;
+        }
+
+        .selector-container {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .selector-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .variable-select {
+            width: 100%;
+            max-width: 600px;
+            padding: 10px 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #334155;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .variable-select:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+       /* Обновленные стили для графиков */
+    .chart-box {
+        background-color: #f8fafc;
+        border-radius: 8px;
+        padding: 20px;
+        position: relative;
+        overflow: hidden; /* Предотвращает выход за границы */
+        width: 100%;
+        min-height: 300px; /* Фиксированная минимальная высота */
+    }
+
+    .chart-canvas-container {
+        position: relative;
+        height: 250px; /* Фиксированная высота */
+        width: 100%;
+    }
+
+    .chart-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    .charts-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); /* Адаптивные колонки */
+        grid-gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    /* Медиа-запрос для мобильных устройств */
+    @media (max-width: 768px) {
+        .charts-container {
+            grid-template-columns: 1fr; /* Одна колонка на мобильных */
+        }
+    }
+
+        .test-results-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-gap: 20px;
+            margin-bottom: 30px;
+            position: relative;
+            padding-top: 60px;
+        }
+        .zero-difference-badge {
+            background-color: #f8fafc;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #334155;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+            position: absolute;
+            top: -20px;
+            left: 0;
+            z-index: 10;
+        }
+
+        .zero-difference-badge strong {
+            color: #1e40af;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .test-box {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .test-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .test-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 15px;
+            font-size: 14px;
+        }
+
+        .test-item {
+            margin-bottom: 8px;
+        }
+
+        .test-label {
+            color: #64748b;
+            margin-bottom: 2px;
+        }
+
+        .test-value {
+            font-weight: 500;
+            color: #334155;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        .status-stationary {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .status-nonstationary {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .summary-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 20px;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .summary-table th {
+            background-color: #f1f5f9;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 500;
+            color: #334155;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .summary-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+        }
+
+        .summary-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .conclusion-container {
+            background-color: #eff6ff;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #3b82f6;
+            position: relative;
+        }
+
+        .conclusion-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #1e40af;
+            margin-bottom: 10px;
+        }
+
+        .conclusion-text {
+            font-size: 14px;
+            color: #334155;
+            line-height: 1.5;
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            margin: 30px auto;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error-message {
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .additional-charts-container {
+            margin-top: 20px;
+        }
+        
+        .integration-legend {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            border-left: 4px solid #64748b;
+        }
+        
+        .integration-legend h4 {
+            font-size: 16px;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 10px;
+        }
+        
+        .integration-legend ul {
+            padding-left: 20px;
+            margin: 0;
+        }
+        
+        .integration-legend li {
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #334155;
+        }
+    </style>
+</head>
+<body>
+    <!-- Верхняя панель -->
+    <header class="top-panel">
+        <div class="logo-container">
+            <div class="logo-square"></div>
+            <h1 class="app-title">Аналитическая система</h1>
+        </div>
+        <nav class="top-menu">
+            <ul>
+                <li><a href="#">О системе</a></li>
+                <li><a href="#">Справка</a></li>
+                <li><a href="#">Контакты</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div class="main-container">
+        <!-- Боковая панель -->
+        <aside class="sidebar">
+            <nav class="main-nav">
+                <ul>
+                    <li>
+                        <a href="index.html">
+                            <span class="nav-icon home-icon"></span>
+                            Главная
+                        </a>
+                    </li>
+                    <li>
+                        <a href="Data_1.html">
+                            <span class="nav-icon data-icon"></span>
+                            Данные
+                        </a>
+                    </li>
+                    <li class="active">
+                        <a href="analysis_1.html">
+                            <span class="nav-icon analysis-icon"></span>
+                            Анализ
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span class="nav-icon forecast-icon"></span>
+                            Прогнозы
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span class="nav-icon reports-icon"></span>
+                            Отчеты
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span class="nav-icon help-icon"></span>
+                            Справка
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="version-info">
+                <p>Версия 3.2.1</p>
+                <p>Обновлено 28.03.2025</p>
+            </div>
+        </aside>
+
+        <!-- Основной контент -->
+        <main class="content">
+            <div class="breadcrumbs">
+                <span>Главная</span> / <span>Анализ</span> / <span>Тесты на стационарность</span>
+            </div>
+
+            <div class="page-header">
+                <h2>Тесты на стационарность временных рядов</h2>
+                <p class="page-subtitle">Проверка временных рядов на стационарность с помощью различных статистических тестов</p>
+            </div>
+
+            <div class="error-message" id="error-container">
+                Произошла ошибка при загрузке данных. Пожалуйста, убедитесь, что файл был загружен корректно.
+            </div>
+
+            <div class="analysis-container">
+                <div class="selector-container">
+                    <label class="selector-label" for="variable-select">Выберите временной ряд для анализа:</label>
+                    <select class="variable-select" id="variable-select">
+                        <option value="" disabled selected>Выберите переменную...</option>
+                    </select>
+                </div>
+
+                <div class="loading-spinner" id="loading-spinner"></div>
+
+                <div id="analysis-results" class="hidden">
+                    <div class="charts-container" id="charts-container">
+                        <!-- Графики будут добавлены динамически -->
+                    </div>
+                    
+                    <!-- Дополнительные графики для разностей высших порядков -->
+                    <div class="additional-charts-container" id="additional-charts">
+                        <!-- Графики разностей высших порядков будут добавлены динамически -->
+                    </div>
+
+                    <div class="test-results-container">
+                        <div class="zero-difference-badge">
+                            <strong>Нулевые разности</strong>
+                            Ниже представлены итоги теста исходного временного ряда без преобразований. Интерпретация тестов показывает, что ряд, возможно, содержит единичный корень и требует дополнительного анализа или преобразований.
+                        </div>
+                        <div class="test-box">
+                            <div class="test-title">
+                                Результаты теста ADF
+                                <span id="adf-status" class="status-badge"></span>
+                            </div>
+                            <div class="test-details">
+                                <div class="test-item">
+                                    <div class="test-label">Статистика:</div>
+                                    <div id="adf-statistic" class="test-value">-</div>
+                                </div>
+                                <div class="test-item">
+                                    <div class="test-label">p-value:</div>
+                                    <div id="adf-pvalue" class="test-value">-</div>
+                                </div>
+                                <div class="test-item">
+                                    <div class="test-label">Крит. значение (5%):</div>
+                                    <div id="adf-critical" class="test-value">-</div>
+                                </div>
+                                <div class="test-item">
+                                    <div class="test-label">Результат:</div>
+                                    <div id="adf-result" class="test-value">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    
+                        <div class="test-box">
+                            <div class="test-title">
+                                Результаты теста KPSS
+                                <span id="kpss-status" class="status-badge"></span>
+                            </div>
+                            <div class="test-details">
+                                <div class="test-item">
+                                    <div class="test-label">Статистика:</div>
+                                    <div id="kpss-statistic" class="test-value">-</div>
+                                </div>
+                                <div class="test-item">
+                                    <div class="test-label">p-value:</div>
+                                    <div id="kpss-pvalue" class="test-value">-</div>
+                                </div>
+                                <div class="test-item">
+                                    <div class="test-label">Крит. значение (5%):</div>
+                                    <div id="kpss-critical" class="test-value">-</div>
+                                </div>
+                                <div class="test-item">
+                                    <div class="test-label">Результат:</div>
+                                    <div id="kpss-result" class="test-value">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Добавление теста Phillips-Perron -->
+                        <div class="test-box">
+                            <div class="test-title">
+                                Результаты теста Phillips-Perron
+                                <span id="pp-status" class="status-badge"></span>
+                            </div>
+                            <div class="test-details">
+                                <div class="test-item">
+                                    <div class="test-label">Статистика:</div>
+                                    <div id="pp-statistic" class="test-value">-</div>
+                                </div>
+                                <div class="test-item">
+                                    <div class="test-label">p-value:</div>
+                                    <div id="pp-pvalue" class="test-value">-</div>
+                                </div>
+                                <div class="test-item">
+                                    <div class="test-label">Крит. значение (5%):</div>
+                                    <div id="pp-critical" class="test-value">-</div>
+                                </div>
+                                <div class="test-item">
+                                    <div class="test-label">Результат:</div>
+                                    <div id="pp-result" class="test-value">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-container" id="summary-container">
+                <h3 class="summary-title">Сводные результаты по всем переменным</h3>
+                <table class="summary-table" id="summary-table">
+                    <thead>
+                        <tr>
+                            <th>Переменная</th>
+                            <th>Порядок интеграции</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-body">
+                        <!-- Данные будут загружены с помощью JavaScript -->
+                    </tbody>
+                </table>
+                
+                <!-- Добавление легенды о порядках интеграции -->
+                <div class="integration-legend">
+                    <h4>Примечание о порядках интеграции:</h4>
+                    <ul>
+                        <li><strong>I(0)</strong> - ряд стационарен в исходном виде</li>
+                        <li><strong>I(1)</strong> - ряд становится стационарным после первого дифференцирования</li>
+                        <li><strong>I(2)</strong> - ряд становится стационарным после второго дифференцирования</li>
+                        <li><strong>I(3)</strong> - ряд становится стационарным после третьего дифференцирования</li>
+                        <li><strong>I(4)</strong> - ряд становится стационарным после четвертого дифференцирования</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="conclusion-container" id="conclusion-container">
+                <h3 class="conclusion-title">Вывод: Требуется дополнительный преобразования</h3>
+                <p class="conclusion-text" id="conclusion-text">
+                    Рекомендуется использовать первые/вторые разности при моделировании
+                </p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // URL вашего API
+    const API_URL = 'http://37.252.23.30:8000';
+    
+    // Массив для хранения экземпляров графиков (для очистки при смене переменной)
+    const chartInstances = [];
+    
+    // Получаем элементы DOM
+    const variableSelect = document.getElementById('variable-select');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const analysisResults = document.getElementById('analysis-results');
+    const errorContainer = document.getElementById('error-container');
+    const summaryBody = document.getElementById('summary-body');
+    const conclusionText = document.getElementById('conclusion-text');
+    const chartsContainer = document.getElementById('charts-container');
+    const additionalCharts = document.getElementById('additional-charts');
+    
+    // Получаем данные о колонках и файле из localStorage
+    const fileColumnsData = JSON.parse(localStorage.getItem('fileColumnsData') || '{}');
+    const fileName = localStorage.getItem('fileName') || 'Не выбран';
+    const fileId = localStorage.getItem('fileId');
+    
+    console.log("Данные из localStorage:", { fileColumnsData, fileName, fileId });
+    
+    // Проверяем наличие необходимых данных
+    if (!fileId) {
+        errorContainer.textContent = 'Файл не был загружен. Пожалуйста, вернитесь на страницу данных и загрузите файл.';
+        errorContainer.style.display = 'block';
+        return;
+    }
+    
+    // Заполняем выпадающий список с колонками для анализа
+    if (variableSelect && fileColumnsData.numeric_columns && fileColumnsData.numeric_columns.length > 0) {
+        console.log("Заполняем список колонок:", fileColumnsData.numeric_columns);
+        
+        // Очищаем существующие опции (кроме placeholder)
+        while (variableSelect.options.length > 1) {
+            variableSelect.remove(1);
+        }
+        
+        // Добавляем числовые колонки как опции
+        fileColumnsData.numeric_columns.forEach(column => {
+            const option = document.createElement('option');
+            option.value = column;
+            option.textContent = column;
+            variableSelect.appendChild(option);
+        });
+        
+    } else {
+        console.error('Не удалось найти список колонок или данные о колонках отсутствуют');
+        errorContainer.style.display = 'block';
+    }
+
+    // Функция для очистки всех графиков
+    function clearCharts() {
+        // Уничтожаем предыдущие экземпляры графиков
+        chartInstances.forEach(chart => {
+            if (chart) {
+                chart.destroy();
+            }
+        });
+        
+        // Очищаем массив графиков
+        chartInstances.length = 0;
+        
+        // Очищаем контейнеры графиков
+        chartsContainer.innerHTML = '';
+        additionalCharts.innerHTML = '';
+    }
+
+    // Функция для создания графика временного ряда с Chart.js
+    function createChart(canvasId, title, data, isOriginal = true) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        
+        // Подготовка данных
+        const labels = data.map(item => {
+            // Преобразование даты для отображения (например, только год и месяц)
+            const date = new Date(item.date);
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        });
+        
+        const values = data.map(item => item.value);
+        
+        // Создание графика
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: title,
+                    data: values,
+                    borderColor: isOriginal ? '#3b82f6' : '#10b981',
+                    backgroundColor: isOriginal ? 'rgba(59, 130, 246, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.1,
+                    pointRadius: 2,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: title,
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        }
+                    },
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Добавляем экземпляр графика в массив
+        chartInstances.push(chart);
+        
+        return chart;
+    }
+
+    // Функция для создания графиков в зависимости от порядка интеграции
+    function createDifferenceCharts(timeSeriesData, selectedColumn, dValue) {
+        // Очищаем предыдущие графики
+        clearCharts();
+        
+        // Создаем графики в зависимости от порядка интеграции
+        
+        // Всегда создаем график исходного ряда
+        const originalChartBox = document.createElement('div');
+        originalChartBox.className = 'chart-box';
+        
+        const originalChartTitle = document.createElement('div');
+        originalChartTitle.className = 'chart-title';
+        
+        const originalChartCanvas = document.createElement('canvas');
+        originalChartCanvas.id = 'original-chart';
+        originalChartCanvas.className = 'chart-canvas';
+        
+        originalChartBox.appendChild(originalChartTitle);
+        originalChartBox.appendChild(originalChartCanvas);
+        chartsContainer.appendChild(originalChartBox);
+        
+        // Создаем график исходного ряда
+        createChart('original-chart', `${selectedColumn} (исходный ряд)`, timeSeriesData, true);
+        
+        // Если ряд нестационарен, добавляем графики разностей
+        if (dValue >= 1) {
+            // Вычисляем первые разности
+            let diff1Data = [];
+            for (let i = 1; i < timeSeriesData.length; i++) {
+                diff1Data.push({
+                    date: timeSeriesData[i].date,
+                    value: timeSeriesData[i].value - timeSeriesData[i-1].value
+                });
+            }
+            
+            // Добавляем график первых разностей
+            const diff1ChartBox = document.createElement('div');
+            diff1ChartBox.className = 'chart-box';
+            
+            const diff1ChartTitle = document.createElement('div');
+            diff1ChartTitle.className = 'chart-title';
+            
+            const diff1ChartCanvas = document.createElement('canvas');
+            diff1ChartCanvas.id = 'diff1-chart';
+            diff1ChartCanvas.className = 'chart-canvas';
+            
+            diff1ChartBox.appendChild(diff1ChartTitle);
+            diff1ChartBox.appendChild(diff1ChartCanvas);
+            chartsContainer.appendChild(diff1ChartBox);
+            
+            // Создаем график первых разностей
+            createChart('diff1-chart', `${selectedColumn} (разности 1-го порядка)`, diff1Data, false);
+            
+            // Если порядок интеграции выше 1, добавляем графики высших разностей
+            if (dValue > 1) {
+                // Создаем контейнер для дополнительных графиков
+                const additionalChartsContainer = document.createElement('div');
+                additionalChartsContainer.className = 'charts-container';
+                additionalCharts.appendChild(additionalChartsContainer);
+                
+                // Добавляем графики высших разностей (2-го порядка и выше)
+                for (let i = 2; i <= Math.min(dValue, 4); i++) {
+                    // Вычисляем разности i-го порядка
+                    let diffData = [...timeSeriesData];
+                    
+                    for (let j = 0; j < i; j++) {
+                        diffData = diffData.slice(1).map((item, idx) => ({
+                            date: item.date,
+                            value: item.value - diffData[idx].value
+                        }));
+                    }
+                    
+                    // Создаем блок для графика
+                    const diffChartBox = document.createElement('div');
+                    diffChartBox.className = 'chart-box';
+                    
+                    const diffChartTitle = document.createElement('div');
+                    diffChartTitle.className = 'chart-title';
+                    diffChartTitle.textContent = `Разности ${i}-го порядка`;
+                    
+                    const diffChartCanvas = document.createElement('canvas');
+                    diffChartCanvas.id = `diff${i}-chart`;
+                    diffChartCanvas.className = 'chart-canvas';
+                    
+                    diffChartBox.appendChild(diffChartTitle);
+                    diffChartBox.appendChild(diffChartCanvas);
+                    additionalChartsContainer.appendChild(diffChartBox);
+                    
+                    // Создаем график разностей i-го порядка
+                    createChart(`diff${i}-chart`, `${selectedColumn} (разности ${i}-го порядка)`, diffData, false);
+                }
+            }
+        }
+    }
+
+    // Функция для извлечения значения из регулярного выражения
+    function extractValue(regex, text, defaultValue = '-') {
+        const match = text.match(regex);
+        return match ? match[1] : defaultValue;
+    }
+
+// Функция для обновления деталей тестов
+function updateTestDetails(results, selectedColumn) {
+        // Найдем результаты тестов для выбранной колонки
+        const columnTestOutputs = results.variable_results[selectedColumn].test_outputs;
+        
+        // Вывод для диагностики
+        console.log("Результаты тестов:", columnTestOutputs);
+        
+        // Функция для извлечения значения из массива строк
+        function findValue(pattern, array) {
+            for (const line of array) {
+                if (pattern.test(line)) {
+                    const match = line.match(pattern);
+                    if (match && match[1]) return match[1];
+                }
+            }
+            return "-";
+        }
+        
+        // Обновление ADF теста
+        const adfStatistic = findValue(/ADF Statistic: ([-\d.]+)/, columnTestOutputs);
+        const adfPValue = findValue(/p-value: ([\d.]+)/, columnTestOutputs.slice(0, 10));
+        const adfCritical = findValue(/Критическое значение \(5%\): ([-\d.]+)/, columnTestOutputs.slice(0, 10));
+        
+        document.getElementById('adf-statistic').textContent = adfStatistic;
+        document.getElementById('adf-pvalue').textContent = adfPValue;
+        document.getElementById('adf-critical').textContent = adfCritical;
+        
+        // Извлечение результата ADF теста и правильная интерпретация
+        let adfResult = "-";
+        for (let i = 0; i < 10; i++) {
+            if (columnTestOutputs[i] && columnTestOutputs[i].includes("Результат:")) {
+                adfResult = columnTestOutputs[i].split("Результат: ")[1].split(".")[0];
+                break;
+            }
+        }
+        document.getElementById('adf-result').textContent = adfResult;
+        
+        // Правильная интерпретация ADF теста:
+        // Если ADF статистика < критического значения ИЛИ p-value < 0.05, ряд стационарен
+        // В противном случае - нестационарен
+        const isAdfStationary = (parseFloat(adfStatistic) < parseFloat(adfCritical)) || 
+                                (parseFloat(adfPValue) < 0.05);
+        
+        if (isAdfStationary) {
+            document.getElementById('adf-status').textContent = "Стационарен";
+            document.getElementById('adf-status').className = "status-badge status-stationary";
+        } else {
+            document.getElementById('adf-status').textContent = "Нестационарен";
+            document.getElementById('adf-status').className = "status-badge status-nonstationary";
+        }
+        
+        // Обновление KPSS теста - ищем в диапазоне строк, где обычно находится KPSS тест
+        const kpssRange = columnTestOutputs.slice(6, 16);
+        const kpssStatistic = findValue(/KPSS Statistic: ([\d.]+)/, kpssRange);
+        const kpssPValue = findValue(/p-value: ([\d.]+)/, kpssRange);
+        const kpssCritical = findValue(/Критическое значение \(5%\): ([\d.]+)/, kpssRange);
+        
+        document.getElementById('kpss-statistic').textContent = kpssStatistic;
+        document.getElementById('kpss-pvalue').textContent = kpssPValue;
+        document.getElementById('kpss-critical').textContent = kpssCritical;
+        
+        // Извлечение результата KPSS теста
+        let kpssResult = "-";
+        for (const line of kpssRange) {
+            if (line && line.includes("Результат:")) {
+                kpssResult = line.split("Результат: ")[1].split(".")[0];
+                break;
+            }
+        }
+        document.getElementById('kpss-result').textContent = kpssResult;
+        
+        // Правильная интерпретация KPSS теста:
+        // Если KPSS статистика > критического значения ИЛИ p-value < 0.05, ряд НЕстационарен
+        // В противном случае - стационарен
+        const isKpssStationary = (parseFloat(kpssStatistic) <= parseFloat(kpssCritical)) ||
+                                (parseFloat(kpssPValue) >= 0.05);
+        
+        if (isKpssStationary) {
+            document.getElementById('kpss-status').textContent = "Стационарен";
+            document.getElementById('kpss-status').className = "status-badge status-stationary";
+        } else {
+            document.getElementById('kpss-status').textContent = "Нестационарен";
+            document.getElementById('kpss-status').className = "status-badge status-nonstationary";
+        }
+        
+        // Обновление Phillips-Perron теста
+        const ppRange = columnTestOutputs.slice(12, 22);
+        const ppStatistic = findValue(/PP Statistic: ([-\d.]+)/, ppRange);
+        const ppPValue = findValue(/p-value: ([\d.]+)/, ppRange);
+        const ppCritical = findValue(/Критическое значение \(5%\): ([-\d.]+)/, ppRange);
+        
+        document.getElementById('pp-statistic').textContent = ppStatistic;
+        document.getElementById('pp-pvalue').textContent = ppPValue;
+        document.getElementById('pp-critical').textContent = ppCritical;
+        
+        // Извлечение результата Phillips-Perron теста
+        let ppResult = "-";
+        for (const line of ppRange) {
+            if (line && line.includes("Результат:")) {
+                ppResult = line.split("Результат: ")[1].split(".")[0];
+                break;
+            }
+        }
+        document.getElementById('pp-result').textContent = ppResult;
+        
+        // Правильная интерпретация Phillips-Perron теста:
+        // Если PP статистика < критического значения ИЛИ p-value < 0.05, ряд стационарен
+        // В противном случае - нестационарен
+        const isPpStationary = (parseFloat(ppStatistic) < parseFloat(ppCritical)) || 
+                            (parseFloat(ppPValue) < 0.05);
+        
+        if (isPpStationary) {
+            document.getElementById('pp-status').textContent = "Стационарен";
+            document.getElementById('pp-status').className = "status-badge status-stationary";
+        } else {
+            document.getElementById('pp-status').textContent = "Нестационарен";
+            document.getElementById('pp-status').className = "status-badge status-nonstationary";
+        }
+    }
+
+    // Функция для выполнения первоначального анализа всех переменных
+    function performInitialAnalysis() {
+        loadingSpinner.style.display = 'block';
+        
+        // Создаем FormData
+        const formData = new FormData();
+        formData.append('file_id', fileId);
+        formData.append('date_column', 'Дата');
+        
+        // Отправляем запрос на анализ всех переменных
+        fetch(`${API_URL}/analyze-with-file-id`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(results => {
+            displayAnalysisResults(results);
+        })
+        .catch(error => {
+            console.error('Ошибка при выполнении первоначального анализа:', error);
+            errorContainer.textContent = `Ошибка при анализе: ${error.message}`;
+            errorContainer.style.display = 'block';
+        })
+        .finally(() => {
+            loadingSpinner.style.display = 'none';
+        });
+    }
+    
+    // Функция для запроса данных временного ряда с сервера
+    async function fetchTimeSeriesData(selectedColumn) {
+        try {
+            // Создаем FormData для запроса данных
+            const formData = new FormData();
+            formData.append('file_id', fileId);
+            formData.append('date_column', 'Дата');
+            formData.append('column', selectedColumn);
+            
+            // Запрос данных с сервера
+            const response = await fetch(`${API_URL}/get-time-series-data`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            // Получение данных
+            const data = await response.json();
+            return data;
+            
+        } catch (error) {
+            console.error('Ошибка при получении данных временного ряда:', error);
+            
+            // В случае ошибки или отсутствия API симулируем данные
+            console.warn('Используем симулированные данные для демонстрации');
+            return simulateTimeSeriesData(selectedColumn);
+        }
+    }
+    
+    // Функция для симуляции данных (используется, если API не доступен)
+    function simulateTimeSeriesData(columnName, length = 100) {
+        // Базовая дата - 10 лет назад (более реалистичные даты)
+        const startDate = new Date();
+        startDate.setFullYear(startDate.getFullYear() - 10);
+        
+        // Генерируем данные с трендом и случайным компонентом
+        const data = [];
+        for (let i = 0; i < length; i++) {
+            // Шаг даты - месяц
+            const date = new Date(startDate);
+            date.setMonth(startDate.getMonth() + i);
+            
+            // Генерируем значение (тренд + случайный компонент + сезонность)
+            const trend = i * 0.2;
+            const random = Math.random() * 10 - 5;
+            // Добавляем сезонный компонент (пик в середине года)
+            const seasonal = 5 * Math.sin((i % 12) / 11 * Math.PI);
+            const value = 100 + trend + random + seasonal;
+            
+            data.push({
+                date: date.toISOString().split('T')[0],
+                value: value
+            });
+        }
+        
+        return data;
+    }
+
+    // Функция для отображения результатов анализа
+    function displayAnalysisResults(results) {
+        // Очищаем существующие результаты
+        summaryBody.innerHTML = '';
+        
+        // Проверяем наличие результатов
+        if (!results.variable_results) {
+            errorContainer.textContent = 'Не удалось получить результаты анализа';
+            errorContainer.style.display = 'block';
+            return;
+        }
+        
+        // Заполняем сводную таблицу для всех переменных
+        Object.entries(results.variable_results).forEach(([varName, varResults]) => {
+            const row = document.createElement('tr');
+            
+            // Колонка с названием переменной
+            const nameCell = document.createElement('td');
+            nameCell.textContent = varName;
+            row.appendChild(nameCell);
+            
+            // Колонка с порядком интеграции
+            const orderCell = document.createElement('td');
+            const integrationOrder = varResults.d_value !== undefined 
+                ? (varResults.d_value === 0 ? 'I(0)' : `I(${varResults.d_value})`) 
+                : 'Н/Д';
+            orderCell.textContent = integrationOrder;
+            row.appendChild(orderCell);
+            
+            // Колонка со статусом стационарности
+            const statusCell = document.createElement('td');
+            const stationaryStatus = varResults.d_value !== undefined 
+                ? (varResults.d_value === 0 ? 'Стационарен' : 'Нестационарен') 
+                : 'Н/Д';
+            statusCell.textContent = stationaryStatus;
+            row.appendChild(statusCell);
+            
+            // Добавляем строку в таблицу
+            summaryBody.appendChild(row);
+        });
+        
+        // Обновляем заключение
+        const allStationary = Object.values(results.variable_results).every(result => result.d_value === 0);
+        const maxOrder = Math.max(...Object.values(results.variable_results).map(result => result.d_value || 0));
+        
+        if (allStationary) {
+            conclusionText.textContent = 'Все временные ряды стационарны, можно использовать в модели без преобразований';
+        } else if (maxOrder === 1) {
+            conclusionText.textContent = 'Некоторые ряды нестационарны, рекомендуется использовать первые разности при моделировании';
+        } else if (maxOrder === 2) {
+            conclusionText.textContent = 'Некоторые ряды имеют порядок интегрирования 2, рекомендуется использовать вторые разности';
+        } else if (maxOrder > 2) {
+            conclusionText.textContent = `Обнаружены ряды с высоким порядком интегрирования (I(${maxOrder})), необходимо внимательно проанализировать данные и рассмотреть альтернативные подходы к моделированию`;
+        }
+        
+        // Обработка коинтеграции, если есть
+        if (results.cointegration_results) {
+            console.log('Результаты коинтеграции:', results.cointegration_results);
+        }
+        
+        // Выбираем первую опцию по умолчанию
+        if (variableSelect.options.length > 1) {
+            variableSelect.selectedIndex = 1;
+
+            // Вызываем обработчик события change для select, чтобы отобразить детальный анализ для первой переменной
+            variableSelect.dispatchEvent(new Event('change'));
+        }
+    }
+
+    // Добавляем обработчик изменения выбранной колонки (для детального анализа)
+    variableSelect.addEventListener('change', async function() {
+        const selectedColumn = variableSelect.value;
+        if (!selectedColumn) return;
+        
+        loadingSpinner.style.display = 'block';
+        analysisResults.classList.add('hidden');
+        
+        try {
+            // Создаем FormData
+            const formData = new FormData();
+            formData.append('file_id', fileId);
+            formData.append('date_column', 'Дата');
+            formData.append('endogenous_vars', JSON.stringify([selectedColumn]));
+            
+            // Получаем детальные результаты анализа
+            const analysisResponse = await fetch(`${API_URL}/analyze-with-file-id`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            // Улучшенная обработка ошибок
+            if (!analysisResponse.ok) {
+                const errorText = await analysisResponse.text();
+                console.error('Ошибка ответа:', errorText);
+                throw new Error(`HTTP error! status: ${analysisResponse.status}, message: ${errorText}`);
+            }
+            
+            const detailedResults = await analysisResponse.json();
+            console.log("Детальные результаты анализа:", detailedResults);
+            
+            // Получаем порядок интеграции
+            const dValue = detailedResults.variable_results[selectedColumn].d_value;
+            console.log(`Порядок интеграции для ${selectedColumn}: ${dValue}`);
+            
+            // Обновляем детали тестов
+            updateTestDetails(detailedResults, selectedColumn);
+            
+            // Получаем данные временного ряда
+            const timeSeriesData = await fetchTimeSeriesData(selectedColumn);
+            
+            // Создаем графики в зависимости от порядка интеграции
+            createDifferenceCharts(timeSeriesData, selectedColumn, dValue);
+            
+            // Отображаем результаты
+            analysisResults.classList.remove('hidden');
+        } catch (error) {
+            console.error('Ошибка при выполнении анализа:', error);
+            errorContainer.textContent = `Ошибка при выполнении анализа: ${error.message}`;
+            errorContainer.style.display = 'block';
+        } finally {
+            loadingSpinner.style.display = 'none';
+        }
+    });
+
+    // Обработка изменения размеров окна для корректного отображения графиков
+    window.addEventListener('resize', function() {
+        // Перерисовка всех графиков при изменении размера окна
+        chartInstances.forEach(chart => {
+            if (chart) {
+                chart.resize();
+            }
+        });
+    });
+
+    // Вызываем первоначальный анализ при загрузке страницы
+    performInitialAnalysis();
+});
+    </script>
+</body>
+</html>

@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Данные - Аналитическая система</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* Дополнительные стили для страницы данных */
+        .upload-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .file-drop-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            background-color: #f8fafc;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-drop-area:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+
+        .upload-icon {
+            font-size: 36px;
+            color: #64748b;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(to right, #3b82f6, #2563eb);
+            color: white;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            margin: 20px auto;
+            display: block;
+        }
+
+        .upload-btn:hover {
+            background: linear-gradient(to right, #2563eb, #1d4ed8);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+        }
+
+        .requirements-box {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .requirements-box h3 {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: #334155;
+        }
+
+        .requirement-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: #334155;
+        }
+
+        .check-icon {
+            color: #3b82f6;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .demo-data-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .demo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .demo-header h3 {
+            font-size: 18px;
+            font-weight: 500;
+            color: #334155;
+        }
+
+        .demo-file {
+            background-color: #f8fafc;
+            border-radius: 6px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #e2e8f0;
+        }
+
+        .file-icon {
+            background-color: #eff6ff;
+            color: #3b82f6;
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 18px;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .file-meta {
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .demo-load-btn {
+            padding: 8px 16px;
+            background-color: #eff6ff;
+            color: #3b82f6;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 13px;
+            border: 1px solid #bfdbfe;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .demo-load-btn:hover {
+            background-color: #dbeafe;
+        }
+
+        .status-container {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            display: none;
+            position: relative;
+        }
+
+        .success-status {
+            background-color: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            color: #166534;
+        }
+        
+        .analysis-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 6px 12px;
+            background-color: #22c55e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .analysis-btn:hover {
+            background-color: #16a34a;
+        }
+
+        .error-status {
+            background-color: #fef2f2;
+            border-left: 4px solid #ef4444;
+            color: #b91c1c;
+        }
+
+        .ready-indicator {
+            display: flex;
+            align-items: center;
+            color: #3b82f6;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 20px;
+        }
+
+        .ready-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Верхняя панель -->
+    <header class="top-panel">
+        <div class="logo-container">
+            <div class="logo-square"></div>
+            <h1 class="app-title">Аналитическая система</h1>
+        </div>
+        <nav class="top-menu">
+            <ul>
+                <li><a href="#">О системе</a></li>
+                <li><a href="#">Справка</a></li>
+                <li><a href="#">Контакты</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="main-container">
+        <!-- Боковая панель -->
+        <aside class="sidebar">
+            <nav class="main-nav">
+                <ul>
+                    <li>
+                        <a href="index.html">
+                            <span class="nav-icon home-icon"></span>
+                            Главная
+                        </a>
+                    </li>
+                    <li class="active">
+                        <a href="Data_1.html">
+                            <span class="nav-icon data-icon"></span>
+                            Данные
+                        </a>
+                    </li>
+                    <li>
+                        <a href="analysis_1.html">
+                            <span class="nav-icon analysis-icon"></span>
+                            Анализ
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span class="nav-icon forecast-icon"></span>
+                            Прогнозы
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span class="nav-icon reports-icon"></span>
+                            Отчеты
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span class="nav-icon help-icon"></span>
+                            Справка
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="version-info">
+                <p>Версия 3.2.1</p>
+                <p>Обновлено 28.03.2025</p>
+            </div>
+        </aside>
+
+        <!-- Основной контент -->
+        <main class="content">
+            <div class="breadcrumbs">
+                <span>Главная</span> / <span>Данные</span>
+            </div>
+
+            <div class="page-header">
+                <h2>Загрузка данных</h2>
+                <p class="subtitle">Подготовка и импорт данных для анализа</p>
+            </div>
+
+            <div class="upload-container">
+                <div class="file-drop-area" id="drop-area">
+                    <div class="upload-icon">↑</div>
+                    <h3>Выберите или перетащите файл</h3>
+                    <p>Поддерживаемые форматы: .xlsx, .csv</p>
+                    <input type="file" id="file-input" class="file-input" accept=".xlsx,.csv">
+                </div>
+                
+                <button class="upload-btn" id="upload-btn" disabled>Загрузить файл</button>
+                
+                <div id="success-status" class="status-container success-status">
+                    Файл успешно загружен и готов к обработке
+                    <!-- Кнопка "Перейти к анализу" будет добавлена сюда динамически -->
+                </div>
+                
+                <div id="error-status" class="status-container error-status">
+                    Ошибка при загрузке файла. Пожалуйста, проверьте формат и попробуйте снова.
+                </div>
+            </div>
+
+            <div class="requirements-box">
+                <h3>Требования к структуре данных</h3>
+                
+                <div class="requirement-item">
+                    <div class="check-icon">✓</div>
+                    <div>Обязательная колонка "Дата" (формат ДД.ММ.ГГГГ)</div>
+                </div>
+                
+                <div class="requirement-item">
+                    <div class="check-icon">✓</div>
+                    <div>Числовые значения в колонках для анализа</div>
+                </div>
+                
+                <div class="requirement-item">
+                    <div class="check-icon">✓</div>
+                    <div>Отсутствие пропущенных значений или их корректное обозначение</div>
+                </div>
+                
+                <div class="requirement-item">
+                    <div class="check-icon">✓</div>
+                    <div>Данные должны быть очищены от выбросов и артефактов</div>
+                </div>
+                
+                <div class="requirement-item">
+                    <div class="check-icon">✓</div>
+                    <div>Максимальный размер файла: 50 МБ</div>
+                </div>
+                
+                <div class="ready-indicator">
+                    <span></span> Готов к загрузке данных
+                </div>
+            </div>
+
+            <div class="demo-data-container">
+                <div class="demo-header">
+                    <h3>Демонстрационные данные</h3>
+                </div>
+                
+                <div class="demo-file">
+                    <div class="file-icon">
+                        <span>X</span>
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">Демонстрационный набор данных.xlsx</div>
+                        <div class="file-meta">Excel • 26 КБ • Обновлено: 22.03.2025</div>
+                    </div>
+                    <button class="demo-load-btn" id="demo-load-btn">Загрузить в систему</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    // Добавьте этот скрипт перед закрывающим тегом </body> в вашем HTML-файле
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // URL вашего API
+        const API_URL = 'http://37.252.23.30:8000';
+        
+        // Получаем элементы DOM
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        const successStatus = document.getElementById('success-status');
+        const errorStatus = document.getElementById('error-status');
+        const demoLoadBtn = document.getElementById('demo-load-btn');
+        
+        // Переменная для хранения выбранного файла
+        let selectedFile = null;
+        
+        // Обработка выбора файла
+        fileInput.addEventListener('change', handleFileSelection);
+        
+        // Обработка drop зоны
+        dropArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        // Предотвращаем стандартное поведение браузера при drag & drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        // Подсветка drop зоны при наведении файла
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        // Обработка загрузки файла через drag & drop
+        dropArea.addEventListener('drop', handleDrop, false);
+        
+        // Кнопка загрузки файла
+        uploadBtn.addEventListener('click', uploadFile);
+        
+        // Кнопка загрузки демо-данных
+        demoLoadBtn.addEventListener('click', loadDemoData);
+        
+        // Функция для предотвращения стандартного поведения браузера
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        // Функция подсветки drop зоны
+        function highlight() {
+            dropArea.style.borderColor = '#3b82f6';
+            dropArea.style.backgroundColor = '#eff6ff';
+        }
+        
+        // Функция отмены подсветки drop зоны
+        function unhighlight() {
+            dropArea.style.borderColor = '#cbd5e1';
+            dropArea.style.backgroundColor = '#f8fafc';
+        }
+        
+        // Функция обработки события drop
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0) {
+                handleFiles(files);
+            }
+        }
+        
+        // Функция обработки выбора файла
+        function handleFileSelection() {
+            if (fileInput.files.length > 0) {
+                handleFiles(fileInput.files);
+            }
+        }
+        
+        // Функция обработки файлов
+        function handleFiles(files) {
+            selectedFile = files[0];
+            
+            // Проверяем тип файла
+            const fileExtension = selectedFile.name.split('.').pop().toLowerCase();
+            if (fileExtension !== 'xlsx' && fileExtension !== 'csv') {
+                errorStatus.textContent = 'Недопустимый формат файла. Поддерживаются только файлы .xlsx и .csv';
+                errorStatus.style.display = 'block';
+                successStatus.style.display = 'none';
+                uploadBtn.disabled = true;
+                return;
+            }
+            
+            // Проверяем размер файла (максимум 50 МБ)
+            if (selectedFile.size > 50 * 1024 * 1024) {
+                errorStatus.textContent = 'Файл слишком большой. Максимальный размер файла: 50 МБ';
+                errorStatus.style.display = 'block';
+                successStatus.style.display = 'none';
+                uploadBtn.disabled = true;
+                return;
+            }
+            
+            // Очищаем статусы
+            errorStatus.style.display = 'none';
+            successStatus.style.display = 'none';
+            
+            // Обновляем UI
+            dropArea.innerHTML = `
+                <div class="upload-icon">✓</div>
+                <h3>Файл выбран</h3>
+                <p>${selectedFile.name} (${formatFileSize(selectedFile.size)})</p>
+            `;
+            
+            // Активируем кнопку загрузки
+            uploadBtn.disabled = false;
+        }
+        
+        // Форматирование размера файла
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' Б';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' КБ';
+            else return (bytes / 1048576).toFixed(1) + ' МБ';
+        }
+        
+        // Отправка файла на сервер
+        async function uploadFile() {
+            if (!selectedFile) {
+                errorStatus.textContent = 'Пожалуйста, выберите файл для загрузки.';
+                errorStatus.style.display = 'block';
+                return;
+            }
+            
+            // Показываем индикатор загрузки на кнопке
+            uploadBtn.innerHTML = 'Загрузка...';
+            uploadBtn.disabled = true;
+            
+            try {
+                // Создаем объект FormData для отправки файла
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                
+                // Загружаем файл на временное хранение
+                const uploadResponse = await fetch(`${API_URL}/upload-temp-file`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!uploadResponse.ok) {
+                    throw new Error('Ошибка при загрузке файла на сервер');
+                }
+                
+                const uploadData = await uploadResponse.json();
+                const fileId = uploadData.file_id;
+                
+                // Сначала анализируем столбцы файла
+                const analyzeFormData = new FormData();
+                analyzeFormData.append('file', selectedFile);
+                
+                const columnAnalysisResponse = await fetch(`${API_URL}/analyze-columns`, {
+                    method: 'POST',
+                    body: analyzeFormData
+                });
+                
+                if (!columnAnalysisResponse.ok) {
+                    throw new Error('Ошибка при анализе столбцов файла');
+                }
+                
+                const columnData = await columnAnalysisResponse.json();
+                
+                // Сохраняем данные в localStorage для использования на странице анализа
+                localStorage.setItem('fileColumnsData', JSON.stringify(columnData));
+                localStorage.setItem('fileName', selectedFile.name);
+                localStorage.setItem('fileId', fileId);
+                
+                // Показываем сообщение об успехе
+                successStatus.textContent = 'Файл успешно загружен и готов к анализу';
+                successStatus.style.display = 'block';
+                errorStatus.style.display = 'none';
+                
+                // Добавляем кнопку перехода к анализу
+                addAnalysisButton(successStatus);
+                
+            } catch (error) {
+                console.error('Ошибка при загрузке файла:', error);
+                errorStatus.textContent = `Ошибка при загрузке файла: ${error.message}`;
+                errorStatus.style.display = 'block';
+                successStatus.style.display = 'none';
+            } finally {
+                // Восстанавливаем кнопку
+                uploadBtn.innerHTML = 'Загрузить файл';
+                uploadBtn.disabled = false;
+            }
+        }
+        
+        // Функция для добавления кнопки перехода на страницу анализа
+        function addAnalysisButton(container) {
+            // Проверяем, нет ли уже кнопки
+            const existingButton = container.querySelector('.analysis-btn');
+            if (existingButton) {
+                return;
+            }
+            
+            // Создаем кнопку
+            const analysisBtn = document.createElement('button');
+            analysisBtn.className = 'analysis-btn';
+            analysisBtn.textContent = 'Перейти к анализу';
+            analysisBtn.addEventListener('click', function() {
+                window.location.href = 'analysis_1.html';
+            });
+            
+            // Добавляем кнопку в контейнер
+            container.appendChild(analysisBtn);
+        }
+        
+        // Функция загрузки демонстрационных данных
+        async function loadDemoData() {
+            demoLoadBtn.textContent = 'Загрузка...';
+            demoLoadBtn.disabled = true;
+            
+            try {
+                // Получаем демонстрационные данные с сервера
+                const demoResponse = await fetch(`${API_URL}/generate-demo-data`);
+                
+                if (!demoResponse.ok) {
+                    throw new Error('Ошибка при загрузке демонстрационных данных');
+                }
+                
+                // Получаем бинарные данные в виде blob
+                const demoBlob = await demoResponse.blob();
+                
+                // Создаем файл из blob
+                const demoFile = new File([demoBlob], 'demo_data.xlsx', {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                });
+                
+                // Обрабатываем файл так же, как и загруженный
+                selectedFile = demoFile;
+                
+                // Обновляем UI
+                dropArea.innerHTML = `
+                    <div class="upload-icon">✓</div>
+                    <h3>Демо-данные загружены</h3>
+                    <p>${demoFile.name} (${formatFileSize(demoFile.size)})</p>
+                `;
+                
+                // Выполняем загрузку демо-данных на сервер (используем ту же логику, что и для обычного файла)
+                uploadBtn.disabled = false;
+                uploadFile();
+                
+            } catch (error) {
+                console.error('Ошибка при загрузке демонстрационных данных:', error);
+                errorStatus.textContent = `Ошибка при загрузке демонстрационных данных: ${error.message}`;
+                errorStatus.style.display = 'block';
+                successStatus.style.display = 'none';
+            } finally {
+                demoLoadBtn.textContent = 'Загрузить в систему';
+                demoLoadBtn.disabled = false;
+            }
+        }
+    });
+    </script>
+</body>
+</html>
