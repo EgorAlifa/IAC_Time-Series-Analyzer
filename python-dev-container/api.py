@@ -1,7 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 from fastapi import Query
 from datetime import datetime, timedelta
 import pandas as pd
@@ -245,7 +245,7 @@ async def analyze_file(
 async def analyze_with_file_id(
     file_id: str = Form(...),
     date_column: str = Form("Дата"),
-    endogenous_vars: Optional[List[str]] = Form(None)
+    endogenous_vars: Optional[Union[List[str], str]] = Form(None)
 ):
     """
     Анализ временных рядов из ранее загруженного файла
@@ -254,6 +254,16 @@ async def analyze_with_file_id(
     - **date_column**: Имя столбца с датами (по умолчанию "Дата")
     - **endogenous_vars**: Список имен эндогенных переменных для анализа коинтеграции
     """
+    # Преобразование строки в список, если передана одна переменная
+    if isinstance(endogenous_vars, str):
+        endogenous_vars = [endogenous_vars]
+    
+    # Добавим отладочный вывод
+    print(f"Received file_id: {file_id}")
+    print(f"Received date_column: {date_column}")
+    print(f"Received endogenous_vars: {endogenous_vars}")
+    print(f"Type of endogenous_vars: {type(endogenous_vars)}")
+    
     file_path = TEMP_FILES_DIR / file_id
     
     if not file_path.exists():
