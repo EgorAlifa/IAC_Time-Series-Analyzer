@@ -37,6 +37,9 @@ async def get_news_endpoint(
     q: str = Query(default="Ставка", description="Поисковый запрос"),
     limit: int = Query(default=5, description="Лимит количества новостей")
 ):
+    try:
+        print(f"Запрос новостей с параметрами: q={q}, limit={limit}")
+
     # API ключ для NewsAPI
     api_key = "1709ee5d87c94b238a395fefc8375b92"
     
@@ -47,6 +50,11 @@ async def get_news_endpoint(
     
     # Формируем URL для запроса к NewsAPI
     url = f'https://newsapi.org/v2/everything?q={q}&from={formatted_date}&sortBy=publishedAt&apiKey={api_key}'
+    response = requests.get(url)
+    print(f"Статус ответа: {response.status_code}")
+
+    data = response.json()
+    print(f"Получены данные: {data.get('status')}")
     
     try:
         # Выполняем запрос к NewsAPI
