@@ -24,10 +24,19 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=[
+        "http://localhost:3000",  # Frontend в режиме разработки
+        "http://37.252.23.30:8000",  # Ваш API сервер
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=[
+        "Content-Type",
+        "Authorization",
+        "Access-Control-Allow-Headers",
+        "Access-Control-Allow-Origin",
+    ],
+    max_age=3600,  # Кэширование preflight запросов на 1 час
 )
 
 # Создаем директорию для временного хранения файлов, если ее нет
