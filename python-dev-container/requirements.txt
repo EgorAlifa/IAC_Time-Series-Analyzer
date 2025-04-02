@@ -11,3 +11,6 @@ python-multipart==0.0.6
 pydantic==2.4.2
 openpyxl==3.1.2
 requests==2.31.0
+uuid==1.30
+pathlib==1.0.1
+typing-extensions==4.8.0
