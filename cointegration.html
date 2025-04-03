@@ -843,7 +843,7 @@
                 formData.append('columns', JSON.stringify(variables));
                 
                 // Выполняем запрос к API для получения данных
-                const response = await fetch(`${API_URL}/get-time-series-data-multi`, {
+                const response = await fetch(`${API_URL}/get-time-series-data`, {
                     method: 'POST',
                     body: formData
                 });
