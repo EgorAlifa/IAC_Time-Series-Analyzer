@@ -303,94 +303,75 @@ async def analyze_file(
 
 @app.post("/analyze-with-file-id", response_model=AnalysisResult)
 async def analyze_with_file_id(
-    file_id: str = Form(...),
-    date_column: str = Form("Дата"),
-    endogenous_vars: Optional[Union[List[str], str]] = Form(None)
+   file_id: str = Form(...),
+   date_column: str = Form("Дата"),
+   endogenous_vars: Optional[Union[List[str], str]] = Form(None)
 ):
-    """
-    Анализ временных рядов из ранее загруженного файла
-    
-    - **file_id**: Идентификатор файла, полученный при загрузке
-    - **date_column**: Имя столбца с датами (по умолчанию "Дата")
-    - **endogenous_vars**: Список имен эндогенных переменных для анализа коинтеграции
-    """
-    # Преобразование строки в список, если передана одна переменная
-    if isinstance(endogenous_vars, str):
-        endogenous_vars = [endogenous_vars]
-    
-    # Добавим отладочный вывод
-    print(f"Received file_id: {file_id}")
-    print(f"Received date_column: {date_column}")
-    print(f"Received endogenous_vars: {endogenous_vars}")
-    print(f"Type of endogenous_vars: {type(endogenous_vars)}")
-    
-    file_path = TEMP_FILES_DIR / file_id
-    
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Файл не найден или срок его хранения истек")
-    
-    try:
-        # Определяем тип файла по расширению
-        file_extension = os.path.splitext(str(file_path))[1].lower()
-        
-        # Чтение данных из файла
-        if file_extension == '.csv':
-            df = pd.read_csv(file_path)
-        elif file_extension in ['.xlsx', '.xls']:
-            df = pd.read_excel(file_path)
-        else:
-            # Пытаемся определить тип файла автоматически
-            try:
-                df = pd.read_excel(file_path)
-            except:
-                try:
-                    df = pd.read_csv(file_path)
-                except:
-                    raise HTTPException(status_code=400, detail="Неподдерживаемый формат файла")
-        
-        # Проверка наличия столбца с датами
-        if date_column not in df.columns:
-            return JSONResponse(
-                status_code=400,
-                content={"error": f"Столбец {date_column} не найден в файле", "columns": df.columns.tolist()}
-            )
-            
-        # Преобразование столбца даты
-        try:
-            df[date_column] = pd.to_datetime(df[date_column])
-            df.set_index(date_column, inplace=True)
-        except Exception as e:
-            return JSONResponse(
-                status_code=400,
-                content={"error": f"Ошибка при преобразовании столбца даты: {str(e)}"}
-            )
-            
-        # Проведение анализа
-        results = analyze_data(df, endogenous_vars)
-        
-        # Обработка особых случаев возврата
-        if isinstance(results, dict) and 'status' in results:
-            if results['status'] == 'required_input':
-                # Возвращаем список доступных столбцов и сообщение для пользователя
-                return JSONResponse(
-                    status_code=200,
-                    content={
-                        "required_input": True,
-                        "message": results['message'],
-                        "available_columns": results['available_columns']
-                    }
-                )
-            elif results['status'] == 'error':
-                # Возвращаем сообщение об ошибке
-                return JSONResponse(
-                    status_code=400,
-                    content={"error": results['message']}
-                )
-        
-        return results
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ошибка при анализе данных: {str(e)}")
+   """
+   Анализ временных рядов из ранее загруженного файла
+   
+   - **file_id**: Идентификатор файла, полученный при загрузке
+   - **date_column**: Имя столбца с датами (по умолчанию "Дата")
+   - **endogenous_vars**: Список имен эндогенных переменных для анализа коинтеграции
+   """
+   # Преобразование строки в список, если передана одна переменная
+   if isinstance(endogenous_vars, str):
+       endogenous_vars = [endogenous_vars]
+   
+   # Добавим отладочный вывод
+   print(f"Received file_id: {file_id}")
+   print(f"Received date_column: {date_column}")
+   print(f"Received endogenous_vars: {endogenous_vars}")
+   print(f"Type of endogenous_vars: {type(endogenous_vars)}")
+   
+   file_path = TEMP_FILES_DIR / file_id
+   
+   if not file_path.exists():
+       raise HTTPException(status_code=404, detail="Файл не найден или срок его хранения истек")
+   
+   try:
+       # Определяем тип файла по расширению
+       file_extension = os.path.splitext(str(file_path))[1].lower()
+       
+       # Чтение данных из файла
+       if file_extension == '.csv':
+           df = pd.read_csv(file_path)
+       elif file_extension in ['.xlsx', '.xls']:
+           df = pd.read_excel(file_path)
+       else:
+           # Пытаемся определить тип файла автоматически
+           try:
+               df = pd.read_excel(file_path)
+           except:
+               try:
+                   df = pd.read_csv(file_path)
+               except:
+                   raise HTTPException(status_code=400, detail="Неподдерживаемый формат файла")
+       
+       # Проверка наличия столбца с датами
+       if date_column not in df.columns:
+           return JSONResponse(
+               status_code=400,
+               content={"error": f"Столбец {date_column} не найден в файле", "columns": df.columns.tolist()}
+           )
+           
+       # Преобразование столбца даты
+       try:
+           df[date_column] = pd.to_datetime(df[date_column])
+           df.set_index(date_column, inplace=True)
+       except Exception as e:
+           return JSONResponse(
+               status_code=400,
+               content={"error": f"Ошибка при преобразовании столбца даты: {str(e)}"}
+           )
+           
+       # Проведение анализа
+       results = analyze_data(df, endogenous_vars)
+       
+       return results
+       
+   except Exception as e:
+       raise HTTPException(status_code=500, detail=f"Ошибка при анализе данных: {str(e)}")
 
 @app.post("/generate-report")
 async def generate_report(
