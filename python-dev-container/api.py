@@ -17,7 +17,7 @@ import threading
 import time
 from pathlib import Path
 
-from ts_analysis import analyze_data, create_word_report, test_cointegration, johansen_test
+from ts_analysis import analyze_data, create_word_report, test_cointegration, johansen_test, send_email
 
 app = FastAPI(title="Анализ стационарности временных рядов")
 from fastapi.middleware.cors import CORSMiddleware
@@ -638,6 +638,29 @@ async def health_check():
     Проверка работоспособности API
     """
     return {"status": "ok", "version": "1.0.0","Первый запуск Егор":"Оно работает я проверил"}
+
+@app.post("/api/feedback")
+async def submit_feedback(feedback: FeedbackForm):
+   """
+   Обработка формы обратной связи
+   
+   - **name**: Имя отправителя
+   - **email**: Email отправителя
+   - **subject**: Тема сообщения (опционально)
+   - **message**: Текст сообщения
+   """
+   try:
+       # Отправка email
+       success = send_email(feedback)
+       
+       if success:
+           return {"status": "success", "message": "Сообщение успешно отправлено"}
+       else:
+           return {"status": "error", "message": "Ошибка при отправке сообщения"}
+   except ValueError as e:
+       return {"status": "error", "message": str(e)}
+   except Exception as e:
+       return {"status": "error", "message": f"Произошла ошибка: {str(e)}"}
 
 # Генерация тестовых данных для демонстрации (если нет реальных данных)
 @app.get("/generate-demo-data")
