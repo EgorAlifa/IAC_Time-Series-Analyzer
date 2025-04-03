@@ -378,6 +378,33 @@
                         <!-- Переменные будут добавлены динамически -->
                     </div>
                     
+                    <div class="additional-parameters">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="det-order" class="form-label">Порядок детерминистических компонент</label>
+                                <input 
+                                    type="number" 
+                                    class="form-control" 
+                                    id="det-order" 
+                                    value="1" 
+                                    min="0" 
+                                    max="3"
+                                >
+                            </div>
+                            <div class="col-md-6">
+                                <label for="k-ar-diff" class="form-label">Количество лагов</label>
+                                <input 
+                                    type="number" 
+                                    class="form-control" 
+                                    id="k-ar-diff" 
+                                    value="1" 
+                                    min="1" 
+                                    max="5"
+                                >
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="loader" id="analysis-loader"></div>
                     
                     <button id="run-analysis" class="analysis-btn">
@@ -581,7 +608,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (variables.length < 2) {
                 throw new Error('Необходимо выбрать минимум 2 переменные для анализа коинтеграции.');
             }
+            // Получаем значения пользовательских параметров
+            const detOrder = document.getElementById('det-order').value;
+            const kArDiff = document.getElementById('k-ar-diff').value;
             
+            // Добавляем параметры в FormData
+            formData.append('det_order', detOrder);
+            formData.append('k_ar_diff', kArDiff);
             // Создаем FormData для запроса
             const formData = new FormData();
             formData.append('file_id', fileId);
