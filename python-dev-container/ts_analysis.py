@@ -296,16 +296,16 @@ def johansen_test(df, endogenous_vars, det_order=1, k_ar_diff=1):
     # Делаем заключение
     output.append('\nЗаключение:')
     if cointegration_rank == 0:
-        output.append("Нет коинтеграционных соотношений между переменными. Все переменные независимы в долгосрочном периоде.")
+        conclusion = "Нет коинтеграционных соотношений между переменными. Все переменные независимы в долгосрочном периоде."
         is_cointegrated = False
     elif cointegration_rank == 1:
-        output.append(f"Обнаружено {cointegration_rank} коинтеграционное соотношение. Существует один стабильный долгосрочный вектор между переменными.")
+        conclusion = f"Обнаружено {cointegration_rank} коинтеграционное соотношение. Существует один стабильный долгосрочный вектор между переменными."
         is_cointegrated = True
     elif cointegration_rank == 2:
-        output.append(f"Обнаружено {cointegration_rank} коинтеграционных соотношения. Существует два стабильных долгосрочных вектора между переменными.")
+        conclusion = f"Обнаружено {cointegration_rank} коинтеграционных соотношения. Существует два стабильных долгосрочных вектора между переменными."
         is_cointegrated = True
     else:
-        output.append(f"Обнаружено {cointegration_rank} коинтеграционных соотношений. Сложная долгосрочная динамика взаимосвязи между переменными.")
+        conclusion = f"Обнаружено {cointegration_rank} коинтеграционных соотношений. Сложная долгосрочная динамика взаимосвязи между переменными."
         is_cointegrated = True
     
     output.append(conclusion)
