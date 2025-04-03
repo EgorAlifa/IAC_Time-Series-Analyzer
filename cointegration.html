@@ -568,7 +568,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return Array.from(checkboxes).map(checkbox => checkbox.value);
     }
     
-    // Функция для запуска анализа коинтеграции
+    // Модифицированная функция для запуска анализа коинтеграции
     async function runCointegrationAnalysis() {
         // Показываем индикатор загрузки
         analysisLoader.style.display = 'block';
@@ -594,8 +594,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log('Отправляем переменные:', variables);
             
-            // Выполняем запрос к API
-            const response = await fetch(`${API_URL}/analyze-with-file-id`, {
+            // Используем новый API для коинтеграционного анализа
+            const response = await fetch(`${API_URL}/cointegration-analysis`, {
                 method: 'POST',
                 body: formData
             });
@@ -609,60 +609,58 @@ document.addEventListener('DOMContentLoaded', function() {
             const results = await response.json();
             console.log('Результаты анализа коинтеграции:', results);
             
-            // Проверяем, требуется ли выбор переменных
-            if (results.required_input) {
-                // Если API запрашивает выбор переменных, показываем соответствующее сообщение
-                alert(results.message);
-                return;
+            // Обновляем данные теста Энгла-Грейнджера
+            if (results.engle_granger_pairs && results.engle_granger_pairs.length > 0) {
+                updateEngleGrangerResults(results.engle_granger_pairs[0]);
+                
+                // Если есть несколько пар, добавляем информацию о других парах
+                if (results.engle_granger_pairs.length > 1) {
+                    const egDetailsContainer = document.getElementById('eg-details');
+                    
+                    const summaryDiv = document.createElement('div');
+                    summaryDiv.className = 'mt-3 pt-2 border-top';
+                    
+                    const summaryTitle = document.createElement('div');
+                    summaryTitle.className = 'fw-bold mb-2';
+                    summaryTitle.textContent = 'Результаты по всем парам:';
+                    summaryDiv.appendChild(summaryTitle);
+                    
+                    const summaryContent = document.createElement('div');
+                    summaryContent.className = 'small';
+                    
+                    results.engle_granger_pairs.forEach((pair, index) => {
+                        const pairDiv = document.createElement('div');
+                        pairDiv.className = 'mb-1';
+                        pairDiv.innerHTML = `<span class="fw-medium">${pair.variables[0]} и ${pair.variables[1]}:</span> 
+                            <span class="${pair.is_cointegrated ? 'text-success' : 'text-danger'}">
+                                ${pair.is_cointegrated ? 'Коинтегрированы' : 'Не коинтегрированы'}
+                            </span>`;
+                        summaryContent.appendChild(pairDiv);
+                    });
+                    
+                    summaryDiv.appendChild(summaryContent);
+                    egDetailsContainer.appendChild(summaryDiv);
+                }
             }
             
-            // Обработка результатов в новом формате
-            if (results.cointegration_results) {
-                // Обновляем данные теста Энгла-Грейнджера
-                if (results.cointegration_results.engle_granger_pairs && 
-                    results.cointegration_results.engle_granger_pairs.length > 0) {
-                    updateEngleGrangerResults(results.cointegration_results.engle_granger_pairs[0]);
-                }
-                
-                // Обновляем данные теста Йохансена
-                if (results.cointegration_results.johansen) {
-                    updateJohansenResults(results.cointegration_results.johansen);
-                }
-                
-                // Обновляем рекомендуемую модель
-                if (results.cointegration_results.recommended_model) {
-                    document.getElementById('recommended-model').textContent = 
-                        results.cointegration_results.recommended_model;
-                }
-                
-                // Обновляем текст рекомендации
-                if (results.cointegration_results.conclusion) {
-                    document.getElementById('recommendation-text').textContent = 
-                        `${results.cointegration_results.conclusion} Для моделирования зависимости между переменными рекомендуется ` +
-                        `использовать модель ${results.cointegration_results.recommended_model}. ` +
-                        (results.cointegration_results.recommended_model.includes('VECM') ? 
-                        'Это позволит учесть долгосрочную зависимость между переменными и получить более точные прогнозы.' : 
-                        'Это позволит избежать проблемы ложной регрессии и получить корректные оценки коэффициентов модели.');
-                }
-            } else {
-                // Обработка результатов в старом формате для обратной совместимости
-                if (results.engle_granger) {
-                    updateEngleGrangerResults(results.engle_granger);
-                }
-                
-                if (results.johansen) {
-                    updateJohansenResults(results.johansen);
-                }
-                
-                if (results.recommended_model) {
-                    document.getElementById('recommended-model').textContent = results.recommended_model;
-                }
-                
-                if (results.conclusion) {
-                    document.getElementById('recommendation-text').textContent = 
-                        `${results.conclusion} Для моделирования зависимости между переменными рекомендуется ` +
-                        `использовать модель ${results.recommended_model}.`;
-                }
+            // Обновляем данные теста Йохансена
+            if (results.johansen) {
+                updateJohansenResults(results.johansen);
+            }
+            
+            // Обновляем рекомендуемую модель
+            if (results.recommended_model) {
+                document.getElementById('recommended-model').textContent = results.recommended_model;
+            }
+            
+            // Обновляем текст рекомендации
+            if (results.conclusion) {
+                document.getElementById('recommendation-text').textContent = 
+                    `${results.conclusion} Для моделирования зависимости между переменными рекомендуется ` +
+                    `использовать модель ${results.recommended_model}. ` +
+                    (results.recommended_model.includes('VECM') ? 
+                    'Это позволит учесть долгосрочную зависимость между переменными и получить более точные прогнозы.' : 
+                    'Это позволит избежать проблемы ложной регрессии и получить корректные оценки коэффициентов модели.');
             }
             
             // Создаем график
