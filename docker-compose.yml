@@ -16,7 +16,7 @@ services:
       dockerfile: Dockerfile
     container_name: time-series-api
     ports:
-      - "8000:8000"
+      - "8080:8000"
     environment:
       - EMAIL_PASSWORD=silFida-lIonez9-otrAsl
     restart: always
