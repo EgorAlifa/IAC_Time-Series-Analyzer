@@ -450,559 +450,529 @@
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Обработка мобильного меню
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-        
-        sidebarToggle.addEventListener('click', function() {
-            sidebar.classList.toggle('active');
-            sidebarOverlay.classList.toggle('active');
-            document.body.classList.toggle('sidebar-open');
-        });
-        
-        sidebarOverlay.addEventListener('click', function() {
+   <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Обработка мобильного меню
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    
+    sidebarToggle.addEventListener('click', function() {
+        sidebar.classList.toggle('active');
+        sidebarOverlay.classList.toggle('active');
+        document.body.classList.toggle('sidebar-open');
+    });
+    
+    sidebarOverlay.addEventListener('click', function() {
+        sidebar.classList.remove('active');
+        sidebarOverlay.classList.remove('active');
+        document.body.classList.remove('sidebar-open');
+    });
+
+    // Адаптивность при изменении размера окна
+    window.addEventListener('resize', function() {
+        if (window.innerWidth >= 992) {
             sidebar.classList.remove('active');
             sidebarOverlay.classList.remove('active');
             document.body.classList.remove('sidebar-open');
-        });
-
-        // Адаптивность при изменении размера окна
-        window.addEventListener('resize', function() {
-            if (window.innerWidth >= 992) {
-                sidebar.classList.remove('active');
-                sidebarOverlay.classList.remove('active');
-                document.body.classList.remove('sidebar-open');
+        }
+    });
+    
+    // URL API
+    const API_URL = 'http://37.252.23.30:8000';
+    
+    // Получение элементов DOM
+    const runAnalysisBtn = document.getElementById('run-analysis');
+    const analysisLoader = document.getElementById('analysis-loader');
+    const analysisResults = document.getElementById('analysis-results');
+    const variablesContainer = document.getElementById('variables-container');
+    
+    // Переменные для доступа к данным
+    const fileId = localStorage.getItem('fileId');
+    const columnsData = JSON.parse(localStorage.getItem('fileColumnsData') || '{}');
+    
+    // Инициализация страницы
+    function initPage() {
+        // Проверка наличия необходимых данных
+        if (!fileId) {
+            alert('Файл не был загружен. Пожалуйста, вернитесь на страницу данных и загрузите файл.');
+            return;
+        }
+        
+        // Загрузка переменных из localStorage
+        loadVariables();
+    }
+    
+    // Функция для загрузки переменных
+    function loadVariables() {
+        // Очистка контейнера переменных
+        variablesContainer.innerHTML = '';
+        
+        // Проверка наличия числовых колонок в данных
+        if (columnsData && columnsData.numeric_columns && columnsData.numeric_columns.length >= 2) {
+            // Добавляем все доступные числовые колонки
+            columnsData.numeric_columns.forEach(variableName => {
+                const variableElement = createVariableElement(variableName);
+                variablesContainer.appendChild(variableElement);
+            });
+            
+            // Добавляем пояснение для пользователя
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'alert alert-info mt-3';
+            infoDiv.innerHTML = 'Выберите не менее двух переменных для анализа коинтеграции. ' +
+                              'Для полноценного анализа рекомендуется выбрать переменные, которые могут ' +
+                              'иметь экономическую взаимосвязь.';
+            variablesContainer.appendChild(infoDiv);
+            
+            // Предварительно выбираем первые две переменные для удобства
+            const checkboxes = variablesContainer.querySelectorAll('input[type="checkbox"]');
+            if (checkboxes.length >= 2) {
+                checkboxes[0].checked = true;
+                checkboxes[1].checked = true;
             }
-        });
+        } else {
+            // Если колонок недостаточно, показываем сообщение
+            variablesContainer.innerHTML = 
+                '<div class="alert alert-warning">Недостаточно числовых колонок для анализа коинтеграции. Необходимо минимум 2 колонки.</div>';
+            
+            // Отключаем кнопку анализа
+            runAnalysisBtn.disabled = true;
+        }
+    }
+    
+    // Функция для создания элемента переменной с возможностью выбора
+    function createVariableElement(variableName) {
+        const div = document.createElement('div');
+        div.className = 'variable-pair';
         
-        // URL API
-        const API_URL = 'http://37.252.23.30:8000';
+        const label = document.createElement('label');
         
-        // Получение элементов DOM
-        const runAnalysisBtn = document.getElementById('run-analysis');
-        const analysisLoader = document.getElementById('analysis-loader');
-        const analysisResults = document.getElementById('analysis-results');
-        const variablesContainer = document.getElementById('variables-container');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = false; // По умолчанию не выбрано
+        checkbox.value = variableName;
         
-        // Переменные для доступа к данным
-        const fileId = localStorage.getItem('fileId');
-        const columnsData = JSON.parse(localStorage.getItem('fileColumnsData') || '{}');
+        const displayName = variableName.replace(/_/g, ' ');
         
-        // Инициализация страницы
-        function initPage() {
-            // Проверка наличия необходимых данных
-            if (!fileId) {
-                alert('Файл не был загружен. Пожалуйста, вернитесь на страницу данных и загрузите файл.');
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(displayName));
+        
+        div.appendChild(label);
+        
+        return div;
+    }
+    
+    // Функция для получения выбранных переменных
+    function getSelectedVariables() {
+        const checkboxes = variablesContainer.querySelectorAll('input[type="checkbox"]:checked');
+        return Array.from(checkboxes).map(checkbox => checkbox.value);
+    }
+    
+    // Функция для запуска анализа коинтеграции
+    async function runCointegrationAnalysis() {
+        // Показываем индикатор загрузки
+        analysisLoader.style.display = 'block';
+        runAnalysisBtn.disabled = true;
+        
+        try {
+            // Получаем выбранные переменные
+            const variables = getSelectedVariables();
+            
+            if (variables.length < 2) {
+                throw new Error('Необходимо выбрать минимум 2 переменные для анализа коинтеграции.');
+            }
+            
+            // Создаем FormData для запроса
+            const formData = new FormData();
+            formData.append('file_id', fileId);
+            formData.append('date_column', 'Дата');
+            
+            // Передаем каждую переменную отдельно
+            variables.forEach(variable => {
+                formData.append('endogenous_vars', variable);
+            });
+            
+            console.log('Отправляем переменные:', variables);
+            
+            // Выполняем запрос к API
+            const response = await fetch(`${API_URL}/analyze-with-file-id`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
+            }
+            
+            // Получаем результаты анализа
+            const results = await response.json();
+            console.log('Результаты анализа коинтеграции:', results);
+            
+            // Проверяем, требуется ли выбор переменных
+            if (results.required_input) {
+                // Если API запрашивает выбор переменных, показываем соответствующее сообщение
+                alert(results.message);
                 return;
             }
             
-            // Загрузка переменных из localStorage
-            loadVariables();
-        }
-        
-        // Функция для загрузки переменных
-        function loadVariables() {
-            // Очистка контейнера переменных
-            variablesContainer.innerHTML = '';
-            
-            // Проверка наличия числовых колонок в данных
-            if (columnsData && columnsData.numeric_columns && columnsData.numeric_columns.length >= 2) {
-                // Добавляем все числовые колонки для выбора (не только первые две)
-                columnsData.numeric_columns.forEach(variableName => {
-                    const variableElement = createVariableElement(variableName);
-                    variablesContainer.appendChild(variableElement);
-                });
+            // Обработка результатов в новом формате
+            if (results.cointegration_results) {
+                // Обновляем данные теста Энгла-Грейнджера
+                if (results.cointegration_results.engle_granger_pairs && 
+                    results.cointegration_results.engle_granger_pairs.length > 0) {
+                    updateEngleGrangerResults(results.cointegration_results.engle_granger_pairs[0]);
+                }
                 
-                // Предварительно выбираем первые две переменные
-                const checkboxes = variablesContainer.querySelectorAll('input[type="checkbox"]');
-                if (checkboxes.length >= 2) {
-                    checkboxes[0].checked = true;
-                    checkboxes[1].checked = true;
+                // Обновляем данные теста Йохансена
+                if (results.cointegration_results.johansen) {
+                    updateJohansenResults(results.cointegration_results.johansen);
+                }
+                
+                // Обновляем рекомендуемую модель
+                if (results.cointegration_results.recommended_model) {
+                    document.getElementById('recommended-model').textContent = 
+                        results.cointegration_results.recommended_model;
+                }
+                
+                // Обновляем текст рекомендации
+                if (results.cointegration_results.conclusion) {
+                    document.getElementById('recommendation-text').textContent = 
+                        `${results.cointegration_results.conclusion} Для моделирования зависимости между переменными рекомендуется ` +
+                        `использовать модель ${results.cointegration_results.recommended_model}. ` +
+                        (results.cointegration_results.recommended_model.includes('VECM') ? 
+                        'Это позволит учесть долгосрочную зависимость между переменными и получить более точные прогнозы.' : 
+                        'Это позволит избежать проблемы ложной регрессии и получить корректные оценки коэффициентов модели.');
                 }
             } else {
-                // Если колонок недостаточно, показываем сообщение
-                variablesContainer.innerHTML = 
-                    '<div class="alert alert-warning">Недостаточно числовых колонок для анализа коинтеграции. Необходимо минимум 2 колонки.</div>';
+                // Обработка результатов в старом формате для обратной совместимости
+                if (results.engle_granger) {
+                    updateEngleGrangerResults(results.engle_granger);
+                }
                 
-                // Отключаем кнопку анализа
-                runAnalysisBtn.disabled = true;
+                if (results.johansen) {
+                    updateJohansenResults(results.johansen);
+                }
+                
+                if (results.recommended_model) {
+                    document.getElementById('recommended-model').textContent = results.recommended_model;
+                }
+                
+                if (results.conclusion) {
+                    document.getElementById('recommendation-text').textContent = 
+                        `${results.conclusion} Для моделирования зависимости между переменными рекомендуется ` +
+                        `использовать модель ${results.recommended_model}.`;
+                }
             }
+            
+            // Создаем график
+            createCointegrationChart(variables);
+            
+            // Показываем результаты анализа
+            analysisResults.style.display = 'block';
+            
+        } catch (error) {
+            console.error('Ошибка при выполнении анализа коинтеграции:', error);
+            alert(`Ошибка при выполнении анализа: ${error.message}`);
+        } finally {
+            // Скрываем индикатор загрузки
+            analysisLoader.style.display = 'none';
+            runAnalysisBtn.disabled = false;
         }
-
+    }
+    
+    // Функция для обновления результатов теста Энгла-Грейнджера
+    function updateEngleGrangerResults(data) {
+        // Получаем контейнер для деталей
+        const detailsContainer = document.getElementById('eg-details');
+        detailsContainer.innerHTML = '';
         
-        // Функция для создания элемента переменной с возможностью выбора
-        function createVariableElement(variableName) {
+        // Проверяем формат данных
+        let details = data.details;
+        let isCointegrated = data.is_cointegrated;
+        
+        // Если структура отличается от ожидаемой
+        if (!details || !Array.isArray(details)) {
+            console.warn('Неожиданный формат данных для теста Энгла-Грейнджера:', data);
+            
+            // Создаем временные данные для отображения
+            detailsContainer.innerHTML = '<div class="alert alert-warning">Недостаточно данных для отображения результатов теста.</div>';
+            return;
+        }
+        
+        // Создаем структуру для деталей
+        const items = [];
+        
+        // Информация о переменных
+        if (data.variables && Array.isArray(data.variables) && data.variables.length === 2) {
+            items.push({ 
+                label: 'Переменные:', 
+                value: `${data.variables[0]} и ${data.variables[1]}` 
+            });
+        }
+        
+        // Ищем данные в массиве details
+        const testStatistic = findValueInDetails(details, /Test Statistic: ([-\d.]+)/);
+        if (testStatistic) {
+            items.push({ label: 'ADF Статистика:', value: testStatistic });
+        }
+        
+        const pValue = findValueInDetails(details, /p-value: ([\d.]+)/);
+        if (pValue) {
+            items.push({ label: 'p-value:', value: pValue });
+        }
+        
+        const crit1 = findValueInDetails(details, /Критическое значение \(1%\): ([-\d.]+)/);
+        if (crit1) {
+            items.push({ label: 'Крит. значение (1%):', value: crit1 });
+        }
+        
+        const crit5 = findValueInDetails(details, /Критическое значение \(5%\): ([-\d.]+)/) || 
+                       findValueInDetails(details, /Критическое значение \(2%\): ([-\d.]+)/);
+        if (crit5) {
+            items.push({ label: 'Крит. значение (5%):', value: crit5 });
+        }
+        
+        const crit10 = findValueInDetails(details, /Критическое значение \(10%\): ([-\d.]+)/) || 
+                        findValueInDetails(details, /Критическое значение \(3%\): ([-\d.]+)/);
+        if (crit10) {
+            items.push({ label: 'Крит. значение (10%):', value: crit10 });
+        }
+        
+        // Добавляем все детали в контейнер
+        items.forEach(item => {
             const div = document.createElement('div');
-            div.className = 'variable-pair';
+            div.className = 'test-item';
             
-            const label = document.createElement('label');
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'test-label';
+            labelDiv.textContent = item.label;
             
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.checked = false; // По умолчанию не выбрано
-            checkbox.disabled = false; // Активно для выбора
-            checkbox.value = variableName;
+            const valueDiv = document.createElement('div');
+            valueDiv.className = 'test-value';
+            valueDiv.textContent = item.value;
             
-            const displayName = variableName.replace(/_/g, ' ');
+            div.appendChild(labelDiv);
+            div.appendChild(valueDiv);
             
-            label.appendChild(checkbox);
-            label.appendChild(document.createTextNode(displayName));
-            
-            div.appendChild(label);
-            
-            return div;
+            detailsContainer.appendChild(div);
+        });
+        
+        // Обновление результата
+        const resultElement = document.getElementById('eg-result');
+        
+        // Ищем результат в деталях
+        const resultLine = details.find(line => line.includes('Результат:'));
+        if (resultLine) {
+            resultElement.textContent = resultLine;
+        } else {
+            resultElement.textContent = isCointegrated ? 
+                'Результат: Отвергаем нулевую гипотезу. Ряды коинтегрированы.' :
+                'Результат: Не отвергаем нулевую гипотезу. Ряды НЕ коинтегрированы.';
         }
         
-        // Функция для получения выбранных переменных
-        function getSelectedVariables() {
-            const checkboxes = variablesContainer.querySelectorAll('input[type="checkbox"]:checked');
-            return Array.from(checkboxes).map(checkbox => checkbox.value);
+        resultElement.className = isCointegrated ? 
+            'test-result result-positive' : 
+            'test-result result-negative';
+    }
+    
+    // Функция для обновления результатов теста Йохансена
+    function updateJohansenResults(data) {
+        // Получаем контейнер для деталей
+        const detailsContainer = document.getElementById('johansen-details');
+        detailsContainer.innerHTML = '';
+        
+        // Проверяем формат данных
+        let details = data.details;
+        let isCointegrated = data.is_cointegrated;
+        
+        // Если структура отличается от ожидаемой
+        if (!details || !Array.isArray(details)) {
+            console.warn('Неожиданный формат данных для теста Йохансена:', data);
+            
+            // Создаем временные данные для отображения
+            detailsContainer.innerHTML = '<div class="alert alert-warning">Недостаточно данных для отображения результатов теста.</div>';
+            return;
         }
         
-        async function runCointegrationAnalysis() {
-            // Показываем индикатор загрузки
-            analysisLoader.style.display = 'block';
-            runAnalysisBtn.disabled = true;
-            
-            try {
-                // Получаем выбранные переменные
-                const variables = getSelectedVariables();
-                
-                if (variables.length < 2) {
-                    throw new Error('Необходимо выбрать минимум 2 переменные для анализа коинтеграции.');
-                }
-                
-                // Создаем FormData для запроса
-                const formData = new FormData();
-                formData.append('file_id', fileId);
-                formData.append('date_column', 'Дата');
-                
-                // ИСПРАВЛЕНИЕ: теперь передаем каждую переменную отдельно, а не в виде JSON-строки
-                variables.forEach(variable => {
-                    formData.append('endogenous_vars', variable);
-                });
-                
-                console.log('Отправляем переменные:', variables);
-                
-                // Выполняем запрос к API
-                const response = await fetch(`${API_URL}/analyze-with-file-id`, {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
-                }
-                
-                // Получаем результаты анализа
-                const results = await response.json();
-                console.log('Результаты анализа коинтеграции:', results);
-                
-                // Проверяем, требуется ли выбор переменных
-                if (results.required_input) {
-                    // Если API запрашивает выбор переменных, показываем соответствующее сообщение
-                    alert(results.message);
-                    return;
-                }
-                
-                // Обработка результатов в новом формате
-                if (results.cointegration_results) {
-                    // Обновляем данные теста Энгла-Грейнджера
-                    if (results.cointegration_results.engle_granger_pairs && 
-                        results.cointegration_results.engle_granger_pairs.length > 0) {
-                        updateEngleGrangerResults(results.cointegration_results.engle_granger_pairs[0]);
-                    }
-                    
-                    // Обновляем данные теста Йохансена
-                    if (results.cointegration_results.johansen) {
-                        updateJohansenResults(results.cointegration_results.johansen);
-                    }
-                    
-                    // Обновляем рекомендуемую модель
-                    if (results.cointegration_results.recommended_model) {
-                        document.getElementById('recommended-model').textContent = 
-                            results.cointegration_results.recommended_model;
-                    }
-                    
-                    // Обновляем текст рекомендации
-                    if (results.cointegration_results.conclusion) {
-                        document.getElementById('recommendation-text').textContent = 
-                            `${results.cointegration_results.conclusion} Для моделирования зависимости между переменными рекомендуется ` +
-                            `использовать модель ${results.cointegration_results.recommended_model}. ` +
-                            (results.cointegration_results.recommended_model.includes('VECM') ? 
-                            'Это позволит учесть долгосрочную зависимость между переменными и получить более точные прогнозы.' : 
-                            'Это позволит избежать проблемы ложной регрессии и получить корректные оценки коэффициентов модели.');
-                    }
-                } else {
-                    // Обработка результатов в старом формате для обратной совместимости
-                    if (results.engle_granger) {
-                        updateEngleGrangerResults(results.engle_granger);
-                    }
-                    
-                    if (results.johansen) {
-                        updateJohansenResults(results.johansen);
-                    }
-                    
-                    if (results.recommended_model) {
-                        document.getElementById('recommended-model').textContent = results.recommended_model;
-                    }
-                    
-                    if (results.conclusion) {
-                        document.getElementById('recommendation-text').textContent = 
-                            `${results.conclusion} Для моделирования зависимости между переменными рекомендуется ` +
-                            `использовать модель ${results.recommended_model}.`;
-                    }
-                }
-                
-                // Создаем график
-                createCointegrationChart(variables);
-                
-                // Показываем результаты анализа
-                analysisResults.style.display = 'block';
-                
-            } catch (error) {
-                console.error('Ошибка при выполнении анализа коинтеграции:', error);
-                alert(`Ошибка при выполнении анализа: ${error.message}`);
-            } finally {
-                // Скрываем индикатор загрузки
-                analysisLoader.style.display = 'none';
-                runAnalysisBtn.disabled = false;
-            }
+        // Создаем структуру для деталей
+        const items = [];
+        
+        // Ищем параметры в деталях
+        const varCountLine = details.find(line => line.includes('Количество переменных:'));
+        if (varCountLine) {
+            const varCount = varCountLine.split(':')[1].trim();
+            items.push({ label: 'Количество переменных:', value: varCount });
         }
         
-        // Функция для обновления результатов теста Энгла-Грейнджера
-        function updateEngleGrangerResults(data) {
-            // Получаем контейнер для деталей
-            const detailsContainer = document.getElementById('eg-details');
-            detailsContainer.innerHTML = '';
-            
-            // Создаем структуру для деталей
-            const items = [];
-            
-            // Ищем данные в массиве details
-            const testStatistic = findValueInDetails(data.details, /Test Statistic: ([-\d.]+)/);
-            if (testStatistic) {
-                items.push({ label: 'ADF Статистика:', value: testStatistic });
-            }
-            
-            const pValue = findValueInDetails(data.details, /p-value: ([\d.]+)/);
-            if (pValue) {
-                items.push({ label: 'p-value:', value: pValue });
-            }
-            
-            const crit1 = findValueInDetails(data.details, /Критическое значение \(1%\): ([-\d.]+)/);
-            if (crit1) {
-                items.push({ label: 'Крит. значение (1%):', value: crit1 });
-            }
-            
-            const crit5 = findValueInDetails(data.details, /Критическое значение \(5%\): ([-\d.]+)/) || 
-                           findValueInDetails(data.details, /Критическое значение \(2%\): ([-\d.]+)/);
-            if (crit5) {
-                items.push({ label: 'Крит. значение (5%):', value: crit5 });
-            }
-            
-            const crit10 = findValueInDetails(data.details, /Критическое значение \(10%\): ([-\d.]+)/) || 
-                            findValueInDetails(data.details, /Критическое значение \(3%\): ([-\d.]+)/);
-            if (crit10) {
-                items.push({ label: 'Крит. значение (10%):', value: crit10 });
-            }
-            
-            // Добавляем все детали в контейнер
-            items.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'test-item';
-                
-                const labelDiv = document.createElement('div');
-                labelDiv.className = 'test-label';
-                labelDiv.textContent = item.label;
-                
-                const valueDiv = document.createElement('div');
-                valueDiv.className = 'test-value';
-                valueDiv.textContent = item.value;
-                
-                div.appendChild(labelDiv);
-                div.appendChild(valueDiv);
-                
-                detailsContainer.appendChild(div);
-            });
-            
-            // Обновление результата
-            const resultElement = document.getElementById('eg-result');
-            
-            // Ищем результат в деталях
-            const resultLine = data.details.find(line => line.includes('Результат:'));
-            if (resultLine) {
-                resultElement.textContent = resultLine;
-            } else {
-                resultElement.textContent = data.is_cointegrated ? 
-                    'Результат: Отвергаем нулевую гипотезу. Ряды коинтегрированы.' :
-                    'Результат: Не отвергаем нулевую гипотезу. Ряды НЕ коинтегрированы.';
-            }
-            
-            resultElement.className = data.is_cointegrated ? 
-                'test-result result-positive' : 
-                'test-result result-negative';
+        const detOrderLine = details.find(line => line.includes('Порядок детерминистических'));
+        if (detOrderLine) {
+            const detOrder = detOrderLine.split(':')[1].trim();
+            items.push({ label: 'Порядок детерминистических компонент:', value: detOrder });
         }
         
-        // Функция для обновления результатов теста Йохансена
-        function updateJohansenResults(data) {
-            // Получаем контейнер для деталей
-            const detailsContainer = document.getElementById('johansen-details');
-            detailsContainer.innerHTML = '';
+        const lagsLine = details.find(line => line.includes('Количество лагов:'));
+        if (lagsLine) {
+            const lags = lagsLine.split(':')[1].trim();
+            items.push({ label: 'Количество лагов:', value: lags });
+        }
+        
+        // Добавляем все детали в контейнер
+        items.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'test-item';
             
-            // Создаем структуру для деталей
-            const items = [];
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'test-label';
+            labelDiv.textContent = item.label;
             
-            // Ищем параметры в деталях
-            const varCountLine = data.details.find(line => line.includes('Количество переменных:'));
-            if (varCountLine) {
-                const varCount = varCountLine.split(':')[1].trim();
-                items.push({ label: 'Количество переменных:', value: varCount });
-            }
+            const valueDiv = document.createElement('div');
+            valueDiv.className = 'test-value';
+            valueDiv.textContent = item.value;
             
-            const detOrderLine = data.details.find(line => line.includes('Порядок детерминистических'));
-            if (detOrderLine) {
-                const detOrder = detOrderLine.split(':')[1].trim();
-                items.push({ label: 'Порядок детерминистических компонент:', value: detOrder });
-            }
+            div.appendChild(labelDiv);
+            div.appendChild(valueDiv);
             
-            const lagsLine = data.details.find(line => line.includes('Количество лагов:'));
-            if (lagsLine) {
-                const lags = lagsLine.split(':')[1].trim();
-                items.push({ label: 'Количество лагов:', value: lags });
-            }
+            detailsContainer.appendChild(div);
+        });
+        
+        // Обновляем таблицу результатов
+        const tableBody = document.getElementById('johansen-table-body');
+        tableBody.innerHTML = '';
+        
+        // Находим заголовок таблицы и строки данных
+        const tableHeaderLine = details.findIndex(line => line.includes('r  |  Статистика'));
+        if (tableHeaderLine !== -1) {
+            // Ищем строки данных после заголовка
+            const dataLines = details.slice(tableHeaderLine + 2);
+            const dataRowsEnd = dataLines.findIndex(line => !line.includes('|'));
+            const dataRows = dataRowsEnd !== -1 ? dataLines.slice(0, dataRowsEnd) : dataLines;
             
-            // Добавляем все детали в контейнер
-            items.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'test-item';
-                
-                const labelDiv = document.createElement('div');
-                labelDiv.className = 'test-label';
-                labelDiv.textContent = item.label;
-                
-                const valueDiv = document.createElement('div');
-                valueDiv.className = 'test-value';
-                valueDiv.textContent = item.value;
-                
-                div.appendChild(labelDiv);
-                div.appendChild(valueDiv);
-                
-                detailsContainer.appendChild(div);
-            });
-            
-            // Обновляем таблицу результатов
-            const tableBody = document.getElementById('johansen-table-body');
-            tableBody.innerHTML = '';
-            
-            // Находим заголовок таблицы и строки данных
-            const tableHeaderLine = data.details.findIndex(line => line.includes('r  |  Статистика'));
-            if (tableHeaderLine !== -1) {
-                // Ищем строки данных после заголовка
-                const dataLines = data.details.slice(tableHeaderLine + 2);
-                const dataRowsEnd = dataLines.findIndex(line => !line.includes('|'));
-                const dataRows = dataRowsEnd !== -1 ? dataLines.slice(0, dataRowsEnd) : dataLines;
-                
-                // Парсим и добавляем строки таблицы
-                dataRows.forEach(                line => {
-                    if (line.includes('|')) {
-                        const cells = line.split('|').map(cell => cell.trim());
+            // Парсим и добавляем строки таблицы
+            dataRows.forEach(line => {
+                if (line.includes('|')) {
+                    const cells = line.split('|').map(cell => cell.trim());
+                    
+                    if (cells.length >= 6) {
+                        const tr = document.createElement('tr');
                         
-                        if (cells.length >= 6) {
-                            const tr = document.createElement('tr');
-                            
-                            // Ранг
-                            const tdRank = document.createElement('td');
-                            tdRank.textContent = cells[0];
-                            tr.appendChild(tdRank);
-                            
-                            // Статистика
-                            const tdStat = document.createElement('td');
-                            tdStat.textContent = cells[1];
-                            tr.appendChild(tdStat);
-                            
-                            // 90%
-                            const td90 = document.createElement('td');
-                            td90.textContent = cells[2];
-                            tr.appendChild(td90);
-                            
-                            // 95%
-                            const td95 = document.createElement('td');
-                            td95.textContent = cells[3];
-                            tr.appendChild(td95);
-                            
-                            // 99%
-                            const td99 = document.createElement('td');
-                            td99.textContent = cells[4];
-                            tr.appendChild(td99);
-                            
-                            // Результат
-                            const tdResult = document.createElement('td');
-                            tdResult.textContent = cells[5];
-                            tdResult.className = cells[5].includes('Отклоняем') ? 'reject' : 'accept';
-                            tr.appendChild(tdResult);
-                            
-                            tableBody.appendChild(tr);
-                        }
+                        // Ранг
+                        const tdRank = document.createElement('td');
+                        tdRank.textContent = cells[0];
+                        tr.appendChild(tdRank);
+                        
+                        // Статистика
+                        const tdStat = document.createElement('td');
+                        tdStat.textContent = cells[1];
+                        tr.appendChild(tdStat);
+                        
+                        // 90%
+                        const td90 = document.createElement('td');
+                        td90.textContent = cells[2];
+                        tr.appendChild(td90);
+                        
+                        // 95%
+                        const td95 = document.createElement('td');
+                        td95.textContent = cells[3];
+                        tr.appendChild(td95);
+                        
+                        // 99%
+                        const td99 = document.createElement('td');
+                        td99.textContent = cells[4];
+                        tr.appendChild(td99);
+                        
+                        // Результат
+                        const tdResult = document.createElement('td');
+                        tdResult.textContent = cells[5];
+                        tdResult.className = cells[5].includes('Отклоняем') ? 'reject' : 'accept';
+                        tr.appendChild(tdResult);
+                        
+                        tableBody.appendChild(tr);
                     }
-                });
-            }
-            
-            // Обновление заключения
-            const conclusionElement = document.getElementById('johansen-conclusion');
-            
-            // Ищем заключение в деталях
-            const conclusionLine = data.details.find(line => line.includes('Заключение:'));
-            if (conclusionLine) {
-                const conclusion = conclusionLine.split('Заключение:')[1].trim();
-                conclusionElement.textContent = `Заключение: ${conclusion}`;
-            } else {
-                conclusionElement.textContent = data.is_cointegrated ? 
-                    'Заключение: Обнаружены коинтеграционные соотношения между переменными.' : 
-                    'Заключение: Нет коинтеграционных соотношений между переменными.';
-            }
-            
-            // Обновляем стиль заключения
-            conclusionElement.className = data.is_cointegrated ? 
-                'test-result result-positive' : 
-                'test-result result-negative';
+                }
+            });
+        } else {
+            console.warn('Не удалось найти данные таблицы в результатах теста Йохансена');
         }
         
-        async function createCointegrationChart(variables) {
-            try {
-                // Создаем FormData для запроса данных временного ряда
-                const formData = new FormData();
-                formData.append('file_id', fileId);
-                formData.append('date_column', 'Дата');
-                
-                // ИСПРАВЛЕНИЕ: передаем каждую переменную отдельно, а не в виде JSON-строки
-                variables.forEach(variable => {
-                    formData.append('columns', variable);
-                });
-                
-                console.log('Отправляем колонки для графика:', variables);
-                
-                // Выполняем запрос к API для получения данных
-                const response = await fetch(`${API_URL}/get-time-series-data`, {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
-                }
-                
-                // Получаем данные для графика
-                const data = await response.json();
-                console.log('Полученные данные для графика:', data);
-                
-                if (!data || !data.time_series || Object.keys(data.time_series).length < 2) {
-                    throw new Error('Не удалось получить данные для графика');
-                }
-                
-                // Извлекаем данные для каждой переменной
-                const timeSeriesData = data.time_series;
-                
-                // Находим общие даты для всех переменных
-                const allDates = Object.keys(timeSeriesData[variables[0]]).sort();
-                
-                // Форматируем даты для отображения (месяц и год)
-                const dates = allDates.map(date => {
-                    const dateObj = new Date(date);
-                    return dateObj.toLocaleString('ru', {month: 'short', year: '2-digit'});
-                });
-                
-                const datasets = variables.map((variable, index) => {
-                    const values = allDates.map(date => timeSeriesData[variable][date] || null);
-                    
-                    return {
-                        label: variable.replace(/_/g, ' '),
-                        data: values,
-                        borderColor: index === 0 ? '#3b82f6' : '#ef4444',
-                        backgroundColor: index === 0 ? 'rgba(59, 130, 246, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                        yAxisID: index === 0 ? 'y' : 'y1',
-                        tension: 0.3
-                    };
-                });
-                
-                // Создание графика
-                const ctx = document.getElementById('cointegration-chart').getContext('2d');
-                
-                // Уничтожаем существующий график, если он есть
-                if (window.cointegrationChart) {
-                    window.cointegrationChart.destroy();
-                }
-                
-                window.cointegrationChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: dates,
-                        datasets: datasets
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        interaction: {
-                            mode: 'index',
-                            intersect: false,
-                        },
-                        plugins: {
-                            title: {
-                                display: false
-                            },
-                            legend: {
-                                position: 'top'
-                            }
-                        },
-                        scales: {
-                            y: {
-                                type: 'linear',
-                                display: true,
-                                position: 'left',
-                                title: {
-                                    display: true,
-                                    text: variables[0].replace(/_/g, ' ')
-                                }
-                            },
-                            y1: {
-                                type: 'linear',
-                                display: true,
-                                position: 'right',
-                                grid: {
-                                    drawOnChartArea: false
-                                },
-                                title: {
-                                    display: true,
-                                    text: variables[1].replace(/_/g, ' ')
-                                }
-                            }
-                        }
-                    }
-                });
-            } catch (error) {
-                console.error('Ошибка при создании графика:', error);
-                
-                // В случае ошибки создаем график с симулированными данными
-                createSimulatedChart(variables);
-            }
+        // Обновление заключения
+        const conclusionElement = document.getElementById('johansen-conclusion');
+        
+        // Ищем заключение в деталях
+        const conclusionLine = details.find(line => line.includes('Заключение:'));
+        if (conclusionLine) {
+            const conclusion = conclusionLine.split('Заключение:')[1].trim();
+            conclusionElement.textContent = `Заключение: ${conclusion}`;
+        } else {
+            conclusionElement.textContent = isCointegrated ? 
+                'Заключение: Обнаружены коинтеграционные соотношения между переменными.' : 
+                'Заключение: Нет коинтеграционных соотношений между переменными.';
         }
         
-        // Функция для создания графика с симулированными данными (запасной вариант)
-        function createSimulatedChart(variables) {
-            // Имитация данных для графика
-            const months = Array.from({length: 24}, (_, i) => {
-                const date = new Date(2023, i % 12, 1);
-                return date.toLocaleString('ru', {month: 'short', year: '2-digit'});
+        // Обновляем стиль заключения
+        conclusionElement.className = isCointegrated ? 
+            'test-result result-positive' : 
+            'test-result result-negative';
+    }
+    
+    // Функция для создания графика отношения между переменными
+    async function createCointegrationChart(variables) {
+        try {
+            // Создаем FormData для запроса данных временного ряда
+            const formData = new FormData();
+            formData.append('file_id', fileId);
+            formData.append('date_column', 'Дата');
+            
+            // Передаем каждую переменную отдельно
+            variables.forEach(variable => {
+                formData.append('columns', variable);
             });
             
-            // Симуляция данных для двух переменных
-            const var1Data = Array.from({length: 24}, () => Math.random() * 20 + 10);
-            const var2Data = Array.from({length: 24}, (_, i) => var1Data[i] * 2 + Math.random() * 10 - 5);
+            console.log('Отправляем колонки для графика:', variables);
+            
+            // Выполняем запрос к API для получения данных
+            const response = await fetch(`${API_URL}/get-time-series-data`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
+            }
+            
+            // Получаем данные для графика
+            const data = await response.json();
+            console.log('Полученные данные для графика:', data);
+            
+            if (!data || !data.time_series || Object.keys(data.time_series).length < 2) {
+                throw new Error('Не удалось получить данные для графика');
+            }
+            
+            // Извлекаем данные для каждой переменной
+            const timeSeriesData = data.time_series;
+            
+            // Находим общие даты для всех переменных
+            const allDates = Object.keys(timeSeriesData[variables[0]]).sort();
+            
+            // Форматируем даты для отображения (месяц и год)
+            const dates = allDates.map(date => {
+                const dateObj = new Date(date);
+                return dateObj.toLocaleString('ru', {month: 'short', year: '2-digit'});
+            });
+            
+            const datasets = variables.map((variable, index) => {
+                const values = allDates.map(date => timeSeriesData[variable][date] || null);
+                
+                return {
+                    label: variable.replace(/_/g, ' '),
+                    data: values,
+                    borderColor: index === 0 ? '#3b82f6' : '#ef4444',
+                    backgroundColor: index === 0 ? 'rgba(59, 130, 246, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                    yAxisID: index === 0 ? 'y' : 'y1',
+                    tension: 0.3
+                };
+            });
             
             // Создание графика
             const ctx = document.getElementById('cointegration-chart').getContext('2d');
@@ -1015,25 +985,8 @@
             window.cointegrationChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: months,
-                    datasets: [
-                        {
-                            label: variables[0].replace(/_/g, ' '),
-                            data: var1Data,
-                            borderColor: '#3b82f6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            yAxisID: 'y',
-                            tension: 0.3
-                        },
-                        {
-                            label: variables[1].replace(/_/g, ' '),
-                            data: var2Data,
-                            borderColor: '#ef4444',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            yAxisID: 'y1',
-                            tension: 0.3
-                        }
-                    ]
+                    labels: dates,
+                    datasets: datasets
                 },
                 options: {
                     responsive: true,
@@ -1075,28 +1028,119 @@
                     }
                 }
             });
+        } catch (error) {
+            console.error('Ошибка при создании графика:', error);
+            
+            // В случае ошибки создаем график с симулированными данными
+            createSimulatedChart(variables);
+        }
+    }
+    
+    // Функция для создания графика с симулированными данными (запасной вариант)
+    function createSimulatedChart(variables) {
+        // Имитация данных для графика
+        const months = Array.from({length: 24}, (_, i) => {
+            const date = new Date(2023, i % 12, 1);
+            return date.toLocaleString('ru', {month: 'short', year: '2-digit'});
+        });
+        
+        // Симуляция данных для двух переменных
+        const var1Data = Array.from({length: 24}, () => Math.random() * 20 + 10);
+        const var2Data = Array.from({length: 24}, (_, i) => var1Data[i] * 2 + Math.random() * 10 - 5);
+        
+        // Создание графика
+        const ctx = document.getElementById('cointegration-chart').getContext('2d');
+        
+        // Уничтожаем существующий график, если он есть
+        if (window.cointegrationChart) {
+            window.cointegrationChart.destroy();
         }
         
-        // Вспомогательная функция для поиска значения в деталях
-        function findValueInDetails(details, regex) {
-            for (const detail of details) {
-                const match = detail.match(regex);
-                if (match) {
-                    return match[1];
+        window.cointegrationChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [
+                    {
+                        label: variables[0].replace(/_/g, ' '),
+                        data: var1Data,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        yAxisID: 'y',
+                        tension: 0.3
+                    },
+                    {
+                        label: variables[1].replace(/_/g, ' '),
+                        data: var2Data,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        yAxisID: 'y1',
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    title: {
+                        display: false
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: variables[0].replace(/_/g, ' ')
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        title: {
+                            display: true,
+                            text: variables[1].replace(/_/g, ' ')
+                        }
+                    }
                 }
             }
-            return null;
+        });
+    }
+    
+    // Вспомогательная функция для поиска значения в деталях
+    function findValueInDetails(details, regex) {
+        for (const detail of details) {
+            const match = detail.match(regex);
+            if (match) {
+                return match[1];
+            }
         }
-        
-        // Обработчик нажатия кнопки запуска анализа
-        runAnalysisBtn.addEventListener('click', runCointegrationAnalysis);
-        
-        // Инициализация страницы
-        initPage();
-        
-        // Автоматически запустить анализ при загрузке страницы
-        // runCointegrationAnalysis();
-    });
-    </script>
+        return null;
+    }
+    
+    // Обработчик нажатия кнопки запуска анализа
+    runAnalysisBtn.addEventListener('click', runCointegrationAnalysis);
+    
+    // Инициализация страницы
+    initPage();
+    
+    // Автоматически запустить анализ при загрузке страницы
+    // runCointegrationAnalysis();
+});
+</script>
 </body>
 </html>
