@@ -17,6 +17,7 @@ from typing import Optional
 from statsmodels.tsa.stattools import adfuller, kpss, coint
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.vector_ar.vecm import coint_johansen
+from datetime import datetime
 
 # Функция для проведения теста Дики-Фуллера на стационарность
 def adf_test(series, title=''):
@@ -546,40 +547,28 @@ class FeedbackForm(BaseModel):
     subject: Optional[str] = "Сообщение с сайта"
     message: str
 
-def send_email(feedback, recipient_email: str = "e.nikonorov@internet.ru"):
+def save_message(feedback):
     try:
-        # Данные для подключения
-        smtp_server = "smtp.mail.ru"
-        smtp_port = 465  # Используем SSL порт вместо TLS
-        smtp_user = "e.nikonorov@internet.ru"
-        smtp_password = os.environ.get("EMAIL_PASSWORD", "silFida-lIonez9-otrAsl")
+        # Создаем директорию, если её нет
+        os.makedirs("feedback_messages", exist_ok=True)
         
         # Формируем сообщение
-        msg = MIMEMultipart()
-        msg['From'] = smtp_user
-        msg['To'] = recipient_email
-        msg['Subject'] = f"[Обратная связь] {feedback.subject}"
+        message = {
+            "name": feedback.name,
+            "email": feedback.email,
+            "subject": feedback.subject,
+            "message": feedback.message,
+            "date": datetime.now().isoformat()
+        }
         
-        body = f"""
-        Новое сообщение от пользователя:
+        # Создаем уникальное имя файла
+        filename = f"feedback_messages/msg_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         
-        Имя: {feedback.name}
-        Email: {feedback.email}
+        # Сохраняем в файл
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(message, f, ensure_ascii=False, indent=2)
         
-        Сообщение:
-        {feedback.message}
-        """
-        
-        msg.attach(MIMEText(body, 'plain'))
-        
-        # Используем SSL соединение вместо TLS
-        server = smtplib.SMTP_SSL(smtp_server, smtp_port)
-        server.login(smtp_user, smtp_password)
-        server.send_message(msg)
-        server.quit()
-        
-        print("Письмо успешно отправлено!")
         return True
     except Exception as e:
-        print(f"Ошибка при отправке email: {str(e)}")
+        print(f"Ошибка при сохранении сообщения: {str(e)}")
         return False
