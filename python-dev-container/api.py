@@ -156,44 +156,96 @@ async def get_news_endpoint(
 @app.post("/get-time-series-data")
 async def get_time_series_data(
     file_id: str = Form(...),
-    date_column: str = Form("Дата"),
-    column: str = Form(...)
+    date_column: str = Form(...),
+    columns: Optional[Union[List[str], str]] = Form(None)
 ):
     """
-    Получение данных временного ряда для построения графиков
+    Получение данных временных рядов для построения графиков
+    
+    - **file_id**: Идентификатор файла, полученный при загрузке
+    - **date_column**: Имя столбца с датами
+    - **columns**: Список имен столбцов для построения графиков
     """
+    # Преобразование строки в список, если передана одна переменная
+    if isinstance(columns, str):
+        columns = [columns]
+    
+    # Добавим отладочный вывод
+    print(f"Received file_id: {file_id}")
+    print(f"Received date_column: {date_column}")
+    print(f"Received columns: {columns}")
+    print(f"Type of columns: {type(columns)}")
+    
     file_path = TEMP_FILES_DIR / file_id
     
     if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Файл не найден")
-        
+        raise HTTPException(status_code=404, detail="Файл не найден или срок его хранения истек")
+    
     try:
+        # Определяем тип файла по расширению
+        file_extension = os.path.splitext(str(file_path))[1].lower()
+        
         # Чтение данных из файла
-        if file_path.suffix.lower() == '.csv':
+        if file_extension == '.csv':
             df = pd.read_csv(file_path)
-        else:
+        elif file_extension in ['.xlsx', '.xls']:
             df = pd.read_excel(file_path)
-            
-        # Проверка наличия столбцов
-        if date_column not in df.columns or column not in df.columns:
+        else:
+            # Пытаемся определить тип файла автоматически
+            try:
+                df = pd.read_excel(file_path)
+            except:
+                try:
+                    df = pd.read_csv(file_path)
+                except:
+                    raise HTTPException(status_code=400, detail="Неподдерживаемый формат файла")
+        
+        # Проверка наличия столбца с датами
+        if date_column not in df.columns:
             return JSONResponse(
-                status_code=400, 
-                content={"error": f"Столбцы не найдены"}
+                status_code=400,
+                content={"error": f"Столбец {date_column} не найден в файле", "columns": df.columns.tolist()}
             )
             
-        # Преобразование даты и сортировка
-        df[date_column] = pd.to_datetime(df[date_column])
-        df = df.sort_values(by=date_column)
+        # Преобразование столбца даты
+        try:
+            df[date_column] = pd.to_datetime(df[date_column])
+        except Exception as e:
+            return JSONResponse(
+                status_code=400,
+                content={"error": f"Ошибка при преобразовании столбца даты: {str(e)}"}
+            )
         
-        # Формирование данных временного ряда
-        time_series_data = []
-        for _, row in df.iterrows():
-            time_series_data.append({
-                "date": row[date_column].strftime("%Y-%m-%d"),
-                "value": float(row[column])
-            })
+        # Проверка наличия запрошенных колонок
+        missing_columns = [col for col in columns if col not in df.columns]
+        if missing_columns:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": f"Следующие колонки не найдены в файле: {', '.join(missing_columns)}",
+                    "available_columns": df.columns.tolist()
+                }
+            )
             
-        return time_series_data
+        # Создаем словарь для временных рядов
+        time_series_data = {}
+        
+        # Для каждой запрошенной колонки получаем данные
+        for column in columns:
+            # Преобразуем данные в словарь {дата: значение}
+            series_dict = df.set_index(date_column)[column].to_dict()
+            
+            # Преобразуем индексы datetime в строки ISO формата для JSON
+            time_series_data[column] = {str(date): value for date, value in series_dict.items()}
+        
+        # Формируем и возвращаем результат
+        return {
+            "time_series": time_series_data,
+            "date_range": {
+                "min": str(df[date_column].min()),
+                "max": str(df[date_column].max())
+            }
+        }
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка при получении данных: {str(e)}")
