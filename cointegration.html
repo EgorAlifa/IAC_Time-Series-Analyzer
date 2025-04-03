@@ -587,10 +587,8 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('file_id', fileId);
             formData.append('date_column', 'Дата');
             
-            // Передаем каждую переменную отдельно
-            variables.forEach(variable => {
-                formData.append('endogenous_vars', variable);
-            });
+            // Передаем массив переменных
+            formData.append('endogenous_vars', JSON.stringify(variables));
             
             console.log('Отправляем переменные:', variables);
             
