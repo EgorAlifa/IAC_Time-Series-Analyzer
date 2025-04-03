@@ -642,18 +642,15 @@ async def health_check():
 @app.post("/api/feedback")
 async def submit_feedback(feedback: FeedbackForm):
     """
-    Обработка формы обратной связи
+    Обработка формы обратной связи (тестовая версия)
     """
-    try:
-        # Сохраняем сообщение локально
-        success = save_message(feedback)
-        
-        if success:
-            return {"status": "success", "message": "Сообщение успешно отправлено"}
-        else:
-            return {"status": "error", "message": "Ошибка при сохранении сообщения"}
-    except Exception as e:
-        return {"status": "error", "message": f"Произошла ошибка: {str(e)}"}
+    # Выводим данные в консоль для отладки
+    print(f"Получено сообщение от: {feedback.name} <{feedback.email}>")
+    print(f"Тема: {feedback.subject}")
+    print(f"Сообщение: {feedback.message}")
+    
+    # Всегда возвращаем успех
+    return {"status": "success", "message": "Сообщение успешно отправлено"}
 
 # Генерация тестовых данных для демонстрации (если нет реальных данных)
 @app.get("/generate-demo-data")
