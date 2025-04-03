@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import time
+import threading
 from scipy import stats
 from datetime import datetime
 from email.mime.text import MIMEText
@@ -18,6 +20,7 @@ from statsmodels.tsa.stattools import adfuller, kpss, coint
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.vector_ar.vecm import coint_johansen
 from datetime import datetime
+
 
 # Функция для проведения теста Дики-Фуллера на стационарность
 def adf_test(series, title=''):
@@ -572,3 +575,48 @@ def save_message(feedback):
     except Exception as e:
         print(f"Ошибка при сохранении сообщения: {str(e)}")
         return False
+
+def cleanup_old_messages():
+    """Удаляет сообщения старше 1 месяца"""
+    while True:
+        try:
+            # Проверяем существование директории
+            if not os.path.exists("feedback_messages"):
+                time.sleep(86400)  # Проверяем раз в день
+                continue
+                
+            # Текущая дата минус 1 месяц
+            one_month_ago = datetime.now() - timedelta(days=30)
+            
+            # Проверяем все файлы в директории
+            for filename in os.listdir("feedback_messages"):
+                file_path = os.path.join("feedback_messages", filename)
+                
+                # Проверяем, является ли файл .json
+                if not filename.endswith('.json'):
+                    continue
+                    
+                # Получаем время создания файла из имени или из метаданных
+                try:
+                    # Пытаемся получить дату из имени файла
+                    date_str = filename.split('_')[1].split('.')[0]
+                    file_date = datetime.strptime(date_str, '%Y%m%d')
+                except:
+                    # Если не получилось, используем время модификации файла
+                    file_date = datetime.fromtimestamp(os.path.getmtime(file_path))
+                
+                # Удаляем файл, если он старше 1 месяца
+                if file_date < one_month_ago:
+                    os.remove(file_path)
+                    print(f"Удален устаревший файл с обратной связью: {filename}")
+            
+            # Проверяем раз в день
+            time.sleep(86400)
+            
+        except Exception as e:
+            print(f"Ошибка при очистке старых сообщений: {str(e)}")
+            time.sleep(86400)  # В случае ошибки тоже ждем день
+
+# Запускаем поток для очистки старых сообщений
+cleanup_thread = threading.Thread(target=cleanup_old_messages, daemon=True)
+cleanup_thread.start()
