@@ -12,7 +12,7 @@ services:
     
   api:
     build: 
-      context: ./IAC_Time-Series-Analyzer/python-dev-container
+      context: ./python-dev-container
       dockerfile: Dockerfile
     container_name: time-series-api
     ports:
