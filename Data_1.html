@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Данные - Аналитическая система</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         /* Дополнительные стили для страницы данных */
         .upload-container {
@@ -121,6 +123,7 @@
             align-items: center;
             justify-content: space-between;
             border: 1px solid #e2e8f0;
+            flex-wrap: wrap;
         }
 
         .file-icon {
@@ -134,10 +137,13 @@
             justify-content: center;
             margin-right: 15px;
             font-size: 18px;
+            flex-shrink: 0;
         }
 
         .file-info {
             flex: 1;
+            min-width: 200px;
+            margin-bottom: 10px;
         }
 
         .file-name {
@@ -225,14 +231,53 @@
             border-radius: 50%;
             margin-right: 8px;
         }
+
+        /* Медиа-запросы для адаптивности */
+        @media (max-width: 767.98px) {
+            .file-drop-area {
+                padding: 20px;
+            }
+            
+            .demo-file {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .file-icon {
+                margin-bottom: 10px;
+            }
+            
+            .demo-load-btn {
+                margin-top: 10px;
+                width: 100%;
+                text-align: center;
+            }
+            
+            .analysis-btn {
+                position: static;
+                transform: none;
+                margin-top: 10px;
+                width: 100%;
+                display: block;
+            }
+            
+            .status-container {
+                padding-bottom: 50px;
+            }
+        }
     </style>
 </head>
 <body>
     <!-- Верхняя панель -->
     <header class="top-panel">
-        <div class="logo-container">
-            <div class="logo-square"></div>
-            <h1 class="app-title">Аналитическая система</h1>
+        <div class="d-flex align-items-center">
+            <button class="menu-toggle d-lg-none me-2" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo-container">
+                <div class="logo-square"></div>
+                <h1 class="app-title">Аналитическая система</h1>
+            </div>
         </div>
         <nav class="top-menu">
             <ul>
@@ -245,42 +290,42 @@
 
     <div class="main-container">
         <!-- Боковая панель -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <nav class="main-nav">
                 <ul>
                     <li>
                         <a href="/">
-                            <span class="nav-icon home-icon"></span>
+                            <span class="nav-icon"><i class="fas fa-home"></i></span>
                             Главная
                         </a>
                     </li>
                     <li class="active">
                         <a href="/data">
-                            <span class="nav-icon data-icon"></span>
+                            <span class="nav-icon"><i class="fas fa-database"></i></span>
                             Данные
                         </a>
                     </li>
                     <li>
                         <a href="/analysis">
-                            <span class="nav-icon analysis-icon"></span>
+                            <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
                             Анализ
                         </a>
                     </li>
                     <li>
                         <a href="#">
-                            <span class="nav-icon forecast-icon"></span>
+                            <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
                             Прогнозы
                         </a>
                     </li>
                     <li>
                         <a href="#">
-                            <span class="nav-icon reports-icon"></span>
+                            <span class="nav-icon"><i class="fas fa-file-alt"></i></span>
                             Отчеты
                         </a>
                     </li>
                     <li>
                         <a href="#">
-                            <span class="nav-icon help-icon"></span>
+                            <span class="nav-icon"><i class="fas fa-question-circle"></i></span>
                             Справка
                         </a>
                     </li>
@@ -305,7 +350,7 @@
 
             <div class="upload-container">
                 <div class="file-drop-area" id="drop-area">
-                    <div class="upload-icon">↑</div>
+                    <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
                     <h3>Выберите или перетащите файл</h3>
                     <p>Поддерживаемые форматы: .xlsx, .csv</p>
                     <input type="file" id="file-input" class="file-input" accept=".xlsx,.csv">
@@ -327,27 +372,27 @@
                 <h3>Требования к структуре данных</h3>
                 
                 <div class="requirement-item">
-                    <div class="check-icon">✓</div>
+                    <div class="check-icon"><i class="fas fa-check"></i></div>
                     <div>Обязательная колонка "Дата" (формат ДД.ММ.ГГГГ)</div>
                 </div>
                 
                 <div class="requirement-item">
-                    <div class="check-icon">✓</div>
+                    <div class="check-icon"><i class="fas fa-check"></i></div>
                     <div>Числовые значения в колонках для анализа</div>
                 </div>
                 
                 <div class="requirement-item">
-                    <div class="check-icon">✓</div>
+                    <div class="check-icon"><i class="fas fa-check"></i></div>
                     <div>Отсутствие пропущенных значений или их корректное обозначение</div>
                 </div>
                 
                 <div class="requirement-item">
-                    <div class="check-icon">✓</div>
+                    <div class="check-icon"><i class="fas fa-check"></i></div>
                     <div>Данные должны быть очищены от выбросов и артефактов</div>
                 </div>
                 
                 <div class="requirement-item">
-                    <div class="check-icon">✓</div>
+                    <div class="check-icon"><i class="fas fa-check"></i></div>
                     <div>Максимальный размер файла: 50 МБ</div>
                 </div>
                 
@@ -363,7 +408,7 @@
                 
                 <div class="demo-file">
                     <div class="file-icon">
-                        <span>X</span>
+                        <i class="fas fa-file-excel"></i>
                     </div>
                     <div class="file-info">
                         <div class="file-name">Демонстрационный набор данных.xlsx</div>
@@ -375,9 +420,37 @@
         </main>
     </div>
 
-    // Добавьте этот скрипт перед закрывающим тегом </body> в вашем HTML-файле
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Обработка мобильного меню
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+            document.body.classList.toggle('sidebar-open');
+        });
+        
+        sidebarOverlay.addEventListener('click', function() {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            document.body.classList.remove('sidebar-open');
+        });
+
+        // Адаптивность при изменении размера окна
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 992) {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
+            }
+        });
+        
         // URL вашего API
         const API_URL = 'http://37.252.23.30:8000';
         
@@ -487,7 +560,7 @@
             
             // Обновляем UI
             dropArea.innerHTML = `
-                <div class="upload-icon">✓</div>
+                <div class="upload-icon"><i class="fas fa-check-circle"></i></div>
                 <h3>Файл выбран</h3>
                 <p>${selectedFile.name} (${formatFileSize(selectedFile.size)})</p>
             `;
@@ -512,7 +585,7 @@
             }
             
             // Показываем индикатор загрузки на кнопке
-            uploadBtn.innerHTML = 'Загрузка...';
+            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка...';
             uploadBtn.disabled = true;
             
             try {
@@ -584,7 +657,7 @@
             // Создаем кнопку
             const analysisBtn = document.createElement('button');
             analysisBtn.className = 'analysis-btn';
-            analysisBtn.textContent = 'Перейти к анализу';
+            analysisBtn.innerHTML = '<i class="fas fa-chart-line"></i> Перейти к анализу';
             analysisBtn.addEventListener('click', function() {
                 window.location.href = 'analysis_1.html';
             });
@@ -595,7 +668,7 @@
         
         // Функция загрузки демонстрационных данных
         async function loadDemoData() {
-            demoLoadBtn.textContent = 'Загрузка...';
+            demoLoadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка...';
             demoLoadBtn.disabled = true;
             
             try {
@@ -619,12 +692,12 @@
                 
                 // Обновляем UI
                 dropArea.innerHTML = `
-                    <div class="upload-icon">✓</div>
+                    <div class="upload-icon"><i class="fas fa-check-circle"></i></div>
                     <h3>Демо-данные загружены</h3>
                     <p>${demoFile.name} (${formatFileSize(demoFile.size)})</p>
                 `;
                 
-                // Выполняем загрузку демо-данных на сервер (используем ту же логику, что и для обычного файла)
+                // Выполняем загрузку демо-данных на сервер
                 uploadBtn.disabled = false;
                 uploadFile();
                 
@@ -634,7 +707,7 @@
                 errorStatus.style.display = 'block';
                 successStatus.style.display = 'none';
             } finally {
-                demoLoadBtn.textContent = 'Загрузить в систему';
+                demoLoadBtn.innerHTML = 'Загрузить в систему';
                 demoLoadBtn.disabled = false;
             }
         }
