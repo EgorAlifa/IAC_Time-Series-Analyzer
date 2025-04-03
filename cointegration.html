@@ -918,11 +918,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData();
             formData.append('file_id', fileId);
             formData.append('date_column', 'Дата');
-            
-            // Передаем каждую переменную отдельно
-            variables.forEach(variable => {
-                formData.append('columns', variable);
-            });
+            tempFormData.append('column', variable); 
             
             console.log('Отправляем колонки для графика:', variables);
             
