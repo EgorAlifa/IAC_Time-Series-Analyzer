@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>О системе - Аналитическая система</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <style>
+        /* Дополнительные стили для страницы "О системе" */
+        .about-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .about-section {
+            margin-bottom: 30px;
+        }
+
+        .about-section h3 {
+            font-size: 18px;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .feature-list {
+            margin: 20px 0;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .feature-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+            color: #3b82f6;
+            flex-shrink: 0;
+        }
+
+        .feature-text {
+            flex: 1;
+        }
+
+        .feature-text h4 {
+            font-size: 16px;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 5px;
+        }
+
+        .feature-text p {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 0;
+        }
+
+        .team-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .person-card {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 15px;
+            width: calc(33.333% - 14px);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .person-name {
+            font-size: 16px;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 5px;
+        }
+
+        .person-role {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .data-format-container {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .data-format-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 15px;
+        }
+
+        .format-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .format-table th {
+            background-color: #eff6ff;
+            padding: 10px;
+            text-align: left;
+            font-weight: 500;
+            color: #334155;
+            border: 1px solid #bfdbfe;
+        }
+
+        .format-table td {
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            color: #334155;
+        }
+
+        .format-note {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #334155;
+        }
+
+        .format-note strong {
+            color: #1e40af;
+        }
+
+        .code-example {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            overflow-x: auto;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .contact-info {
+            background-color: #f0fdf4;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            border-left: 4px solid #10b981;
+        }
+
+        .contact-info h4 {
+            font-size: 16px;
+            font-weight: 500;
+            color: #166534;
+            margin-bottom: 10px;
+        }
+
+        .contact-info p {
+            font-size: 14px;
+            color: #334155;
+            margin-bottom: 5px;
+        }
+
+        .version-history {
+            margin-top: 20px;
+        }
+
+        .version-item {
+            margin-bottom: 15px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .version-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #3b82f6;
+        }
+
+        .version-number {
+            font-weight: 500;
+            color: #334155;
+        }
+
+        .version-date {
+            font-size: 13px;
+            color: #64748b;
+            margin-left: 10px;
+        }
+
+        /* Медиа-запросы для адаптивности */
+        @media (max-width: 991.98px) {
+            .person-card {
+                width: calc(50% - 10px);
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .person-card {
+                width: 100%;
+            }
+
+            .format-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Верхняя панель -->
+    <header class="top-panel">
+        <div class="d-flex align-items-center">
+            <button class="menu-toggle d-lg-none me-2" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo-container">
+                <div class="logo-square"></div>
+                <h1 class="app-title">Аналитическая система</h1>
+            </div>
+        </div>
+        <nav class="top-menu">
+            <ul>
+                <li><a href="/about" class="active">О системе</a></li>
+                <li><a href="#">Контакты</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="main-container">
+        <!-- Боковая панель -->
+        <aside class="sidebar" id="sidebar">
+            <nav class="main-nav">
+                <ul>
+                    <li>
+                        <a href="/">
+                            <span class="nav-icon"><i class="fas fa-home"></i></span>
+                            Главная
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/data">
+                            <span class="nav-icon"><i class="fas fa-database"></i></span>
+                            Данные
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/analysis">
+                            <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+                            Анализ
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+                            Прогнозы
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span class="nav-icon"><i class="fas fa-file-alt"></i></span>
+                            Отчеты
+                        </a>
+                    </li>
+                    <li class="active">
+                        <a href="#">
+                            <span class="nav-icon"><i class="fas fa-info-circle"></i></span>
+                            О системе
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="version-info">
+                <p>Версия 3.2.1</p>
+                <p>Обновлено 28.03.2025</p>
+            </div>
+        </aside>
+
+        <!-- Основной контент -->
+        <main class="content">
+            <div class="breadcrumbs">
+                <span>Главная</span> / <span>О системе</span>
+            </div>
+
+            <div class="page-header">
+                <h2>О системе</h2>
+                <p class="subtitle">Информация о возможностях аналитической системы и требованиях к данным</p>
+            </div>
+
+            <div class="about-container">
+                <div class="about-section">
+                    <h3>Описание системы</h3>
+                    <p>Аналитическая система представляет собой комплексное решение для анализа временных рядов и построения прогностических моделей. Система разработана для экономистов, финансовых аналитиков и исследователей, работающих с временными рядами в различных областях.</p>
+                    
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="feature-text">
+                                <h4>Импорт и обработка данных</h4>
+                                <p>Поддержка различных форматов данных (XLSX, CSV), автоматическая очистка и предобработка временных рядов.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="feature-text">
+                                <h4>Анализ стационарности</h4>
+                                <p>Проведение тестов на стационарность (ADF, KPSS, Phillips-Perron), определение порядка интегрированности временных рядов.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <div class="feature-text">
+                                <h4>Построение моделей</h4>
+                                <p>Автоматический подбор параметров для различных типов моделей (ARIMA, VAR, VECM), оценка качества и статистической значимости.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <div class="feature-text">
+                                <h4>Прогнозирование</h4>
+                                <p>Построение прогнозов на основе выбранных моделей, визуализация результатов, расчет доверительных интервалов.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-file-export"></i>
+                            </div>
+                            <div class="feature-text">
+                                <h4>Экспорт и отчеты</h4>
+                                <p>Формирование аналитических отчетов, экспорт результатов анализа и прогнозов в различных форматах.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="about-section">
+                    <h3>Требования к данным</h3>
+                    <p>Для корректной работы системы и получения достоверных результатов анализа необходимо соблюдать определенные требования к формату и структуре исходных данных:</p>
+                    
+                    <div class="data-format-container">
+                        <div class="data-format-title">Пример структуры входного файла:</div>
+                        
+                        <table class="format-table">
+                            <thead>
+                                <tr>
+                                    <th>Дата</th>
+                                    <th>ВВП</th>
+                                    <th>Инфляция</th>
+                                    <th>Безработица</th>
+                                    <th>Ставка_ЦБ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>01.01.2020</td>
+                                    <td>106.5</td>
+                                    <td>2.4</td>
+                                    <td>4.6</td>
+                                    <td>6.25</td>
+                                </tr>
+                                <tr>
+                                    <td>01.02.2020</td>
+                                    <td>107.2</td>
+                                    <td>2.3</td>
+                                    <td>4.5</td>
+                                    <td>6.25</td>
+                                </tr>
+                                <tr>
+                                    <td>01.03.2020</td>
+                                    <td>106.8</td>
+                                    <td>2.5</td>
+                                    <td>4.7</td>
+                                    <td>6.0</td>
+                                </tr>
+                                <tr>
+                                    <td>01.04.2020</td>
+                                    <td>103.2</td>
+                                    <td>3.1</td>
+                                    <td>5.8</td>
+                                    <td>5.5</td>
+                                </tr>
+                                <tr>
+                                    <td>...</td>
+                                    <td>...</td>
+                                    <td>...</td>
+                                    <td>...</td>
+                                    <td>...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <div class="format-note">
+                            <strong>Важно:</strong> Входной файл должен содержать колонку "Дата" в формате ДД.ММ.ГГГГ. Все остальные колонки должны содержать числовые значения для временных рядов. Имена колонок не должны содержать пробелов (можно использовать подчеркивание).
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h4>Основные требования к данным:</h4>
+                        <ul class="mt-2">
+                            <li>Файлы форматов XLSX или CSV</li>
+                            <li>Наличие колонки "Дата" (обязательное требование)</li>
+                            <li>Все временные ряды должны иметь одинаковую частоту наблюдений (месячная, квартальная, годовая)</li>
+                            <li>Для каждого временного ряда должен быть указан непрерывный период данных без пропусков</li>
+                            <li>Максимальный размер файла: 50 МБ</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h4>Рекомендации по подготовке данных:</h4>
+                        <ul class="mt-2">
+                            <li>Проверьте данные на выбросы перед загрузкой в систему</li>
+                            <li>Убедитесь, что все временные ряды имеют общий период наблюдений</li>
+                            <li>Для получения более точных результатов рекомендуется использовать не менее 30-50 наблюдений</li>
+                            <li>Если в данных имеются пропуски, рекомендуется заполнить их перед загрузкой в систему</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="about-section">
+                    <h3>Методология анализа</h3>
+                    <p>Аналитическая система использует современные эконометрические методы для анализа временных рядов и построения прогностических моделей:</p>
+                    
+                    <ul class="mt-3">
+                        <li><strong>Тесты на стационарность:</strong> Расширенный тест Дики — Фуллера (ADF), Квятковского-Филлипса-Шмидта-Шина (KPSS), Филлипса-Перрона (PP)</li>
+                        <li><strong>Определение порядка интеграции:</strong> автоматическое определение необходимого количества разностей для достижения стационарности</li>
+                        <li><strong>Моделирование временных рядов:</strong> ARIMA, VAR, VECM</li>
+                        <li><strong>Тестирование коинтеграции:</strong> тест Йохансена, Энгла-Грейнджера</li>
+                        <li><strong>Анализ причинности:</strong> тест Грейнджера на причинность</li>
+                        <li><strong>Оценка качества моделей:</strong> информационные критерии (AIC, BIC, HQIC) </li>
+                    </ul>
+                    
+                    <div class="mt-4">
+                        <h4>Алгоритм работы системы:</h4>
+                        <ol class="mt-2">
+                            <li>Загрузка и первичная обработка данных</li>
+                            <li>Анализ стационарности и определение порядка интеграции временных рядов</li>
+                            <li>Выбор подходящего класса моделей (ARIMA, VAR, VECM) в зависимости от свойств временных рядов</li>
+                            <li>Автоматический подбор оптимальных параметров модели</li>
+                            <li>Диагностика модели и проверка адекватности</li>
+                            <li>Построение прогнозов и расчет доверительных интервалов</li>
+                            <li>Формирование аналитического отчета</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="about-section">
+                    <h3>История версий</h3>
+                    
+                    <div class="version-history">
+                        <div class="version-item">
+                            <span class="version-number">Версия 3.2.2</span>
+                            <span class="version-date">20.04.2025</span>
+                            <p>Исправлены ошибки в модуле прогнозирования, улучшена производительность при работе с большими файлами, добавлена возможность экспорта графиков в SVG.</p>
+                        </div>
+                        
+                        <div class="version-item">
+                            <span class="version-number">Версия 3.2.1</span>
+                            <span class="version-date">15.02.2025</span>
+                            <p>Добавлены новые методы анализа коинтеграции, улучшен пользовательский интерфейс, расширены возможности визуализации данных.</p>
+                        </div>
+                        
+                        <div class="version-item">
+                            <span class="version-number">Версия 3.1.0</span>
+                            <span class="version-date">10.02.2025</span>
+                            <p>Добавлена поддержка сезонных моделей ARIMA, улучшен алгоритм определения порядка интеграции, обновлен дизайн интерфейса.</p>
+                        </div>
+                        
+                        <div class="version-item">
+                            <span class="version-number">Версия 3.0.0</span>
+                            <span class="version-date">05.02.2025</span>
+                            <p>Полностью переработанный интерфейс, новый аналитический движок, поддержка новых типов моделей, улучшенная визуализация результатов.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Обработка мобильного меню
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                sidebarOverlay.classList.toggle('active');
+                document.body.classList.toggle('sidebar-open');
+            });
+            
+            sidebarOverlay.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
+            });
+
+            // Адаптивность при изменении размера окна
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 992) {
+                    sidebar.classList.remove('active');
+                    sidebarOverlay.classList.remove('active');
+                    document.body.classList.remove('sidebar-open');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
