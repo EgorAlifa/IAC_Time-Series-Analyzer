@@ -581,7 +581,7 @@
                 formData.append('variables', JSON.stringify(variables));
                 
                 // Выполняем запрос к API
-                const response = await fetch(`${API_URL}/cointegration-analysis`, {
+                const response = await fetch(`${API_URL}/analyze-with-file-id`, {
                     method: 'POST',
                     body: formData
                 });
