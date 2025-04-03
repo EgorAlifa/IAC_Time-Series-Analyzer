@@ -208,7 +208,9 @@ async def get_news_endpoint(
 async def cointegration_analysis(
     file_id: str = Form(...),
     date_column: str = Form("Дата"),
-    endogenous_vars: Optional[Union[List[str], str]] = Form(None)
+    endogenous_vars: Optional[Union[List[str], str]] = Form(None),
+    det_order: int = Form(1),  # Значение по умолчанию 1
+    k_ar_diff: int = Form(1)   # Значение по умолчанию 1
 ):
     """
     Анализ коинтеграции для выбранных переменных
@@ -312,8 +314,8 @@ async def cointegration_analysis(
         is_cointegrated_johansen, cointegration_output_johansen = johansen_test(
             df,
             unpacked_vars,
-            det_order=1,
-            k_ar_diff=1
+            det_order=det_order,  # Используем переданное значение
+            k_ar_diff=k_ar_diff   # Используем переданное значение
         )
         
         # Определяем общий результат коинтеграции
