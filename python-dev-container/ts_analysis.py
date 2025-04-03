@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from statsmodels.tsa.stattools import adfuller, kpss, coint
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.tsa.vector_ar.vecm import coint_johansen
 import seaborn as sns
 from scipy import stats
 import os
