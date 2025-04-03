@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Основной синий квадрат с небольшим округлением углов -->
+  <rect width="32" height="32" rx="4" fill="#3b82f6"/>
+  
+  <!-- Белый квадрат внутри как в логотипе -->
+  <rect x="10" y="10" width="12" height="12" rx="2" fill="white"/>
+  
+  <!-- Дополнительные элементы дизайна для обозначения аналитики -->
+  <path d="M12 20L15 15L18 17L20 12" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+</svg>
