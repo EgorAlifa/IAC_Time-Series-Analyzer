@@ -914,23 +914,28 @@ document.addEventListener('DOMContentLoaded', function() {
     // Функция для создания графика отношения между переменными
     async function createCointegrationChart(variables) {
         try {
-            // Создаем FormData для запроса данных временного ряда
-            const formData = new FormData();
-            formData.append('file_id', fileId);
-            formData.append('date_column', 'Дата');
-            tempFormData.append('column', variable); 
+            // Создаем объект для хранения данных временных рядов
+            const timeSeriesData = {};
             
-            console.log('Отправляем колонки для графика:', variables);
-            
-            // Выполняем запрос к API для получения данных
-            const response = await fetch(`${API_URL}/get-time-series-data`, {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
+            // Выполняем запросы для каждой переменной
+            for (const variable of variables) {
+                // Создаем FormData внутри цикла
+                const formData = new FormData();
+                formData.append('file_id', fileId);
+                formData.append('date_column', 'Дата');
+                formData.append('column', variable);
+                
+                const response = await fetch(`${API_URL}/get-time-series-data`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
+                }
+                
+                timeSeriesData[variable] = await response.json();
             }
             
             // Получаем данные для графика
@@ -1032,7 +1037,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function createSimulatedChart(variables) {
         // Имитация данных для графика
         const months = Array.from({length: 24}, (_, i) => {
-            const date = new Date(2023, i % 12, 1);
+            const date = new Date(2021, i % 12, 1);
             return date.toLocaleString('ru', {month: 'short', year: '2-digit'});
         });
         
