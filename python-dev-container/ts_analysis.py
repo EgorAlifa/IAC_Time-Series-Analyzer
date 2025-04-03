@@ -309,6 +309,9 @@ def johansen_test(df, endogenous_vars, det_order=1, k_ar_diff=1):
         is_cointegrated = True
     
     output.append(conclusion)
+    
+    # Возвращаем результат в конце
+    return is_cointegrated, output
 
 # Функция для анализа разностей (дифференцирования) ряда
 def analyze_differences(series, title='', max_diff=4):
