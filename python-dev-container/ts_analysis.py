@@ -547,54 +547,38 @@ class FeedbackForm(BaseModel):
     message: str
 
 def send_email(feedback, recipient_email: str = "e.nikonorov@internet.ru"):
-    """
-    Отправка электронной почты с данными формы обратной связи
-    """
-    # Данные для подключения к SMTP-серверу mail.ru
-    smtp_server = "smtp.mail.ru"
-    smtp_port = 587
-    smtp_user = "e.nikonorov@internet.ru"  # Ваш email
-    
-    # Получаем пароль из переменных окружения (безопасное хранение)
-    smtp_password = os.environ.get("EMAIL_PASSWORD")
-    
-    # Отладочная информация
-    print(f"EMAIL_PASSWORD env: {smtp_password}")
-    print(f"All env vars: {os.environ}")
-    
-    # Используем жестко заданный пароль в случае проблем
-    if not smtp_password:
-        smtp_password = "silFida-lIonez9-otrAsl"
-        print("Using hardcoded password")
-    
-    # Создаем сообщение
-    msg = MIMEMultipart()
-    msg['From'] = smtp_user
-    msg['To'] = recipient_email
-    msg['Subject'] = f"[Обратная связь] {feedback.subject}"
-    
-    # Формируем текст письма
-    body = f"""
-    Новое сообщение от пользователя:
-    
-    Имя: {feedback.name}
-    Email: {feedback.email}
-    
-    Сообщение:
-    {feedback.message}
-    """
-    
-    msg.attach(MIMEText(body, 'plain'))
-    
     try:
-        # Подключаемся к серверу
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()  # Включаем шифрование
-        server.login(smtp_user, smtp_password)
+        # Данные для подключения
+        smtp_server = "smtp.mail.ru"
+        smtp_port = 465  # Используем SSL порт вместо TLS
+        smtp_user = "e.nikonorov@internet.ru"
+        smtp_password = os.environ.get("EMAIL_PASSWORD", "silFida-lIonez9-otrAsl1212")
         
-        # Отправляем письмо
+        # Формируем сообщение
+        msg = MIMEMultipart()
+        msg['From'] = smtp_user
+        msg['To'] = recipient_email
+        msg['Subject'] = f"[Обратная связь] {feedback.subject}"
+        
+        body = f"""
+        Новое сообщение от пользователя:
+        
+        Имя: {feedback.name}
+        Email: {feedback.email}
+        
+        Сообщение:
+        {feedback.message}
+        """
+        
+        msg.attach(MIMEText(body, 'plain'))
+        
+        # Используем SSL соединение вместо TLS
+        server = smtplib.SMTP_SSL(smtp_server, smtp_port)
+        server.login(smtp_user, smtp_password)
         server.send_message(msg)
         server.quit()
+        
+        print("Письмо успешно отправлено!")
         return True
     except Exception as e:
         print(f"Ошибка при отправке email: {str(e)}")
