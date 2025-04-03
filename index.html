@@ -4,125 +4,105 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Аналитическая система</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <!-- Пользовательские стили -->
     <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Верхняя панель -->
-    <header class="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-2">
-        <div class="container-fluid">
-            <a class="navbar-brand d-flex align-items-center" href="#">
-                <div class="logo-square me-2"></div>
-                <span class="fw-semibold">Аналитическая система</span>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNavbar">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="topNavbar">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="#">О системе</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Справка</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Контакты</a></li>
-                </ul>
-            </div>
+    <header class="top-panel">
+        <div class="logo-container">
+            <div class="logo-square"></div>
+            <h1 class="app-title">Аналитическая система</h1>
         </div>
+        <nav class="top-menu">
+            <ul>
+                <li><a href="#">О системе</a></li>
+                <li><a href="#">Справка</a></li>
+                <li><a href="#">Контакты</a></li>
+            </ul>
+        </nav>
     </header>
 
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Боковая панель -->
-            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-white sidebar collapse">
-                <div class="position-sticky pt-3 d-flex flex-column h-100" style="top: 0;">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="/">
-                                <i class="bi bi-house-door"></i>
-                                Главная
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/data">
-                                <i class="bi bi-database"></i>
-                                Данные
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/analysis">
-                                <i class="bi bi-bar-chart"></i>
-                                Анализ
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="bi bi-graph-up"></i>
-                                Прогнозы
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="bi bi-file-earmark-text"></i>
-                                Отчеты
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="bi bi-question-circle"></i>
-                                Справка
-                            </a>
-                        </li>
-                    </ul>
-                    
-                    <div class="version-info mt-auto small text-muted p-3">
-                        <p class="mb-1">Версия 3.2.1</p>
-                        <p class="mb-0">Обновлено 28.03.2025</p>
-                    </div>
-                </div>
+    <div class="main-container">
+        <!-- Боковая панель -->
+        <aside class="sidebar">
+            <nav class="main-nav">
+                <ul>
+                    <li class="active">
+                        <a href="/">
+                            <span class="nav-icon home-icon"></span>
+                            Главная
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/data">
+                            <span class="nav-icon data-icon"></span>
+                            Данные
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/analysis">
+                            <span class="nav-icon analysis-icon"></span>
+                            Анализ
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span class="nav-icon forecast-icon"></span>
+                            Прогнозы
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span class="nav-icon reports-icon"></span>
+                            Отчеты
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span class="nav-icon help-icon"></span>
+                            Справка
+                        </a>
+                    </li>
+                </ul>
             </nav>
+            <div class="version-info">
+                <p>Версия 3.2.1</p>
+                <p>Обновлено 28.03.2025</p>
+            </div>
+        </aside>
 
-            <!-- Основной контент -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                <div class="pt-3 pb-2 mb-3">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item active">Главная</li>
-                        </ol>
-                    </nav>
+        <!-- Основной контент -->
+        <main class="content">
+            <div class="breadcrumbs">
+                <span>Главная</span>
+            </div>
 
-                    <div class="mb-4">
-                        <h2 class="fw-semibold">Новости и события</h2>
-                        <p class="text-muted">Актуальная информация и события в мире финансов и экономики</p>
-                    </div>
+            <div class="page-header">
+                <h2>Новости и события</h2>
+                <p class="subtitle">Актуальная информация и события в мире финансов и экономики</p>
+            </div>
 
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <div id="news-list">
-                                <!-- Новости будут загружены с помощью JavaScript -->
-                                <div class="text-center py-4 text-muted">Загрузка новостей...</div>
-                            </div>
-                            
-                            <div class="mt-4 p-3 bg-light rounded-3 border-start border-primary border-4">
-                                <div class="d-flex align-items-center">
-                                    <span class="badge bg-primary bg-opacity-10 text-primary me-3">22.03.2025</span>
-                                    <h5 class="mb-0 me-auto">Выпущено обновление аналитической системы</h5>
-                                    <span class="text-muted small">v3.2.1</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <div class="news-container">
+                
+                
+                <div id="news-list">
+                    <!-- Новости будут загружены с помощью JavaScript -->
+                    <div class="loading-indicator">Загрузка новостей...</div>
                 </div>
-            </main>
+                
+                <div class="update-info">
+                    <div class="update-date">
+                        <span class="date-badge">22.03.2025</span>
+                    </div>
+                    <h3>Выпущено обновление аналитической системы</h3>
+                    <span class="version-badge">v3.2.1</span>
+                </div>
+            </div>
         </div>
+        </main>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // URL вашего прокси-сервера (замените на ваш домен на PythonAnywhere)
@@ -139,7 +119,7 @@
             
             // Элемент для отображения новостей
             const newsList = document.getElementById('news-list');
-            newsList.innerHTML = '<div class="text-center py-4 text-muted">Загрузка новостей...</div>';
+            newsList.innerHTML = '<div class="loading-indicator">Загрузка новостей...</div>';
             
             // Выполняем запрос к прокси-серверу
             fetch(fullUrl)
@@ -162,15 +142,17 @@
                             
                             // Создаем элемент новости
                             const newsItem = document.createElement('div');
-                            newsItem.className = 'mb-3 p-3 bg-light rounded-3 border-start border-primary border-4';
+                            newsItem.className = 'news-item';
                             
                             newsItem.innerHTML = `
-                                <span class="badge bg-primary bg-opacity-10 text-primary mb-2">${formattedDate}</span>
-                                <h5>${news.title}</h5>
-                                <p class="text-muted">${news.description || 'Описание отсутствует'}</p>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <a href="${news.url}" class="text-primary small" target="_blank">Подробнее →</a>
-                                    <span class="text-muted small">Источник: ${news.source}</span>
+                                <div class="news-date">
+                                    <span class="date-badge">${formattedDate}</span>
+                                </div>
+                                <h3>${news.title}</h3>
+                                <p>${news.description || 'Описание отсутствует'}</p>
+                                <div class="news-footer">
+                                    <a href="${news.url}" class="more-link" target="_blank">Подробнее →</a>
+                                    <span class="source">Источник: ${news.source}</span>
                                 </div>
                             `;
                             
@@ -178,13 +160,13 @@
                         });
                     } else {
                         // Если новостей нет
-                        newsList.innerHTML = '<div class="alert alert-info">Нет доступных новостей. Пожалуйста, попробуйте позже.</div>';
+                        newsList.innerHTML = '<div class="no-news">Нет доступных новостей. Пожалуйста, попробуйте позже.</div>';
                     }
                 })
                 .catch(error => {
                     console.error('Ошибка при загрузке новостей:', error);
                     newsList.innerHTML = `
-                        <div class="alert alert-danger">
+                        <div class="error-message">
                             Не удалось загрузить новости: ${error.message}
                         </div>
                     `;
