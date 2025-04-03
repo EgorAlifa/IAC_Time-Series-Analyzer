@@ -913,209 +913,83 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Функция для создания графика отношения между переменными
     async function createCointegrationChart(variables) {
+        // Проверяем, что передано достаточно переменных
+        if (!variables || variables.length < 2) {
+            console.error('Недостаточно переменных для создания графика');
+            createSimulatedChart(variables);
+            return;
+        }
+    
         try {
-            
-            let timeSeriesData = {};
-            
-            // Выполняем запросы для каждой переменной
-            for (const variable of variables) {
-                // Создаем FormData внутри цикла
+            // Создаем промисы для всех запросов
+            const fetchPromises = variables.map(variable => {
                 const formData = new FormData();
                 formData.append('file_id', fileId);
                 formData.append('date_column', 'Дата');
                 formData.append('column', variable);
                 
-                const response = await fetch(`${API_URL}/get-time-series-data`, {
+                return fetch(`${API_URL}/get-time-series-data`, {
                     method: 'POST',
                     body: formData
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
                 });
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
-                }
-                
-                timeSeriesData[variable] = await response.json();
-            }
-            
-            // Получаем данные для графика
-            const data = await response.json();
-            console.log('Полученные данные для графика:', data);
-            
-            if (!data || !data.time_series || Object.keys(data.time_series).length < 2) {
-                throw new Error('Не удалось получить данные для графика');
-            }
-            
-            // Извлекаем данные для каждой переменной
-            const timeSeriesData = data.time_series;
-            
-            // Находим общие даты для всех переменных
-            const allDates = Object.keys(timeSeriesData[variables[0]]).sort();
-            
-            // Форматируем даты для отображения (месяц и год)
-            const dates = allDates.map(date => {
-                const dateObj = new Date(date);
-                return dateObj.toLocaleString('ru', {month: 'short', year: '2-digit'});
             });
-            
-            const datasets = variables.map((variable, index) => {
-                const values = allDates.map(date => timeSeriesData[variable][date] || null);
-                
-                return {
-                    label: variable.replace(/_/g, ' '),
-                    data: values,
-                    borderColor: index === 0 ? '#3b82f6' : '#ef4444',
-                    backgroundColor: index === 0 ? 'rgba(59, 130, 246, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                    yAxisID: index === 0 ? 'y' : 'y1',
-                    tension: 0.3
-                };
+    
+            // Параллельно выполняем все запросы
+            const timeSeriesDataArray = await Promise.all(fetchPromises);
+    
+            // Создаем объект с данными
+            const timeSeriesData = {};
+            variables.forEach((variable, index) => {
+                timeSeriesData[variable] = timeSeriesDataArray[index];
             });
-            
+    
+            // Находим общие даты (если нужно)
+            const allDates = timeSeriesData[variables[0]].map(item => item.date);
+    
+            // Создаем наборы данных
+            const datasets = variables.map((variable, index) => ({
+                label: variable.replace(/_/g, ' '),
+                data: timeSeriesData[variable].map(item => item.value),
+                borderColor: index === 0 ? '#3b82f6' : '#ef4444',
+                backgroundColor: index === 0 ? 'rgba(59, 130, 246, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                tension: 0.3
+            }));
+    
             // Создание графика
             const ctx = document.getElementById('cointegration-chart').getContext('2d');
             
-            // Уничтожаем существующий график, если он есть
+            // Уничтожаем существующий график
             if (window.cointegrationChart) {
                 window.cointegrationChart.destroy();
             }
-            
+    
+            // Создаем новый график
             window.cointegrationChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: dates,
+                    labels: allDates,
                     datasets: datasets
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
-                    plugins: {
-                        title: {
-                            display: false
-                        },
-                        legend: {
-                            position: 'top'
-                        }
-                    },
                     scales: {
                         y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                            title: {
-                                display: true,
-                                text: variables[0].replace(/_/g, ' ')
-                            }
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            grid: {
-                                drawOnChartArea: false
-                            },
-                            title: {
-                                display: true,
-                                text: variables[1].replace(/_/g, ' ')
-                            }
+                            beginAtZero: false
                         }
                     }
                 }
             });
+    
         } catch (error) {
             console.error('Ошибка при создании графика:', error);
-            
-            // В случае ошибки создаем график с симулированными данными
             createSimulatedChart(variables);
         }
-    }
-    
-    // Функция для создания графика с симулированными данными (запасной вариант)
-    function createSimulatedChart(variables) {
-        // Имитация данных для графика
-        const months = Array.from({length: 24}, (_, i) => {
-            const date = new Date(2021, i % 12, 1);
-            return date.toLocaleString('ru', {month: 'short', year: '2-digit'});
-        });
-        
-        // Симуляция данных для двух переменных
-        const var1Data = Array.from({length: 24}, () => Math.random() * 20 + 10);
-        const var2Data = Array.from({length: 24}, (_, i) => var1Data[i] * 2 + Math.random() * 10 - 5);
-        
-        // Создание графика
-        const ctx = document.getElementById('cointegration-chart').getContext('2d');
-        
-        // Уничтожаем существующий график, если он есть
-        if (window.cointegrationChart) {
-            window.cointegrationChart.destroy();
-        }
-        
-        window.cointegrationChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: months,
-                datasets: [
-                    {
-                        label: variables[0].replace(/_/g, ' '),
-                        data: var1Data,
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        yAxisID: 'y',
-                        tension: 0.3
-                    },
-                    {
-                        label: variables[1].replace(/_/g, ' '),
-                        data: var2Data,
-                        borderColor: '#ef4444',
-                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                        yAxisID: 'y1',
-                        tension: 0.3
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                },
-                plugins: {
-                    title: {
-                        display: false
-                    },
-                    legend: {
-                        position: 'top'
-                    }
-                },
-                scales: {
-                    y: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        title: {
-                            display: true,
-                            text: variables[0].replace(/_/g, ' ')
-                        }
-                    },
-                    y1: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        grid: {
-                            drawOnChartArea: false
-                        },
-                        title: {
-                            display: true,
-                            text: variables[1].replace(/_/g, ' ')
-                        }
-                    }
-                }
-            }
-        });
     }
     
     // Вспомогательная функция для поиска значения в деталях
