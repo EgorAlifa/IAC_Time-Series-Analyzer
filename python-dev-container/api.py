@@ -25,14 +25,18 @@ from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",  # Frontend в режиме разработки
-        "https://egoralifa.github.io",  # GitHub Pages
-        "https://egoralifa.github.io/IAC_Time-Series-Analyzer",  # Полный путь репозитория
-        "http://37.252.23.30:8000",  # API сервер
-        "null",  # Для локальных файлов
-        "file://*",  # Файловый протокол
-        "*"  # Максимально открытый вариант для отладки
+        "http://localhost:3000",
+        "https://egoralifa.github.io",
+        "https://egoralifa.github.io/IAC_Time-Series-Analyzer",
+        "http://37.252.23.30:8000",
+        "https://iac-time-series-analyzer.ru",
+        "http://iac-time-series-analyzer.ru",   
+        "null",
+        "file://*",
+        "*"
     ],
+    # остальные параметры без изменений
+)
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=[
