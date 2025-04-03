@@ -203,6 +203,145 @@ async def get_news_endpoint(
             'error': 'Exception occurred',
             'message': str(e)
         }
+
+@app.post("/cointegration-analysis")
+async def cointegration_analysis(
+    file_id: str = Form(...),
+    date_column: str = Form("Дата"),
+    endogenous_vars: Optional[Union[List[str], str]] = Form(None)
+):
+    """
+    Анализ коинтеграции для выбранных переменных
+    
+    - **file_id**: Идентификатор файла, полученный при загрузке
+    - **date_column**: Имя столбца с датами (по умолчанию "Дата")
+    - **endogenous_vars**: Список имен эндогенных переменных для анализа коинтеграции
+    """
+    # Распаковываем переменные из возможных форматов
+    unpacked_vars = unpack_variables(endogenous_vars)
+    
+    # Добавим отладочный вывод
+    print(f"Cointegration analysis - file_id: {file_id}")
+    print(f"Cointegration analysis - date_column: {date_column}")
+    print(f"Cointegration analysis - endogenous_vars: {endogenous_vars}")
+    print(f"Cointegration analysis - unpacked_vars: {unpacked_vars}")
+    
+    # Проверяем наличие хотя бы двух переменных
+    if len(unpacked_vars) < 2:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Для анализа коинтеграции необходимо минимум две переменные"}
+        )
+    
+    file_path = TEMP_FILES_DIR / file_id
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Файл не найден или срок его хранения истек")
+    
+    try:
+        # Определяем тип файла по расширению
+        file_extension = os.path.splitext(str(file_path))[1].lower()
+        
+        # Чтение данных из файла
+        if file_extension == '.csv':
+            df = pd.read_csv(file_path)
+        elif file_extension in ['.xlsx', '.xls']:
+            df = pd.read_excel(file_path)
+        else:
+            # Пытаемся определить тип файла автоматически
+            try:
+                df = pd.read_excel(file_path)
+            except:
+                try:
+                    df = pd.read_csv(file_path)
+                except:
+                    raise HTTPException(status_code=400, detail="Неподдерживаемый формат файла")
+        
+        # Проверка наличия столбца с датами
+        if date_column not in df.columns:
+            return JSONResponse(
+                status_code=400,
+                content={"error": f"Столбец {date_column} не найден в файле", "columns": df.columns.tolist()}
+            )
+            
+        # Преобразование столбца даты
+        try:
+            df[date_column] = pd.to_datetime(df[date_column])
+            df.set_index(date_column, inplace=True)
+        except Exception as e:
+            return JSONResponse(
+                status_code=400,
+                content={"error": f"Ошибка при преобразовании столбца даты: {str(e)}"}
+            )
+        
+        # Проверяем, что все указанные переменные есть в данных
+        missing_vars = [var for var in unpacked_vars if var not in df.columns]
+        if missing_vars:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": f"Следующие переменные не найдены в данных: {', '.join(missing_vars)}",
+                    "available_columns": df.columns.tolist()
+                }
+            )
+        
+        # Выполняем только коинтеграционный анализ
+        
+        # Для анализа методом Энгла-Грейнджера создаем все возможные пары
+        eg_results = []
+        
+        for i in range(len(unpacked_vars)):
+            for j in range(i+1, len(unpacked_vars)):
+                var1 = unpacked_vars[i]
+                var2 = unpacked_vars[j]
+                
+                is_cointegrated_eg, cointegration_output_eg = test_cointegration(
+                    df[var1],
+                    df[var2],
+                    var1,
+                    var2
+                )
+                
+                eg_results.append({
+                    'variables': [var1, var2],
+                    'is_cointegrated': is_cointegrated_eg,
+                    'details': cointegration_output_eg
+                })
+        
+        # Тест Йохансена на коинтеграцию (для всех переменных сразу)
+        is_cointegrated_johansen, cointegration_output_johansen = johansen_test(
+            df,
+            unpacked_vars,
+            det_order=1,
+            k_ar_diff=1
+        )
+        
+        # Определяем общий результат коинтеграции
+        any_eg_cointegrated = any([result['is_cointegrated'] for result in eg_results])
+        is_cointegrated = any_eg_cointegrated or is_cointegrated_johansen
+        
+        # Формируем результат
+        result = {
+            'engle_granger_pairs': eg_results,
+            'engle_granger_summary': {
+                'is_cointegrated': any_eg_cointegrated,
+                'cointegrated_pairs': [f"{result['variables'][0]} и {result['variables'][1]}" 
+                                     for result in eg_results if result['is_cointegrated']]
+            },
+            'johansen': {
+                'is_cointegrated': is_cointegrated_johansen,
+                'details': cointegration_output_johansen
+            },
+            'conclusion': "Переменные коинтегрированы." if is_cointegrated else "Переменные не коинтегрированы.",
+            'recommended_model': "VECM" if is_cointegrated else "VAR в разностях"
+        }
+        
+        return result
+        
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Ошибка при анализе коинтеграции: {str(e)}")
 @app.post("/get-time-series-data")
 async def get_time_series_data(
     file_id: str = Form(...),
