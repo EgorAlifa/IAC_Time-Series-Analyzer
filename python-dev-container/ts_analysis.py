@@ -359,127 +359,110 @@ def analyze_differences(series, title='', max_diff=4):
 
 # Основная функция для анализа данных
 def analyze_data(df, endogenous_vars=None):
-    """
-    Основная функция для анализа временных рядов
-    
-    Parameters:
-    -----------
-    df : pandas.DataFrame
-        Датафрейм с временными рядами
-    endogenous_vars : list or None
-        Список имен эндогенных переменных для анализа
-        
-    Returns:
-    --------
-    dict
-        Результаты анализа в формате JSON
-    """
-    # Словарь для хранения результатов
-    results = {'variable_results': {}}
-    
-    # Если эндогенные переменные не указаны, запрашиваем их у пользователя
-    # или предоставляем сообщение о необходимости выбора переменных
-    if endogenous_vars is None or len(endogenous_vars) == 0:
-        # Получаем все числовые колонки
-        all_numeric_columns = [col for col in df.columns if df[col].dtype in [np.float64, np.int64]]
-        
-        # Возвращаем сообщение с предложением выбрать переменные
-        return {
-            "status": "required_input",
-            "message": "Необходимо выбрать эндогенные переменные для анализа",
-            "available_columns": all_numeric_columns
-        }
-    else:
-        # Получаем все числовые колонки, исключая эндогенные
-        all_numeric_columns = [col for col in df.columns 
-                                if df[col].dtype in [np.float64, np.int64] 
-                                and col not in endogenous_vars]
-    
-    # Проверяем, что эндогенные переменные существуют в датафрейме
-    missing_vars = [var for var in endogenous_vars if var not in df.columns]
-    valid_endogenous_vars = [var for var in endogenous_vars if var in df.columns]
-    
-    if missing_vars:
-        results['warnings'] = {
-            'missing_variables': missing_vars,
-            'message': f"Следующие переменные не найдены в данных: {', '.join(missing_vars)}"
-        }
-    
-    if len(valid_endogenous_vars) == 0:
-        return {
-            "status": "error",
-            "message": "Ни одна из указанных эндогенных переменных не найдена в данных"
-        }
-    
-    # Анализ эндогенных переменных
-    for column in valid_endogenous_vars:
-        d_value, test_outputs = analyze_differences(df[column], column, max_diff=4)
-        results['variable_results'][column] = {
-            'd_value': d_value,
-            'test_outputs': test_outputs,
-            'type': 'endogenous'
-        }
-    
-    # Анализ экзогенных переменных
-    for column in all_numeric_columns:
-        d_value, test_outputs = analyze_differences(df[column], column, max_diff=4)
-        results['variable_results'][column] = {
-            'd_value': d_value,
-            'test_outputs': test_outputs,
-            'type': 'exogenous'
-        }
-    
-    # Анализ коинтеграции
-    if len(valid_endogenous_vars) >= 2:
-        # Для каждой пары эндогенных переменных проводим тест Энгла-Грейнджера
-        eg_results = []
-        
-        for i in range(len(valid_endogenous_vars)):
-            for j in range(i+1, len(valid_endogenous_vars)):
-                var1 = valid_endogenous_vars[i]
-                var2 = valid_endogenous_vars[j]
-                
-                is_cointegrated_eg, cointegration_output_eg = test_cointegration(
-                    df[var1],
-                    df[var2],
-                    var1,
-                    var2
-                )
-                
-                eg_results.append({
-                    'variables': [var1, var2],
-                    'is_cointegrated': is_cointegrated_eg,
-                    'details': cointegration_output_eg
-                })
-        
-        # Тест Йохансена на коинтеграцию (для всех переменных сразу)
-        is_cointegrated_johansen, cointegration_output_johansen = johansen_test(
-            df,
-            valid_endogenous_vars,
-            det_order=1,
-            k_ar_diff=1
-        )
-        
-        # Сохраняем результаты обоих тестов
-        results['cointegration_results'] = {
-            'engle_granger_pairs': eg_results,
-            'johansen': {
-                'is_cointegrated': is_cointegrated_johansen,
-                'details': cointegration_output_johansen
-            }
-        }
-        
-        # Проверяем есть ли коинтеграция хотя бы по одному тесту
-        has_any_cointegration = is_cointegrated_johansen or any([pair['is_cointegrated'] for pair in eg_results])
-        
-        results['cointegration_results']['conclusion'] = "Переменные коинтегрированы." if has_any_cointegration else "Переменные не коинтегрированы."
-        results['cointegration_results']['recommended_model'] = "VECM" if has_any_cointegration else "VAR в разностях"
-    elif len(valid_endogenous_vars) == 1:
-        results['warnings'] = results.get('warnings', {})
-        results['warnings']['cointegration'] = "Для анализа коинтеграции необходимо минимум две переменные"
-    
-    return results
-
+   """
+   Основная функция для анализа временных рядов
+   
+   Parameters:
+   -----------
+   df : pandas.DataFrame
+       Датафрейм с временными рядами
+   endogenous_vars : list or None
+       Список имен эндогенных переменных для анализа
+       
+   Returns:
+   --------
+   dict
+       Результаты анализа в формате JSON
+   """
+   # Словарь для хранения результатов
+   results = {'variable_results': {}}
+   
+   # Если эндогенные переменные не указаны, используем все числовые колонки
+   if endogenous_vars is None:
+       # Получаем все числовые колонки
+       all_numeric_columns = [col for col in df.columns if df[col].dtype in [np.float64, np.int64]]
+       
+       # Если не указаны эндогенные, берем первые две как эндогенные
+       endogenous_vars = all_numeric_columns[:2]
+   else:
+       # Получаем все числовые колонки, исключая эндогенные
+       all_numeric_columns = [col for col in df.columns 
+                              if df[col].dtype in [np.float64, np.int64] 
+                              and col not in endogenous_vars]
+   
+   # Проверяем, что эндогенные переменные существуют в датафрейме
+   endogenous_vars = [var for var in endogenous_vars if var in df.columns]
+   
+   # Анализ эндогенных переменных
+   for column in endogenous_vars:
+       d_value, test_outputs = analyze_differences(df[column], column, max_diff=4)
+       results['variable_results'][column] = {
+           'd_value': d_value,
+           'test_outputs': test_outputs,
+           'type': 'endogenous'
+       }
+   
+   # Анализ экзогенных переменных
+   for column in all_numeric_columns:
+       d_value, test_outputs = analyze_differences(df[column], column, max_diff=4)
+       results['variable_results'][column] = {
+           'd_value': d_value,
+           'test_outputs': test_outputs,
+           'type': 'exogenous'
+       }
+   
+   # Анализ коинтеграции
+   if len(endogenous_vars) >= 2:
+       # Для анализа методом Энгла-Грейнджера создаем все возможные пары
+       eg_results = []
+       
+       for i in range(len(endogenous_vars)):
+           for j in range(i+1, len(endogenous_vars)):
+               var1 = endogenous_vars[i]
+               var2 = endogenous_vars[j]
+               
+               is_cointegrated_eg, cointegration_output_eg = test_cointegration(
+                   df[var1],
+                   df[var2],
+                   var1,
+                   var2
+               )
+               
+               eg_results.append({
+                   'variables': [var1, var2],
+                   'is_cointegrated': is_cointegrated_eg,
+                   'details': cointegration_output_eg
+               })
+       
+       # Тест Йохансена на коинтеграцию (для всех переменных сразу)
+       is_cointegrated_johansen, cointegration_output_johansen = johansen_test(
+           df,
+           endogenous_vars,
+           det_order=1,
+           k_ar_diff=1
+       )
+       
+       # Определяем общий результат коинтеграции
+       any_eg_cointegrated = any([result['is_cointegrated'] for result in eg_results])
+       is_cointegrated = any_eg_cointegrated or is_cointegrated_johansen
+       
+       # Сохраняем результаты обоих тестов
+       results['cointegration_results'] = {
+           'engle_granger_pairs': eg_results,
+           'engle_granger_summary': {
+               'is_cointegrated': any_eg_cointegrated,
+               'cointegrated_pairs': [f"{result['variables'][0]} и {result['variables'][1]}" 
+                                    for result in eg_results if result['is_cointegrated']]
+           },
+           'johansen': {
+               'is_cointegrated': is_cointegrated_johansen,
+               'details': cointegration_output_johansen
+           },
+           'conclusion': "Переменные коинтегрированы." if is_cointegrated else "Переменные не коинтегрированы.",
+           'recommended_model': "VECM" if is_cointegrated else "VAR в разностях"
+       }
+   
+   return results
 # Функция создания отчета Word
 def create_word_report(results, df):
     """
