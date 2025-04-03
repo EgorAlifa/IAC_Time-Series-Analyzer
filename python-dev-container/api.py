@@ -17,7 +17,7 @@ import threading
 import time
 from pathlib import Path
 
-from ts_analysis import analyze_data, create_word_report
+from ts_analysis import analyze_data, create_word_report, test_cointegration, johansen_test
 
 app = FastAPI(title="Анализ стационарности временных рядов")
 from fastapi.middleware.cors import CORSMiddleware
