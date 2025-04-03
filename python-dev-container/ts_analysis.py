@@ -552,7 +552,7 @@ def send_email(feedback, recipient_email: str = "e.nikonorov@internet.ru"):
         smtp_server = "smtp.mail.ru"
         smtp_port = 465  # Используем SSL порт вместо TLS
         smtp_user = "e.nikonorov@internet.ru"
-        smtp_password = os.environ.get("EMAIL_PASSWORD", "silFida-lIonez9-otrAsl1212")
+        smtp_password = os.environ.get("EMAIL_PASSWORD", "silFida-lIonez9-otrAsl")
         
         # Формируем сообщение
         msg = MIMEMultipart()
