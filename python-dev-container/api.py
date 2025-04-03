@@ -368,6 +368,25 @@ async def analyze_with_file_id(
         # Проведение анализа
         results = analyze_data(df, endogenous_vars)
         
+        # Обработка особых случаев возврата
+        if isinstance(results, dict) and 'status' in results:
+            if results['status'] == 'required_input':
+                # Возвращаем список доступных столбцов и сообщение для пользователя
+                return JSONResponse(
+                    status_code=200,
+                    content={
+                        "required_input": True,
+                        "message": results['message'],
+                        "available_columns": results['available_columns']
+                    }
+                )
+            elif results['status'] == 'error':
+                # Возвращаем сообщение об ошибке
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": results['message']}
+                )
+        
         return results
         
     except Exception as e:
