@@ -143,10 +143,14 @@
         }
 
         .table-container {
-            margin: 15px 0;
-            border-radius: 6px;
-            overflow: hidden;
-            border: 1px solid #e2e8f0;
+           margin: 15px 0;
+           border-radius: 6px;
+           overflow-x: auto; /* Горизонтальная прокрутка /
+           border: 1px solid 
+        #e2e8f0;
+           width: 100%; / Растягиваем на всю ширину /
+           box-sizing: border-box; / Включаем border в общую ширину /
+           -webkit-overflow-scrolling: touch; / Плавная прокрутка на iOS */
         }
 
         .johansen-table {
