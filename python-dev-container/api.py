@@ -19,7 +19,7 @@ from pathlib import Path
 
 from ts_analysis import analyze_data, create_word_report
 
-app = FastAPI(title="Анализ стационарности временных рядов", root_path="/api")
+app = FastAPI(title="Анализ стационарности временных рядов")
 from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
@@ -84,11 +84,11 @@ class AnalysisResult(BaseModel):
     variable_results: Dict[str, Dict[str, Any]]
     cointegration_results: Optional[Dict[str, Any]] = None
 
-@app.get("/")
+@app.get("/api")
 async def root():
     return {"message": "API для анализа стационарности временных рядов"}
 
-@app.get("/news")
+@app.get("/api/news")
 async def get_news_endpoint(
     q: str = Query(default="Ставка", description="Поисковый запрос"),
     limit: int = Query(default=5, description="Лимит количества новостей")
