@@ -35,11 +35,15 @@ body {
 .sidebar {
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
     height: calc(100vh - 60px);
-    position: sticky;
+    position: fixed;
     top: 60px;
+    left: 0;
+    width: 16.66667%; /* col-2 ширина */
+    max-width: 250px; /* Максимальная ширина меню */
     padding-top: 0.5rem;
     overflow-x: hidden;
     overflow-y: auto;
+    z-index: 100;
 }
 
 .sidebar .nav-link {
@@ -99,8 +103,18 @@ main {
     padding: 0.35rem 0.65rem;
 }
 
+/* Стили для основного контента */
+main.col-md-9.ms-sm-auto.col-lg-10 {
+    margin-left: 16.66667%; /* Должно соответствовать ширине sidebar */
+}
+
 /* Медиа-запросы для адаптивности */
 @media (max-width: 767.98px) {
+    main.col-md-9.ms-sm-auto.col-lg-10 {
+        margin-left: 0;
+        width: 100%;
+    }
+    
     .sidebar {
         position: fixed;
         top: 60px;
