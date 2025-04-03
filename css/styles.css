@@ -26,7 +26,24 @@ ul {
     padding: 0;
     margin: 0;
 }
-
+/* Хлебные крошки */
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    color: #64748b;
+    }
+        
+.breadcrumbs a {
+    color: #64748b;
+}
+        
+.breadcrumbs a:hover {
+    color: #3b82f6;
+}
+.breadcrumbs .separator {
+    margin: 0 10px;
+    color: #94a3b8;
+}
 /* Верхняя панель */
 .top-panel {
     display: flex;
