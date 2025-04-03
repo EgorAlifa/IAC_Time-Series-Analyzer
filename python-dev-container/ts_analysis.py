@@ -546,7 +546,7 @@ class FeedbackForm(BaseModel):
     subject: Optional[str] = "Сообщение с сайта"
     message: str
 
-def send_email(feedback: FeedbackForm, recipient_email: str = "e.nikonorov@internet.ru"):
+def send_email(feedback, recipient_email: str = "e.nikonorov@internet.ru"):
     """
     Отправка электронной почты с данными формы обратной связи
     """
@@ -556,10 +556,16 @@ def send_email(feedback: FeedbackForm, recipient_email: str = "e.nikonorov@inter
     smtp_user = "e.nikonorov@internet.ru"  # Ваш email
     
     # Получаем пароль из переменных окружения (безопасное хранение)
-    smtp_password = os.environ.get("EMAIL_PASSWORD", "")
+    smtp_password = os.environ.get("EMAIL_PASSWORD")
     
+    # Отладочная информация
+    print(f"EMAIL_PASSWORD env: {smtp_password}")
+    print(f"All env vars: {os.environ}")
+    
+    # Используем жестко заданный пароль в случае проблем
     if not smtp_password:
-        raise ValueError("EMAIL_PASSWORD не указан в переменных окружения")
+        smtp_password = "silFida-lIonez9-otrAsl"
+        print("Using hardcoded password")
     
     # Создаем сообщение
     msg = MIMEMultipart()
