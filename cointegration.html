@@ -601,6 +601,13 @@ document.addEventListener('DOMContentLoaded', function() {
         analysisLoader.style.display = 'block';
         runAnalysisBtn.disabled = true;
         
+        // Создаем FormData ПЕРЕД использованием
+        const formData = new FormData();
+        
+        // Получаем значения пользовательских параметров
+        const detOrder = document.getElementById('det-order').value;
+        const kArDiff = document.getElementById('k-ar-diff').value;
+    
         try {
             // Получаем выбранные переменные
             const variables = getSelectedVariables();
@@ -608,19 +615,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (variables.length < 2) {
                 throw new Error('Необходимо выбрать минимум 2 переменные для анализа коинтеграции.');
             }
-            // Получаем значения пользовательских параметров
-            const detOrder = document.getElementById('det-order').value;
-            const kArDiff = document.getElementById('k-ar-diff').value;
             
             // Добавляем параметры в FormData
-            formData.append('det_order', detOrder);
-            formData.append('k_ar_diff', kArDiff);
-            // Создаем FormData для запроса
-            const formData = new FormData();
             formData.append('file_id', fileId);
             formData.append('date_column', 'Дата');
+            formData.append('det_order', detOrder);
+            formData.append('k_ar_diff', kArDiff);
             
-            // Передаем массив переменных
+            // Передаем каждую переменную отдельно
             formData.append('endogenous_vars', JSON.stringify(variables));
             
             console.log('Отправляем переменные:', variables);
