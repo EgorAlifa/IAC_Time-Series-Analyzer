@@ -914,8 +914,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Функция для создания графика отношения между переменными
     async function createCointegrationChart(variables) {
         try {
-            // Создаем объект для хранения данных временных рядов
-            const timeSeriesData = {};
+            
+            timeSeriesData = {};
             
             // Выполняем запросы для каждой переменной
             for (const variable of variables) {
