@@ -915,7 +915,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function createCointegrationChart(variables) {
         try {
             
-            timeSeriesData = {};
+            let timeSeriesData = {};
             
             // Выполняем запросы для каждой переменной
             for (const variable of variables) {
