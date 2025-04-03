@@ -562,120 +562,117 @@
             return Array.from(checkboxes).map(checkbox => checkbox.value);
         }
         
-        // Функция для запуска анализа коинтеграции
-       async function runCointegrationAnalysis() {
-        // Показываем индикатор загрузки
-        analysisLoader.style.display = 'block';
-        runAnalysisBtn.disabled = true;
-        
-        try {
-            // Получаем выбранные переменные
-            const variables = getSelectedVariables();
+        async function runCointegrationAnalysis() {
+            // Показываем индикатор загрузки
+            analysisLoader.style.display = 'block';
+            runAnalysisBtn.disabled = true;
             
-            if (variables.length < 2) {
-                throw new Error('Необходимо выбрать минимум 2 переменные для анализа коинтеграции.');
-            }
-            
-            // Создаем FormData для запроса
-            const formData = new FormData();
-            formData.append('file_id', fileId);
-            formData.append('date_column', 'Дата');
-            
-            // Важное изменение: теперь передаем переменные как массив в параметре endogenous_vars
-            // для каждой переменной добавляем отдельное поле в formData
-            variables.forEach(variable => {
-                formData.append('endogenous_vars', variable);
-            });
-            
-            // Выполняем запрос к API
-            const response = await fetch(`${API_URL}/analyze-with-file-id`, {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            // Получаем результаты анализа
-            const results = await response.json();
-            console.log('Результаты анализа коинтеграции:', results);
-            
-            // Проверяем, требуется ли выбор переменных
-            if (results.required_input) {
-                // Если API запрашивает выбор переменных, показываем соответствующее сообщение
-                alert(results.message);
-                return;
-            }
-            
-            // Обработка обновленного формата результатов
-            // Обновляем данные теста Энгла-Грейнджера (проверяем новый формат)
-            if (results.cointegration_results && results.cointegration_results.engle_granger_pairs) {
-                // Обрабатываем результаты для всех пар
-                const egPairs = results.cointegration_results.engle_granger_pairs;
-                // Для простоты показываем результаты только для первой пары
-                if (egPairs.length > 0) {
-                    updateEngleGrangerResults(egPairs[0]);
-                }
-            } else if (results.engle_granger) {
-                // Для обратной совместимости
-                updateEngleGrangerResults(results.engle_granger);
-            }
-            
-            // Обновляем данные теста Йохансена
-            if (results.cointegration_results && results.cointegration_results.johansen) {
-                updateJohansenResults(results.cointegration_results.johansen);
-            } else if (results.johansen) {
-                // Для обратной совместимости
-                updateJohansenResults(results.johansen);
-            }
-            
-            // Обновляем рекомендуемую модель и заключение
-            if (results.cointegration_results) {
-                if (results.cointegration_results.recommended_model) {
-                    document.getElementById('recommended-model').textContent = 
-                        results.cointegration_results.recommended_model;
+            try {
+                // Получаем выбранные переменные
+                const variables = getSelectedVariables();
+                
+                if (variables.length < 2) {
+                    throw new Error('Необходимо выбрать минимум 2 переменные для анализа коинтеграции.');
                 }
                 
-                if (results.cointegration_results.conclusion) {
-                    document.getElementById('recommendation-text').textContent = 
-                        `${results.cointegration_results.conclusion} Для моделирования зависимости между переменными рекомендуется ` +
-                        `использовать модель ${results.cointegration_results.recommended_model}. ` +
-                        (results.cointegration_results.recommended_model.includes('VECM') ? 
-                        'Это позволит учесть долгосрочную зависимость между переменными и получить более точные прогнозы.' : 
-                        'Это позволит избежать проблемы ложной регрессии и получить корректные оценки коэффициентов модели.');
-                }
-            } else {
-                // Для обратной совместимости
-                if (results.recommended_model) {
-                    document.getElementById('recommended-model').textContent = results.recommended_model;
+                // Создаем FormData для запроса
+                const formData = new FormData();
+                formData.append('file_id', fileId);
+                formData.append('date_column', 'Дата');
+                
+                // ИСПРАВЛЕНИЕ: теперь передаем каждую переменную отдельно, а не в виде JSON-строки
+                variables.forEach(variable => {
+                    formData.append('endogenous_vars', variable);
+                });
+                
+                console.log('Отправляем переменные:', variables);
+                
+                // Выполняем запрос к API
+                const response = await fetch(`${API_URL}/analyze-with-file-id`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
                 }
                 
-                if (results.conclusion) {
-                    document.getElementById('recommendation-text').textContent = 
-                        `${results.conclusion} Для моделирования зависимости между переменными рекомендуется ` +
-                        `использовать модель ${results.recommended_model}. ` +
-                        (results.recommended_model.includes('VECM') ? 
-                        'Это позволит учесть долгосрочную зависимость между переменными и получить более точные прогнозы.' : 
-                        'Это позволит избежать проблемы ложной регрессии и получить корректные оценки коэффициентов модели.');
+                // Получаем результаты анализа
+                const results = await response.json();
+                console.log('Результаты анализа коинтеграции:', results);
+                
+                // Проверяем, требуется ли выбор переменных
+                if (results.required_input) {
+                    // Если API запрашивает выбор переменных, показываем соответствующее сообщение
+                    alert(results.message);
+                    return;
                 }
+                
+                // Обработка результатов в новом формате
+                if (results.cointegration_results) {
+                    // Обновляем данные теста Энгла-Грейнджера
+                    if (results.cointegration_results.engle_granger_pairs && 
+                        results.cointegration_results.engle_granger_pairs.length > 0) {
+                        updateEngleGrangerResults(results.cointegration_results.engle_granger_pairs[0]);
+                    }
+                    
+                    // Обновляем данные теста Йохансена
+                    if (results.cointegration_results.johansen) {
+                        updateJohansenResults(results.cointegration_results.johansen);
+                    }
+                    
+                    // Обновляем рекомендуемую модель
+                    if (results.cointegration_results.recommended_model) {
+                        document.getElementById('recommended-model').textContent = 
+                            results.cointegration_results.recommended_model;
+                    }
+                    
+                    // Обновляем текст рекомендации
+                    if (results.cointegration_results.conclusion) {
+                        document.getElementById('recommendation-text').textContent = 
+                            `${results.cointegration_results.conclusion} Для моделирования зависимости между переменными рекомендуется ` +
+                            `использовать модель ${results.cointegration_results.recommended_model}. ` +
+                            (results.cointegration_results.recommended_model.includes('VECM') ? 
+                            'Это позволит учесть долгосрочную зависимость между переменными и получить более точные прогнозы.' : 
+                            'Это позволит избежать проблемы ложной регрессии и получить корректные оценки коэффициентов модели.');
+                    }
+                } else {
+                    // Обработка результатов в старом формате для обратной совместимости
+                    if (results.engle_granger) {
+                        updateEngleGrangerResults(results.engle_granger);
+                    }
+                    
+                    if (results.johansen) {
+                        updateJohansenResults(results.johansen);
+                    }
+                    
+                    if (results.recommended_model) {
+                        document.getElementById('recommended-model').textContent = results.recommended_model;
+                    }
+                    
+                    if (results.conclusion) {
+                        document.getElementById('recommendation-text').textContent = 
+                            `${results.conclusion} Для моделирования зависимости между переменными рекомендуется ` +
+                            `использовать модель ${results.recommended_model}.`;
+                    }
+                }
+                
+                // Создаем график
+                createCointegrationChart(variables);
+                
+                // Показываем результаты анализа
+                analysisResults.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Ошибка при выполнении анализа коинтеграции:', error);
+                alert(`Ошибка при выполнении анализа: ${error.message}`);
+            } finally {
+                // Скрываем индикатор загрузки
+                analysisLoader.style.display = 'none';
+                runAnalysisBtn.disabled = false;
             }
-            
-            // Создаем график
-            createCointegrationChart(variables);
-            
-            // Показываем результаты анализа
-            analysisResults.style.display = 'block';
-            
-        } catch (error) {
-            console.error('Ошибка при выполнении анализа коинтеграции:', error);
-            alert(`Ошибка при выполнении анализа: ${error.message}`);
-        } finally {
-            // Скрываем индикатор загрузки
-            analysisLoader.style.display = 'none';
-            runAnalysisBtn.disabled = false;
         }
-    }
         
         // Функция для обновления результатов теста Энгла-Грейнджера
         function updateEngleGrangerResults(data) {
@@ -875,14 +872,19 @@
                 'test-result result-negative';
         }
         
-        // Функция для создания графика отношения между переменными
         async function createCointegrationChart(variables) {
             try {
                 // Создаем FormData для запроса данных временного ряда
                 const formData = new FormData();
                 formData.append('file_id', fileId);
                 formData.append('date_column', 'Дата');
-                formData.append('columns', JSON.stringify(variables));
+                
+                // ИСПРАВЛЕНИЕ: передаем каждую переменную отдельно, а не в виде JSON-строки
+                variables.forEach(variable => {
+                    formData.append('columns', variable);
+                });
+                
+                console.log('Отправляем колонки для графика:', variables);
                 
                 // Выполняем запрос к API для получения данных
                 const response = await fetch(`${API_URL}/get-time-series-data`, {
@@ -891,11 +893,13 @@
                 });
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
                 }
                 
                 // Получаем данные для графика
                 const data = await response.json();
+                console.log('Полученные данные для графика:', data);
                 
                 if (!data || !data.time_series || Object.keys(data.time_series).length < 2) {
                     throw new Error('Не удалось получить данные для графика');
@@ -903,14 +907,18 @@
                 
                 // Извлекаем данные для каждой переменной
                 const timeSeriesData = data.time_series;
-                const dates = Object.keys(timeSeriesData[variables[0]]).map(date => {
-                    // Форматируем дату для отображения (месяц и год)
+                
+                // Находим общие даты для всех переменных
+                const allDates = Object.keys(timeSeriesData[variables[0]]).sort();
+                
+                // Форматируем даты для отображения (месяц и год)
+                const dates = allDates.map(date => {
                     const dateObj = new Date(date);
                     return dateObj.toLocaleString('ru', {month: 'short', year: '2-digit'});
                 });
                 
                 const datasets = variables.map((variable, index) => {
-                    const values = Object.values(timeSeriesData[variable]);
+                    const values = allDates.map(date => timeSeriesData[variable][date] || null);
                     
                     return {
                         label: variable.replace(/_/g, ' '),
