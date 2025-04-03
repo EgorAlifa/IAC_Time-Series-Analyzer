@@ -1,17 +1,22 @@
-import pandas as pd
+import os
+import io
+import tempfile
+import smtplib
 import numpy as np
+import pandas as pd
+import seaborn as sns
 import matplotlib.pyplot as plt
+from scipy import stats
+from datetime import datetime
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from docx import Document
+from docx.shared import Inches
+from pydantic import BaseModel, EmailStr
+from typing import Optional
 from statsmodels.tsa.stattools import adfuller, kpss, coint
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.vector_ar.vecm import coint_johansen
-import seaborn as sns
-from scipy import stats
-import os
-from datetime import datetime
-from docx import Document
-from docx.shared import Inches
-import io
-import tempfile
 
 # Функция для проведения теста Дики-Фуллера на стационарность
 def adf_test(series, title=''):
@@ -534,3 +539,57 @@ def create_word_report(results, df):
         doc.save(temp_path)
     
     return temp_path
+# Модель данных для формы обратной связи
+class FeedbackForm(BaseModel):
+    name: str
+    email: EmailStr
+    subject: Optional[str] = "Сообщение с сайта"
+    message: str
+
+def send_email(feedback: FeedbackForm, recipient_email: str = "e.nikonorov@internet.ru"):
+    """
+    Отправка электронной почты с данными формы обратной связи
+    """
+    # Данные для подключения к SMTP-серверу mail.ru
+    smtp_server = "smtp.mail.ru"
+    smtp_port = 587
+    smtp_user = "e.nikonorov@internet.ru"  # Ваш email
+    
+    # Получаем пароль из переменных окружения (безопасное хранение)
+    smtp_password = os.environ.get("EMAIL_PASSWORD", "")
+    
+    if not smtp_password:
+        raise ValueError("EMAIL_PASSWORD не указан в переменных окружения")
+    
+    # Создаем сообщение
+    msg = MIMEMultipart()
+    msg['From'] = smtp_user
+    msg['To'] = recipient_email
+    msg['Subject'] = f"[Обратная связь] {feedback.subject}"
+    
+    # Формируем текст письма
+    body = f"""
+    Новое сообщение от пользователя:
+    
+    Имя: {feedback.name}
+    Email: {feedback.email}
+    
+    Сообщение:
+    {feedback.message}
+    """
+    
+    msg.attach(MIMEText(body, 'plain'))
+    
+    try:
+        # Подключаемся к серверу
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()  # Включаем шифрование
+        server.login(smtp_user, smtp_password)
+        
+        # Отправляем письмо
+        server.send_message(msg)
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"Ошибка при отправке email: {str(e)}")
+        return False
