@@ -83,7 +83,57 @@ cleanup_thread.start()
 class AnalysisResult(BaseModel):
     variable_results: Dict[str, Dict[str, Any]]
     cointegration_results: Optional[Dict[str, Any]] = None
-
+def unpack_variables(variables):
+    """
+    Распаковывает переменные из возможных форматов (строка, список, JSON-строка)
+    
+    Args:
+        variables: Переменные в различных форматах
+        
+    Returns:
+        list: Список переменных
+    """
+    # Если None, возвращаем пустой список
+    if variables is None:
+        return []
+    
+    # Если строка, проверяем, является ли она JSON
+    if isinstance(variables, str):
+        try:
+            # Пробуем распарсить как JSON
+            import json
+            parsed = json.loads(variables)
+            if isinstance(parsed, list):
+                return parsed
+            else:
+                return [variables]  # Не список JSON, возвращаем как есть
+        except:
+            # Не JSON, возвращаем как есть
+            return [variables]
+    
+    # Если список, проверяем каждый элемент на JSON
+    if isinstance(variables, list):
+        result = []
+        for item in variables:
+            if isinstance(item, str):
+                try:
+                    # Пробуем распарсить как JSON
+                    import json
+                    parsed = json.loads(item)
+                    if isinstance(parsed, list):
+                        result.extend(parsed)  # Добавляем все элементы из JSON-массива
+                    else:
+                        result.append(parsed)  # Добавляем одиночное значение
+                except:
+                    # Не JSON, добавляем как есть
+                    result.append(item)
+            else:
+                # Не строка, добавляем как есть
+                result.append(item)
+        return result
+    
+    # Для других типов возвращаем в списке
+    return [variables]
 @app.get("/api")
 async def root():
     return {"message": "API для анализа стационарности временных рядов"}
@@ -166,15 +216,22 @@ async def get_time_series_data(
     - **date_column**: Имя столбца с датами
     - **columns**: Список имен столбцов для построения графиков
     """
-    # Преобразование строки в список, если передана одна переменная
-    if isinstance(columns, str):
-        columns = [columns]
+    # Распаковываем переменные из возможных форматов
+    unpacked_columns = unpack_variables(columns)
     
     # Добавим отладочный вывод
     print(f"Received file_id: {file_id}")
     print(f"Received date_column: {date_column}")
     print(f"Received columns: {columns}")
     print(f"Type of columns: {type(columns)}")
+    print(f"Unpacked columns: {unpacked_columns}")
+    
+    # Проверяем, есть ли выбранные колонки
+    if not unpacked_columns:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Не выбраны колонки для анализа"}
+        )
     
     file_path = TEMP_FILES_DIR / file_id
     
@@ -217,7 +274,7 @@ async def get_time_series_data(
             )
         
         # Проверка наличия запрошенных колонок
-        missing_columns = [col for col in columns if col not in df.columns]
+        missing_columns = [col for col in unpacked_columns if col not in df.columns]
         if missing_columns:
             return JSONResponse(
                 status_code=400,
@@ -231,7 +288,7 @@ async def get_time_series_data(
         time_series_data = {}
         
         # Для каждой запрошенной колонки получаем данные
-        for column in columns:
+        for column in unpacked_columns:
             # Преобразуем данные в словарь {дата: значение}
             series_dict = df.set_index(date_column)[column].to_dict()
             
@@ -355,102 +412,51 @@ async def analyze_file(
 
 @app.post("/analyze-with-file-id", response_model=AnalysisResult)
 async def analyze_with_file_id(
-   file_id: str = Form(...),
-   date_column: str = Form("Дата"),
-   endogenous_vars: Optional[Union[List[str], str]] = Form(None)
-):
-   """
-   Анализ временных рядов из ранее загруженного файла
-   
-   - **file_id**: Идентификатор файла, полученный при загрузке
-   - **date_column**: Имя столбца с датами (по умолчанию "Дата")
-   - **endogenous_vars**: Список имен эндогенных переменных для анализа коинтеграции
-   """
-   # Преобразование строки в список, если передана одна переменная
-   if isinstance(endogenous_vars, str):
-       endogenous_vars = [endogenous_vars]
-   
-   # Добавим отладочный вывод
-   print(f"Received file_id: {file_id}")
-   print(f"Received date_column: {date_column}")
-   print(f"Received endogenous_vars: {endogenous_vars}")
-   print(f"Type of endogenous_vars: {type(endogenous_vars)}")
-   
-   file_path = TEMP_FILES_DIR / file_id
-   
-   if not file_path.exists():
-       raise HTTPException(status_code=404, detail="Файл не найден или срок его хранения истек")
-   
-   try:
-       # Определяем тип файла по расширению
-       file_extension = os.path.splitext(str(file_path))[1].lower()
-       
-       # Чтение данных из файла
-       if file_extension == '.csv':
-           df = pd.read_csv(file_path)
-       elif file_extension in ['.xlsx', '.xls']:
-           df = pd.read_excel(file_path)
-       else:
-           # Пытаемся определить тип файла автоматически
-           try:
-               df = pd.read_excel(file_path)
-           except:
-               try:
-                   df = pd.read_csv(file_path)
-               except:
-                   raise HTTPException(status_code=400, detail="Неподдерживаемый формат файла")
-       
-       # Проверка наличия столбца с датами
-       if date_column not in df.columns:
-           return JSONResponse(
-               status_code=400,
-               content={"error": f"Столбец {date_column} не найден в файле", "columns": df.columns.tolist()}
-           )
-           
-       # Преобразование столбца даты
-       try:
-           df[date_column] = pd.to_datetime(df[date_column])
-           df.set_index(date_column, inplace=True)
-       except Exception as e:
-           return JSONResponse(
-               status_code=400,
-               content={"error": f"Ошибка при преобразовании столбца даты: {str(e)}"}
-           )
-           
-       # Проведение анализа
-       results = analyze_data(df, endogenous_vars)
-       
-       return results
-       
-   except Exception as e:
-       raise HTTPException(status_code=500, detail=f"Ошибка при анализе данных: {str(e)}")
-
-@app.post("/generate-report")
-async def generate_report(
-    file: UploadFile = File(...),
+    file_id: str = Form(...),
     date_column: str = Form("Дата"),
-    endogenous_vars: Optional[List[str]] = Form(None)
+    endogenous_vars: Optional[Union[List[str], str]] = Form(None)
 ):
     """
-    Генерация отчета в формате Word на основе анализа стационарности и коинтеграции
+    Анализ временных рядов из ранее загруженного файла
     
-    - **file**: Excel или CSV файл с данными
+    - **file_id**: Идентификатор файла, полученный при загрузке
     - **date_column**: Имя столбца с датами (по умолчанию "Дата")
     - **endogenous_vars**: Список имен эндогенных переменных для анализа коинтеграции
     """
-    # Проверка расширения файла
-    file_extension = os.path.splitext(file.filename)[1].lower()
+    # Распаковываем переменные из возможных форматов
+    unpacked_vars = unpack_variables(endogenous_vars)
+    
+    # Добавим отладочный вывод
+    print(f"Received file_id: {file_id}")
+    print(f"Received date_column: {date_column}")
+    print(f"Received endogenous_vars: {endogenous_vars}")
+    print(f"Type of endogenous_vars: {type(endogenous_vars)}")
+    print(f"Unpacked vars: {unpacked_vars}")
+    
+    file_path = TEMP_FILES_DIR / file_id
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Файл не найден или срок его хранения истек")
     
     try:
+        # Определяем тип файла по расширению
+        file_extension = os.path.splitext(str(file_path))[1].lower()
+        
         # Чтение данных из файла
-        content = await file.read()
         if file_extension == '.csv':
-            df = pd.read_csv(BytesIO(content))
+            df = pd.read_csv(file_path)
         elif file_extension in ['.xlsx', '.xls']:
-            df = pd.read_excel(BytesIO(content))
+            df = pd.read_excel(file_path)
         else:
-            raise HTTPException(status_code=400, detail="Поддерживаются только файлы CSV, XLS или XLSX")
-            
+            # Пытаемся определить тип файла автоматически
+            try:
+                df = pd.read_excel(file_path)
+            except:
+                try:
+                    df = pd.read_csv(file_path)
+                except:
+                    raise HTTPException(status_code=400, detail="Неподдерживаемый формат файла")
+        
         # Проверка наличия столбца с датами
         if date_column not in df.columns:
             return JSONResponse(
@@ -468,22 +474,32 @@ async def generate_report(
                 content={"error": f"Ошибка при преобразовании столбца даты: {str(e)}"}
             )
             
-        # Проведение анализа
-        results = analyze_data(df, endogenous_vars)
+        # Проведение анализа с распакованными переменными
+        results = analyze_data(df, unpacked_vars)
         
-        # Создание отчета Word
-        report_path = create_word_report(results, df)
+        # Обработка особых случаев возврата
+        if isinstance(results, dict) and 'status' in results:
+            if results['status'] == 'required_input':
+                # Возвращаем список доступных столбцов и сообщение для пользователя
+                return JSONResponse(
+                    status_code=200,
+                    content={
+                        "required_input": True,
+                        "message": results['message'],
+                        "available_columns": results['available_columns']
+                    }
+                )
+            elif results['status'] == 'error':
+                # Возвращаем сообщение об ошибке
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": results['message']}
+                )
         
-        # Отправка файла пользователю
-        return FileResponse(
-            path=report_path,
-            filename="Отчет_анализа_стационарности.docx",
-            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        )
+        return results
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ошибка при генерации отчета: {str(e)}")
-
+        raise HTTPException(status_code=500, detail=f"Ошибка при анализе данных: {str(e)}")
 @app.post("/analyze-columns")
 async def analyze_columns(file: UploadFile = File(...)):
     """
