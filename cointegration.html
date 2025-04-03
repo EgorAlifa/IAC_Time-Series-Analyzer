@@ -891,24 +891,24 @@ document.addEventListener('DOMContentLoaded', function() {
             console.warn('Не удалось найти данные таблицы в результатах теста Йохансена');
         }
         
-        // Обновление заключения
-        const conclusionElement = document.getElementById('johansen-conclusion');
-        
-        // Ищем заключение в деталях
-        const conclusionLine = details.find(line => line.includes('Заключение:'));
-        if (conclusionLine) {
-            const conclusion = conclusionLine.split('Заключение:')[1].trim();
-            conclusionElement.textContent = `Заключение: ${conclusion}`;
-        } else {
-            conclusionElement.textContent = isCointegrated ? 
-                'Заключение: Обнаружены коинтеграционные соотношения между переменными.' : 
-                'Заключение: Нет коинтеграционных соотношений между переменными.';
-        }
-        
-        // Обновляем стиль заключения
-        conclusionElement.className = isCointegrated ? 
-            'test-result result-positive' : 
-            'test-result result-negative';
+    // Обновление заключения
+    const conclusionElement = document.getElementById('johansen-conclusion');
+    
+    // Ищем заключение в деталях
+    const conclusionIndex = details.findIndex(line => line.includes('\nЗаключение:'));
+    if (conclusionIndex !== -1 && details[conclusionIndex + 1]) {
+        const conclusion = details[conclusionIndex + 1].trim();
+        conclusionElement.textContent = `Заключение: ${conclusion}`;
+    } else {
+        conclusionElement.textContent = isCointegrated ? 
+            'Заключение: Обнаружены коинтеграционные соотношения между переменными.' : 
+            'Заключение: Нет коинтеграционных соотношений между переменными.';
+    }
+    
+    // Обновляем стиль заключения
+    conclusionElement.className = isCointegrated ? 
+        'test-result result-positive' : 
+        'test-result result-negative';
     }
     
     // Функция для создания графика отношения между переменными
