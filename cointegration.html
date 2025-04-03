@@ -510,17 +510,18 @@
             
             // Проверка наличия числовых колонок в данных
             if (columnsData && columnsData.numeric_columns && columnsData.numeric_columns.length >= 2) {
-                // Берем первые две числовые колонки для анализа
-                const firstVariable = columnsData.numeric_columns[0];
-                const secondVariable = columnsData.numeric_columns[1];
+                // Добавляем все числовые колонки для выбора (не только первые две)
+                columnsData.numeric_columns.forEach(variableName => {
+                    const variableElement = createVariableElement(variableName);
+                    variablesContainer.appendChild(variableElement);
+                });
                 
-                // Создаем элементы для переменных
-                const var1Element = createVariableElement(firstVariable);
-                const var2Element = createVariableElement(secondVariable);
-                
-                // Добавляем элементы в контейнер
-                variablesContainer.appendChild(var1Element);
-                variablesContainer.appendChild(var2Element);
+                // Предварительно выбираем первые две переменные
+                const checkboxes = variablesContainer.querySelectorAll('input[type="checkbox"]');
+                if (checkboxes.length >= 2) {
+                    checkboxes[0].checked = true;
+                    checkboxes[1].checked = true;
+                }
             } else {
                 // Если колонок недостаточно, показываем сообщение
                 variablesContainer.innerHTML = 
@@ -530,8 +531,9 @@
                 runAnalysisBtn.disabled = true;
             }
         }
+
         
-        // Функция для создания элемента переменной
+        // Функция для создания элемента переменной с возможностью выбора
         function createVariableElement(variableName) {
             const div = document.createElement('div');
             div.className = 'variable-pair';
@@ -540,8 +542,8 @@
             
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
-            checkbox.checked = true;
-            checkbox.disabled = true;
+            checkbox.checked = false; // По умолчанию не выбрано
+            checkbox.disabled = false; // Активно для выбора
             checkbox.value = variableName;
             
             const displayName = variableName.replace(/_/g, ' ');
@@ -561,55 +563,94 @@
         }
         
         // Функция для запуска анализа коинтеграции
-        async function runCointegrationAnalysis() {
-            // Показываем индикатор загрузки
-            analysisLoader.style.display = 'block';
-            runAnalysisBtn.disabled = true;
+       async function runCointegrationAnalysis() {
+        // Показываем индикатор загрузки
+        analysisLoader.style.display = 'block';
+        runAnalysisBtn.disabled = true;
+        
+        try {
+            // Получаем выбранные переменные
+            const variables = getSelectedVariables();
             
-            try {
-                // Получаем выбранные переменные
-                const variables = getSelectedVariables();
-                
-                if (variables.length < 2) {
-                    throw new Error('Необходимо выбрать минимум 2 переменные для анализа коинтеграции.');
+            if (variables.length < 2) {
+                throw new Error('Необходимо выбрать минимум 2 переменные для анализа коинтеграции.');
+            }
+            
+            // Создаем FormData для запроса
+            const formData = new FormData();
+            formData.append('file_id', fileId);
+            formData.append('date_column', 'Дата');
+            
+            // Важное изменение: теперь передаем переменные как массив в параметре endogenous_vars
+            // для каждой переменной добавляем отдельное поле в formData
+            variables.forEach(variable => {
+                formData.append('endogenous_vars', variable);
+            });
+            
+            // Выполняем запрос к API
+            const response = await fetch(`${API_URL}/analyze-with-file-id`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            // Получаем результаты анализа
+            const results = await response.json();
+            console.log('Результаты анализа коинтеграции:', results);
+            
+            // Проверяем, требуется ли выбор переменных
+            if (results.required_input) {
+                // Если API запрашивает выбор переменных, показываем соответствующее сообщение
+                alert(results.message);
+                return;
+            }
+            
+            // Обработка обновленного формата результатов
+            // Обновляем данные теста Энгла-Грейнджера (проверяем новый формат)
+            if (results.cointegration_results && results.cointegration_results.engle_granger_pairs) {
+                // Обрабатываем результаты для всех пар
+                const egPairs = results.cointegration_results.engle_granger_pairs;
+                // Для простоты показываем результаты только для первой пары
+                if (egPairs.length > 0) {
+                    updateEngleGrangerResults(egPairs[0]);
+                }
+            } else if (results.engle_granger) {
+                // Для обратной совместимости
+                updateEngleGrangerResults(results.engle_granger);
+            }
+            
+            // Обновляем данные теста Йохансена
+            if (results.cointegration_results && results.cointegration_results.johansen) {
+                updateJohansenResults(results.cointegration_results.johansen);
+            } else if (results.johansen) {
+                // Для обратной совместимости
+                updateJohansenResults(results.johansen);
+            }
+            
+            // Обновляем рекомендуемую модель и заключение
+            if (results.cointegration_results) {
+                if (results.cointegration_results.recommended_model) {
+                    document.getElementById('recommended-model').textContent = 
+                        results.cointegration_results.recommended_model;
                 }
                 
-                // Создаем FormData для запроса
-                const formData = new FormData();
-                formData.append('file_id', fileId);
-                formData.append('date_column', 'Дата');
-                formData.append('variables', JSON.stringify(variables));
-                
-                // Выполняем запрос к API
-                const response = await fetch(`${API_URL}/analyze-with-file-id`, {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                if (results.cointegration_results.conclusion) {
+                    document.getElementById('recommendation-text').textContent = 
+                        `${results.cointegration_results.conclusion} Для моделирования зависимости между переменными рекомендуется ` +
+                        `использовать модель ${results.cointegration_results.recommended_model}. ` +
+                        (results.cointegration_results.recommended_model.includes('VECM') ? 
+                        'Это позволит учесть долгосрочную зависимость между переменными и получить более точные прогнозы.' : 
+                        'Это позволит избежать проблемы ложной регрессии и получить корректные оценки коэффициентов модели.');
                 }
-                
-                // Получаем результаты анализа
-                const results = await response.json();
-                console.log('Результаты анализа коинтеграции:', results);
-                
-                // Обновляем данные теста Энгла-Грейнджера
-                if (results.engle_granger) {
-                    updateEngleGrangerResults(results.engle_granger);
-                }
-                
-                // Обновляем данные теста Йохансена
-                if (results.johansen) {
-                    updateJohansenResults(results.johansen);
-                }
-                
-                // Обновляем рекомендуемую модель
+            } else {
+                // Для обратной совместимости
                 if (results.recommended_model) {
                     document.getElementById('recommended-model').textContent = results.recommended_model;
                 }
                 
-                // Обновляем текст рекомендации
                 if (results.conclusion) {
                     document.getElementById('recommendation-text').textContent = 
                         `${results.conclusion} Для моделирования зависимости между переменными рекомендуется ` +
@@ -618,22 +659,23 @@
                         'Это позволит учесть долгосрочную зависимость между переменными и получить более точные прогнозы.' : 
                         'Это позволит избежать проблемы ложной регрессии и получить корректные оценки коэффициентов модели.');
                 }
-                
-                // Создаем график
-                createCointegrationChart(variables);
-                
-                // Показываем результаты анализа
-                analysisResults.style.display = 'block';
-                
-            } catch (error) {
-                console.error('Ошибка при выполнении анализа коинтеграции:', error);
-                alert(`Ошибка при выполнении анализа: ${error.message}`);
-            } finally {
-                // Скрываем индикатор загрузки
-                analysisLoader.style.display = 'none';
-                runAnalysisBtn.disabled = false;
             }
+            
+            // Создаем график
+            createCointegrationChart(variables);
+            
+            // Показываем результаты анализа
+            analysisResults.style.display = 'block';
+            
+        } catch (error) {
+            console.error('Ошибка при выполнении анализа коинтеграции:', error);
+            alert(`Ошибка при выполнении анализа: ${error.message}`);
+        } finally {
+            // Скрываем индикатор загрузки
+            analysisLoader.style.display = 'none';
+            runAnalysisBtn.disabled = false;
         }
+    }
         
         // Функция для обновления результатов теста Энгла-Грейнджера
         function updateEngleGrangerResults(data) {
