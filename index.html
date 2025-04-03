@@ -4,16 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Аналитическая система</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Верхняя панель -->
     <header class="top-panel">
-        <div class="logo-container">
-            <div class="logo-square"></div>
-            <h1 class="app-title">Аналитическая система</h1>
+        <div class="d-flex align-items-center">
+            <button class="menu-toggle d-lg-none me-2" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo-container">
+                <div class="logo-square"></div>
+                <h1 class="app-title">Аналитическая система</h1>
+            </div>
         </div>
         <nav class="top-menu">
             <ul>
@@ -26,42 +33,42 @@
 
     <div class="main-container">
         <!-- Боковая панель -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <nav class="main-nav">
                 <ul>
                     <li class="active">
                         <a href="/">
-                            <span class="nav-icon home-icon"></span>
+                            <span class="nav-icon"><i class="fas fa-home"></i></span>
                             Главная
                         </a>
                     </li>
                     <li>
                         <a href="/data">
-                            <span class="nav-icon data-icon"></span>
+                            <span class="nav-icon"><i class="fas fa-database"></i></span>
                             Данные
                         </a>
                     </li>
                     <li>
                         <a href="/analysis">
-                            <span class="nav-icon analysis-icon"></span>
+                            <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
                             Анализ
                         </a>
                     </li>
                     <li>
                         <a href="#">
-                            <span class="nav-icon forecast-icon"></span>
+                            <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
                             Прогнозы
                         </a>
                     </li>
                     <li>
                         <a href="#">
-                            <span class="nav-icon reports-icon"></span>
+                            <span class="nav-icon"><i class="fas fa-file-alt"></i></span>
                             Отчеты
                         </a>
                     </li>
                     <li>
                         <a href="#">
-                            <span class="nav-icon help-icon"></span>
+                            <span class="nav-icon"><i class="fas fa-question-circle"></i></span>
                             Справка
                         </a>
                     </li>
@@ -85,8 +92,6 @@
             </div>
 
             <div class="news-container">
-                
-                
                 <div id="news-list">
                     <!-- Новости будут загружены с помощью JavaScript -->
                     <div class="loading-indicator">Загрузка новостей...</div>
@@ -100,16 +105,44 @@
                     <span class="version-badge">v3.2.1</span>
                 </div>
             </div>
-        </div>
         </main>
     </div>
 
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // URL вашего прокси-сервера (замените на ваш домен на PythonAnywhere)
+            // Обработка мобильного меню
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                sidebarOverlay.classList.toggle('active');
+                document.body.classList.toggle('sidebar-open');ф
+            });
+            
+            sidebarOverlay.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
+            });
+
+            // Адаптивность при изменении размера окна
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 992) {
+                    sidebar.classList.remove('active');
+                    sidebarOverlay.classList.remove('active');
+                    document.body.classList.remove('sidebar-open');
+                }
+            });
+            
+            // URL вашего прокси-сервера
             const proxyUrl = 'http://37.252.23.30:8000/api/news';
             
-            // Параметры запроса (можно изменить поисковый запрос, если нужно)
+            // Параметры запроса
             const queryParams = new URLSearchParams({
                 q: 'Банки ЦБ',  // Поисковый запрос
                 limit: 5     // Максимальное количество новостей
