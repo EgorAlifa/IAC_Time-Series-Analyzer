@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Контакты - Аналитическая система</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <style>
+        /* Стили для страницы Контакты */
+        
+        /* Хлебные крошки */
+        .breadcrumbs {
+            display: flex;
+            align-items: center;
+            color: #64748b;
+        }
+        
+        .breadcrumbs a {
+            color: #64748b;
+        }
+        
+        .breadcrumbs a:hover {
+            color: #3b82f6;
+        }
+        
+        .breadcrumbs .separator {
+            margin: 0 10px;
+            color: #94a3b8;
+        }
+        
+        /* Контейнер для блока контактов */
+        .contacts-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        /* Блок контактной информации */
+        .contact-info {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 25px;
+            height: 100%;
+            position: relative;
+        }
+        
+        .contact-info::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background-color: #3b82f6;
+            border-radius: 3px 0 0 3px;
+        }
+        
+        .contact-info h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #334155;
+        }
+        
+        .contact-item {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .contact-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #eff6ff;
+            color: #3b82f6;
+            border-radius: 50%;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .contact-text h4 {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #334155;
+        }
+        
+        .contact-text p {
+            font-size: 14px;
+            color: #64748b;
+            margin: 0;
+        }
+        
+        .social-links {
+            display: flex;
+            margin-top: 30px;
+        }
+        
+        .social-link {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #eff6ff;
+            color: #3b82f6;
+            border-radius: 50%;
+            margin-right: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .social-link:hover {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        /* Форма обратной связи */
+        .feedback-form {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 25px;
+            position: relative;
+        }
+        
+        .feedback-form::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background-color: #3b82f6;
+            border-radius: 3px 0 0 3px;
+        }
+        
+        .feedback-form h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #334155;
+        }
+        
+        .form-description {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #334155;
+        }
+        
+        .required {
+            color: #ef4444;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px 15px;
+            font-size: 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            color: #334155;
+            background-color: white;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .submit-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 25px;
+            font-size: 15px;
+            font-weight: 500;
+            color: white;
+            background-color: #3b82f6;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .submit-btn:hover {
+            background-color: #2563eb;
+        }
+        
+        .btn-icon {
+            margin-left: 10px;
+        }
+        
+        .btn-loading {
+            display: none;
+        }
+        
+        .submit-btn.loading .btn-text, 
+        .submit-btn.loading .btn-icon {
+            visibility: hidden;
+        }
+        
+        .submit-btn.loading .btn-loading {
+            display: flex;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Статусы формы */
+        .form-status-container {
+            margin-bottom: 20px;
+        }
+        
+        .form-status {
+            display: none;
+            padding: 12px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .form-status.success {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        
+        .form-status.error {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+        
+        .form-status i {
+            margin-right: 8px;
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 991.98px) {
+            .contact-info {
+                margin-bottom: 30px;
+            }
+        }
+        
+        @media (max-width: 767.98px) {
+            .contacts-container {
+                padding: 20px;
+            }
+            
+            .contact-info, .feedback-form {
+                padding: 20px;
+            }
+        }
+        
+        @media (max-width: 575.98px) {
+            .contact-item {
+                flex-direction: column;
+            }
+            
+            .contact-icon {
+                margin-bottom: 10px;
+            }
+            
+            .submit-btn {
+                width: 100%;
+            }
+        }
+    </style>
+
+</head>
+<body>
+    <!-- Верхняя панель -->
+    <header class="top-panel">
+        <div class="d-flex align-items-center">
+            <button class="menu-toggle d-lg-none me-2" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo-container">
+                <div class="logo-square"></div>
+                <h1 class="app-title">Аналитическая система</h1>
+            </div>
+        </div>
+        <nav class="top-menu">
+            <ul>
+                <li><a href="contacts.html" class="active">Контакты</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="main-container">
+        <!-- Боковая панель -->
+        <aside class="sidebar" id="sidebar">
+            <nav class="main-nav">
+                <ul>
+                    <li>
+                        <a href="/">
+                            <span class="nav-icon"><i class="fas fa-home"></i></span>
+                            Главная
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/data">
+                            <span class="nav-icon"><i class="fas fa-database"></i></span>
+                            Данные
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/analysis">
+                            <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+                            Стационарный анализ
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/analysis_cointegration">
+                            <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+                            Коинтеграционный анализ 
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+                            Прогнозы
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <span class="nav-icon"><i class="fas fa-file-alt"></i></span>
+                            Отчеты
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/about">
+                            <span class="nav-icon"><i class="fas fa-question-circle"></i></span>
+                            О системе
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="version-info">
+                <p>Версия 3.2.1</p>
+                <p>Обновлено 28.03.2025</p>
+            </div>
+        </aside>
+
+        <!-- Основной контент -->
+        <main class="content">
+            <div class="breadcrumbs">
+                <span><a href="/">Главная</a></span>
+                <span class="separator">/</span>
+                <span>Контакты</span>
+            </div>
+
+            <div class="page-header">
+                <h2>Контакты</h2>
+                <p class="subtitle">Связь с разработчиками аналитической системы</p>
+            </div>
+
+            <div class="contacts-container">
+                <div class="row">
+                    <!-- Информация о контактах -->
+                    <div class="col-lg-5 mb-4 mb-lg-0">
+                        <div class="contact-info">
+                            <h3>Наши контакты</h3>
+                            <div class="contact-item">
+                                <div class="contact-icon">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div class="contact-text">
+                                    <h4>Электронная почта</h4>
+                                    <p>tujh2012@bk.ru</p>
+                                </div>
+                            </div>
+                            <div class="contact-item">
+                                <div class="contact-icon">
+                                    <i class="fas fa-phone-alt"></i>
+                                </div>
+                                <div class="contact-text">
+                                    <h4>Телефон</h4>
+                                    <p>+7 (XXX) XXX-XX-XX</p>
+                                </div>
+                            </div>
+                            <div class="contact-item">
+                                <div class="contact-icon">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </div>
+                                <div class="contact-text">
+                                    <h4>Адрес</h4>
+                                    <p>г. Москва, ул. Примерная, д. 123</p>
+                                </div>
+                            </div>
+                            <div class="social-links">
+                                <a href="#" class="social-link"><i class="fab fa-telegram"></i></a>
+                                <a href="#" class="social-link"><i class="fab fa-vk"></i></a>
+                                <a href="#" class="social-link"><i class="fab fa-github"></i></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Форма обратной связи -->
+                    <div class="col-lg-7">
+                        <div class="feedback-form">
+                            <h3>Форма обратной связи</h3>
+                            <p class="form-description">Заполните форму ниже, и мы свяжемся с вами в ближайшее время</p>
+                            
+                            <form id="contactForm">
+                                <div class="form-status-container">
+                                    <div id="formSuccess" class="form-status success">
+                                        <i class="fas fa-check-circle"></i> Сообщение успешно отправлено!
+                                    </div>
+                                    <div id="formError" class="form-status error">
+                                        <i class="fas fa-exclamation-circle"></i> <span id="errorText">Произошла ошибка при отправке.</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="name">Ваше имя <span class="required">*</span></label>
+                                    <input type="text" class="form-control" id="name" name="name" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="email">Электронная почта <span class="required">*</span></label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="subject">Тема</label>
+                                    <input type="text" class="form-control" id="subject" name="subject">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="message">Сообщение <span class="required">*</span></label>
+                                    <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                                </div>
+                                
+                                <button type="submit" class="submit-btn">
+                                    <span class="btn-text">Отправить сообщение</span>
+                                    <span class="btn-icon"><i class="fas fa-paper-plane"></i></span>
+                                    <span class="btn-loading"><i class="fas fa-spinner fa-spin"></i></span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Обработка мобильного меню
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                sidebarOverlay.classList.toggle('active');
+                document.body.classList.toggle('sidebar-open');
+            });
+            
+            sidebarOverlay.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
+            });
+
+            // Адаптивность при изменении размера окна
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 992) {
+                    sidebar.classList.remove('active');
+                    sidebarOverlay.classList.remove('active');
+                    document.body.classList.remove('sidebar-open');
+                }
+            });
+
+            // Обработка отправки формы
+            const contactForm = document.getElementById('contactForm');
+            const formSuccess = document.getElementById('formSuccess');
+            const formError = document.getElementById('formError');
+            const errorText = document.getElementById('errorText');
+
+            contactForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Скрываем возможные предыдущие уведомления
+                formSuccess.style.display = 'none';
+                formError.style.display = 'none';
+                
+                // Показываем индикатор загрузки
+                const submitBtn = contactForm.querySelector('.submit-btn');
+                submitBtn.classList.add('loading');
+                
+                // Собираем данные формы
+                const formData = {
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                    subject: document.getElementById('subject').value || 'Сообщение с сайта',
+                    message: document.getElementById('message').value
+                };
+                
+                // Отправляем запрос
+                fetch('http://37.252.23.30:8000/api/feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    submitBtn.classList.remove('loading');
+                    
+                    if (data.status === 'success') {
+                        formSuccess.style.display = 'block';
+                        contactForm.reset();
+                    } else {
+                        errorText.textContent = data.message || 'Произошла ошибка при отправке.';
+                        formError.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    submitBtn.classList.remove('loading');
+                    errorText.textContent = 'Ошибка соединения с сервером.';
+                    formError.style.display = 'block';
+                    console.error('Error:', error);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
