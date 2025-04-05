@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аналитическая система - Отчеты</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <style>
+        .reports-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .info-box {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            position: relative;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .info-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 12px;
+        }
+        
+        .info-text {
+            font-size: 15px;
+            color: #334155;
+            line-height: 1.6;
+        }
+        
+        .section-title {
+            position: relative;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background-color: #3b82f6;
+            border-radius: 3px;
+        }
+        
+        .report-options {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .option-block {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+            transition: box-shadow 0.2s ease;
+        }
+        
+        .option-block:hover {
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .development-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: #f97316;
+            color: white;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        
+        .option-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .option-icon {
+            background-color: #eff6ff;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: #3b82f6;
+            font-size: 16px;
+        }
+        
+        .option-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #334155;
+            margin: 0;
+        }
+        
+        .option-description {
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        
+        .format-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .format-option {
+            display: flex;
+            align-items: center;
+        }
+        
+        .format-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            color: #64748b;
+        }
+        
+        .format-label {
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        .test-section, .model-section {
+            margin-top: 25px;
+        }
+        
+        .section-subtitle {
+            font-size: 16px;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-subtitle i {
+            margin-right: 10px;
+            color: #3b82f6;
+        }
+        
+        .test-item, .model-item {
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border: 1px solid #e2e8f0;
+            transition: box-shadow 0.2s ease;
+        }
+        
+        .test-item:hover, .model-item:hover {
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .test-header, .model-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .test-checkbox, .model-checkbox {
+            margin-right: 10px;
+        }
+        
+        .test-title, .model-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: #334155;
+        }
+        
+        .test-params, .model-params {
+            margin-top: 10px;
+            margin-left: 24px; /* Выравнивание с заголовком */
+            padding-top: 10px;
+            border-top: 1px dashed #e2e8f0;
+            display: none; /* По умолчанию скрыто */
+        }
+        
+        .test-checkbox:checked ~ .test-params,
+        .model-checkbox:checked ~ .model-params {
+            display: block; /* Показывать при выбранном тесте */
+        }
+        
+        .param-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .param-label {
+            width: 180px;
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        .param-input {
+            flex: 1;
+            max-width: 100px;
+            padding: 5px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .param-select {
+            flex: 1;
+            max-width: 150px;
+            padding: 5px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .btn-generate {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-top: 20px;
+        }
+        
+        .btn-generate:hover {
+            background-color: #2563eb;
+        }
+        
+        .btn-disabled {
+            background-color: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+        
+        .btn-disabled:hover {
+            background-color: #e2e8f0;
+        }
+        
+        @media (max-width: 767.98px) {
+            .format-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .param-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .param-label {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+            
+            .param-input, .param-select {
+                width: 100%;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Верхняя панель -->
+    <header class="top-panel">
+        <div class="d-flex align-items-center">
+            <button class="menu-toggle d-lg-none me-2" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo-container">
+                <div class="logo-square"></div>
+                <h1 class="app-title">Аналитическая система</h1>
+            </div>
+        </div>
+        <nav class="top-menu">
+            <ul>
+                <li><a href="/contacts">Контакты</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="main-container">
+        <!-- Боковая панель -->
+        <aside class="sidebar" id="sidebar">
+            <nav class="main-nav">
+                <ul>
+                    <li>
+                        <a href="/">
+                            <span class="nav-icon"><i class="fas fa-home"></i></span>
+                            Главная
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/data">
+                            <span class="nav-icon"><i class="fas fa-database"></i></span>
+                            Данные
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/analysis">
+                            <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+                            Анализ
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/forecasts">
+                            <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+                            Прогнозы
+                        </a>
+                    </li>
+                    <li class="active">
+                        <a href="/reports">
+                            <span class="nav-icon"><i class="fas fa-file-alt"></i></span>
+                            Отчеты
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/about">
+                            <span class="nav-icon"><i class="fas fa-question-circle"></i></span>
+                            О системе
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="version-info">
+                <p>Версия 3.2.1</p>
+                <p>Обновлено 28.03.2025</p>
+            </div>
+        </aside>
+
+        <!-- Основной контент -->
+        <main class="content">
+            <div class="breadcrumbs">
+                <span><a href="/">Главная</a></span>
+                <span class="separator">/</span>
+                <span>Отчеты</span>
+            </div>
+
+            <div class="page-header">
+                <h2>Формирование отчетов</h2>
+                <p class="subtitle">Выбор тестов и моделей для включения в отчет</p>
+            </div>
+            
+            <div class="info-box">
+                <h3 class="info-title">О формировании отчетов</h3>
+                <p class="info-text">
+                    Выберите интересующие вас тесты и модели, задайте необходимые параметры и сформируйте единый отчет в формате DOCX или PDF.
+                    Отчет будет содержать результаты всех выбранных анализов с указанными параметрами и может быть загружен на ваш компьютер.
+                </p>
+            </div>
+
+            <div class="reports-container">
+                <h3 class="section-title">Создание отчета</h3>
+                
+                <div class="report-options">
+                    <div class="option-block">
+                        <div class="development-badge">В разработке</div>
+                        <div class="option-header">
+                            <div class="option-icon" style="color: #94a3b8; background-color: #f1f5f9;">
+                                <i class="fas fa-file-export"></i>
+                            </div>
+                            <h4 class="option-title" style="color: #94a3b8;">Экспорт результатов</h4>
+                        </div>
+                        
+                        <p class="option-description" style="color: #94a3b8;">
+                            Выберите необходимые тесты и модели для включения в отчет. Для каждого выбранного элемента можно настроить параметры.
+                            Выберите формат отчета и нажмите "Сформировать отчет" для создания документа.
+                        </p>
+                        
+                        <div class="format-row">
+                            <div class="format-option">
+                                <div class="format-icon">
+                                    <i class="fas fa-file-word" style="color: #94a3b8;"></i>
+                                </div>
+                                <label class="format-label" style="color: #94a3b8;">
+                                    <input type="radio" name="format" value="docx" checked disabled>
+                                    DOCX
+                                </label>
+                            </div>
+                            <div class="format-option">
+                                <div class="format-icon">
+                                    <i class="fas fa-file-pdf" style="color: #94a3b8;"></i>
+                                </div>
+                                <label class="format-label" style="color: #94a3b8;">
+                                    <input type="radio" name="format" value="pdf" disabled>
+                                    PDF
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Секция с тестами -->
+                        <div class="test-section">
+                            <h5 class="section-subtitle" style="color: #94a3b8;">
+                                <i class="fas fa-vial" style="color: #94a3b8;"></i> Тесты для включения в отчет
+                            </h5>
+                            
+                            <!-- Тест на стационарность -->
+                            <div class="test-item">
+                                <div class="test-header">
+                                    <input type="checkbox" id="test-stationary" class="test-checkbox" disabled>
+                                    <label for="test-stationary" class="test-title" style="color: #94a3b8;">Тесты на стационарность (ADF, KPSS, Phillips-Perron)</label>
+                                </div>
+                            </div>
+                            
+                            <!-- Тест на коинтеграцию -->
+                            <div class="test-item">
+                                <div class="test-header">
+                                    <input type="checkbox" id="test-cointegration" class="test-checkbox" disabled>
+                                    <label for="test-cointegration" class="test-title" style="color: #94a3b8;">Тест на коинтеграцию</label>
+                                </div>
+                                <div class="test-params">
+                                    <div class="param-row">
+                                        <label class="param-label" style="color: #94a3b8;">Порядок детерминистической компоненты:</label>
+                                        <select class="param-select" disabled>
+                                            <option value="0">0</option>
+                                            <option value="1" selected>1</option>
+                                            <option value="2">2</option>
+                                            <option value="3">3</option>
+                                        </select>
+                                    </div>
+                                    <div class="param-row">
+                                        <label class="param-label" style="color: #94a3b8;">Количество лагов:</label>
+                                        <input type="number" class="param-input" value="2" min="1" max="5" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Тест Грейнджера -->
+                            <div class="test-item">
+                                <div class="test-header">
+                                    <input type="checkbox" id="test-granger" class="test-checkbox" disabled>
+                                    <label for="test-granger" class="test-title" style="color: #94a3b8;">Тест причинности по Грейнджеру</label>
+                                </div>
+                                <div class="test-params">
+                                    <div class="param-row">
+                                        <label class="param-label" style="color: #94a3b8;">Максимальное число лагов:</label>
+                                        <input type="number" class="param-input" value="4" min="1" max="12" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Секция с моделями -->
+                        <div class="model-section">
+                            <h5 class="section-subtitle" style="color: #94a3b8;">
+                                <i class="fas fa-chart-line" style="color: #94a3b8;"></i> Модели для включения в отчет
+                            </h5>
+                            
+                            <!-- Модель ARDL -->
+                            <div class="model-item">
+                                <div class="model-header">
+                                    <input type="checkbox" id="model-ardl" class="model-checkbox" disabled>
+                                    <label for="model-ardl" class="model-title" style="color: #94a3b8;">Модель ARDL</label>
+                                </div>
+                                <div class="model-params">
+                                    <div class="param-row">
+                                        <label class="param-label" style="color: #94a3b8;">Максимальное число лагов p:</label>
+                                        <input type="number" class="param-input" value="4" min="1" max="12" disabled>
+                                    </div>
+                                    <div class="param-row">
+                                        <label class="param-label" style="color: #94a3b8;">Максимальное число лагов q:</label>
+                                        <input type="number" class="param-input" value="4" min="1" max="12" disabled>
+                                    </div>
+                                    <div class="param-row">
+                                        <label class="param-label" style="color: #94a3b8;">Информационный критерий:</label>
+                                        <select class="param-select" disabled>
+                                            <option value="aic" selected>AIC</option>
+                                            <option value="bic">BIC</option>
+                                            <option value="hqic">HQIC</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Модель VAR -->
+                            <div class="model-item">
+                                <div class="model-header">
+                                    <input type="checkbox" id="model-var" class="model-checkbox" disabled>
+                                    <label for="model-var" class="model-title" style="color: #94a3b8;">Модель VAR</label>
+                                </div>
+                                <div class="model-params">
+                                    <div class="param-row">
+                                        <label class="param-label" style="color: #94a3b8;">Количество лагов:</label>
+                                        <input type="number" class="param-input" value="2" min="1" max="8" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Модель VECM -->
+                            <div class="model-item">
+                                <div class="model-header">
+                                    <input type="checkbox" id="model-vecm" class="model-checkbox" disabled>
+                                    <label for="model-vecm" class="model-title" style="color: #94a3b8;">Модель VECM</label>
+                                </div>
+                                <div class="model-params">
+                                    <div class="param-row">
+                                        <label class="param-label" style="color: #94a3b8;">Количество лагов:</label>
+                                        <input type="number" class="param-input" value="2" min="1" max="8" disabled>
+                                    </div>
+                                    <div class="param-row">
+                                        <label class="param-label" style="color: #94a3b8;">Ранг коинтеграции:</label>
+                                        <input type="number" class="param-input" value="1" min="1" max="5" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Модель VECMX -->
+                            <div class="model-item">
+                                <div class="model-header">
+                                    <input type="checkbox" id="model-vecmx" class="model-checkbox" disabled>
+                                    <label for="model-vecmx" class="model-title" style="color: #94a3b8;">Модель VECMX</label>
+                                </div>
+                                <div class="model-params">
+                                    <div class="param-row">
+                                        <label class="param-label" style="color: #94a3b8;">Количество лагов:</label>
+                                        <input type="number" class="param-input" value="2" min="1" max="8" disabled>
+                                    </div>
+                                    <div class="param-row">
+                                        <label class="param-label" style="color: #94a3b8;">Ранг коинтеграции:</label>
+                                        <input type="number" class="param-input" value="1" min="1" max="5" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Модель NARDL -->
+                            <div class="model-item">
+                                <div class="model-header">
+                                    <input type="checkbox" id="model-nardl" class="model-checkbox" disabled>
+                                    <label for="model-nardl" class="model-title" style="color: #94a3b8;">Модель NARDL</label>
+                                </div>
+                                <div class="model-params">
+                                    <div class="param-row">
+                                        <label class="param-label" style="color: #94a3b8;">Максимальное число лагов p:</label>
+                                        <input type="number" class="param-input" value="4" min="1" max="12" disabled>
+                                    </div>
+                                    <div class="param-row">
+                                        <label class="param-label" style="color: #94a3b8;">Максимальное число лагов q:</label>
+                                        <input type="number" class="param-input" value="4" min="1" max="12" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="btn-generate btn-disabled">
+                            <i class="fas fa-file-export me-2"></i> Сформировать отчет
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Секция с информацией о последних обновлениях -->
+            <div class="update-container mt-4">
+                <div class="update-info">
+                    <div class="update-date">
+                        <span class="date-badge">28.03.2025</span>
+                    </div>
+                    <h3>Добавлена страница формирования отчетов</h3>
+                    <span class="version-badge">v3.2.1</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Обработка мобильного меню
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                sidebarOverlay.classList.toggle('active');
+                document.body.classList.toggle('sidebar-open');
+            });
+            
+            sidebarOverlay.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
+            });
+
+            // Адаптивность при изменении размера окна
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 992) {
+                    sidebar.classList.remove('active');
+                    sidebarOverlay.classList.remove('active');
+                    document.body.classList.remove('sidebar-open');
+                }
+            });
+            
+            // Для демонстрации - в рабочей версии эти обработчики будут активны
+            /*
+            // Обработка отображения параметров при выборе теста/модели
+            const checkboxes = document.querySelectorAll('.test-checkbox, .model-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const params = this.closest('.test-item, .model-item').querySelector('.test-params, .model-params');
+                    if (params) {
+                        params.style.display = this.checked ? 'block' : 'none';
+                    }
+                });
+            });
+            */
+        });
+    </script>
+</body>
+</html>
