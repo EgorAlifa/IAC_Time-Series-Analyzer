@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Преобразование порядков интеграции - Аналитическая система</title>
+    <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-    <style>
+<style>
         /* Дополнительные стили для страницы преобразования данных */
         .data-table {
             width: 100%;
@@ -424,6 +424,57 @@
             cursor: pointer;
         }
         
+        .integration-info {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .integration-info h4 {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: #334155;
+        }
+        
+        .integration-info ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+        
+        .integration-info li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        .integration-info li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #3b82f6;
+            font-weight: bold;
+        }
+        
+        .badge-i0 {
+            background-color: #dcfce7;
+            color: #15803d;
+        }
+        
+        .badge-i1 {
+            background-color: #ffedd5;
+            color: #c2410c;
+        }
+        
+        .badge-i2 {
+            background-color: #dbeafe;
+            color: #1d4ed8;
+        }
+        
         /* Для адаптивности на мобильных устройствах */
         @media (max-width: 767.98px) {
             .variable-row {
@@ -574,6 +625,16 @@
 
             <!-- Контент для преобразования данных (отображается, если файл загружен) -->
             <div id="transformationContent" style="display: none;">
+                <!-- Информация о порядках интеграции -->
+                <div class="integration-info">
+                    <h4>Порядки интеграции временных рядов</h4>
+                    <ul>
+                        <li><span class="badge badge-i0">I(0)</span> - <strong>Стационарный ряд</strong>: колеблется вокруг среднего значения, без тренда, дисперсия постоянна.</li>
+                        <li><span class="badge badge-i1">I(1)</span> - <strong>Первый порядок интеграции</strong>: нестационарный ряд, первые разности которого стационарны.</li>
+                        <li><span class="badge badge-i2">I(2)</span> - <strong>Второй порядок интеграции</strong>: нестационарный ряд, вторые разности которого стационарны.</li>
+                    </ul>
+                </div>
+
                 <!-- Блок с графиком исходных данных -->
                 <div id="originalChartContainer" class="chart-container">
                     <div class="chart-header">
@@ -679,841 +740,799 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // API URL
-            const API_URL = 'http://37.252.23.30:8000';
-            
-            // Обработка мобильного меню
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            const sidebar = document.getElementById('sidebar');
-            const sidebarOverlay = document.getElementById('sidebarOverlay');
-            
-            sidebarToggle.addEventListener('click', function() {
-                sidebar.classList.toggle('active');
-                sidebarOverlay.classList.toggle('active');
-                document.body.classList.toggle('sidebar-open');
-            });
-            
-            sidebarOverlay.addEventListener('click', function() {
-                sidebar.classList.remove('active');
-                sidebarOverlay.classList.remove('active');
-                document.body.classList.remove('sidebar-open');
-            });
+// transform-integration.js
+document.addEventListener('DOMContentLoaded', function() {
+    // API URL
+    const API_URL = 'http://37.252.23.30:8000';
+    
+    // Обработка мобильного меню
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    
+    sidebarToggle.addEventListener('click', function() {
+        sidebar.classList.toggle('active');
+        sidebarOverlay.classList.toggle('active');
+        document.body.classList.toggle('sidebar-open');
+    });
+    
+    sidebarOverlay.addEventListener('click', function() {
+        sidebar.classList.remove('active');
+        sidebarOverlay.classList.remove('active');
+        document.body.classList.remove('sidebar-open');
+    });
 
-            // Адаптивность при изменении размера окна
-            window.addEventListener('resize', function() {
-                if (window.innerWidth >= 992) {
-                    sidebar.classList.remove('active');
-                    sidebarOverlay.classList.remove('active');
-                    document.body.classList.remove('sidebar-open');
-                }
-            });
-            
-            // Модальное окно загрузки
-            const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
-            const loadingMessage = document.getElementById('loadingMessage');
-            const loadingDetails = document.getElementById('loadingDetails');
-            
-            // Элементы DOM для отображения информации о файле
-            const fileInfoPanel = document.getElementById('fileInfoPanel');
-            const fileName = document.getElementById('fileName');
-            const fileDetails = document.getElementById('fileDetails');
-            const noDataMessage = document.getElementById('noDataMessage');
-            const transformationContent = document.getElementById('transformationContent');
-            const backToDataBtn = document.getElementById('backToDataBtn');
-            
-            // Элементы DOM для преобразования
-            const variablesList = document.getElementById('variablesList');
-            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-            const transformBtn = document.getElementById('transformBtn');
-            const downloadBtn = document.getElementById('downloadBtn');
-            const previewBtn = document.getElementById('previewBtn');
-            const transformAlert = document.getElementById('transformAlert');
-            const transformMessage = document.getElementById('transformMessage');
-            
-            // Элементы DOM для графиков
-            const originalChartContainer = document.getElementById('originalChartContainer');
-            const previewChartContainer = document.getElementById('previewChartContainer');
-            const closePreviewBtn = document.getElementById('closePreviewBtn');
-            const chartLegend = document.getElementById('chartLegend');
-            const previewLegend = document.getElementById('previewLegend');
-            const toggleAllSeriesBtn = document.getElementById('toggleAllSeriesBtn');
-            
-            // Контексты для графиков
-            const originalChartCtx = document.getElementById('originalChart').getContext('2d');
-            const previewChartCtx = document.getElementById('previewChart').getContext('2d');
-            
-            // Глобальные переменные
-            let originalChart = null;
-            let previewChart = null;
-            let fileData = null;
-            let selectedVariables = [];
-            let transformedData = null;
-            let allSeriesVisible = true;
-            let chartColors = [
-                '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
-                '#ec4899', '#6366f1', '#14b8a6', '#f97316', '#a855f7'
-            ];
-            
-            // Проверяем, есть ли загруженный файл
-            checkLoadedFile();
-            
-            // Слушатель для кнопки "К списку данных"
-            backToDataBtn.addEventListener('click', function() {
-                window.location.href = '/data';
-            });
-            
-            // Слушатель для чекбокса "Выбрать все"
-            selectAllCheckbox.addEventListener('change', function() {
-                const checkboxes = document.querySelectorAll('.transform-checkbox');
-                checkboxes.forEach(checkbox => {
-                    if (!checkbox.closest('.variable-row').classList.contains('not-numeric')) {
-                        checkbox.checked = selectAllCheckbox.checked;
-                    }
-                });
-                updateSelectedVariables();
-            });
-            
-            // Слушатель для кнопки преобразования
-            transformBtn.addEventListener('click', transformData);
-            
-            // Слушатель для кнопки скачивания
-            downloadBtn.addEventListener('click', downloadTransformedData);
-            
-            // Слушатель для кнопки предпросмотра
-            previewBtn.addEventListener('click', previewTransformation);
-            
-            // Слушатель для кнопки закрытия предпросмотра
-            closePreviewBtn.addEventListener('click', function() {
-                previewChartContainer.style.display = 'none';
-            });
-            
-            // Слушатель для кнопки показать/скрыть все ряды
-            toggleAllSeriesBtn.addEventListener('click', toggleAllSeries);
-            
-            // Функция проверки наличия загруженного файла
-            function checkLoadedFile() {
-                const storedFileId = localStorage.getItem('fileId');
-                const storedFileName = localStorage.getItem('fileName');
-                const storedColumnsData = localStorage.getItem('fileColumnsData');
-                
-                if (storedFileId && storedFileName && storedColumnsData) {
-                    // Есть загруженный файл
-                    fileInfoPanel.style.display = 'flex';
-                    noDataMessage.style.display = 'none';
-                    transformationContent.style.display = 'block';
-                    
-                    // Отображаем информацию о файле
-                    fileName.textContent = storedFileName;
-                    
-                    try {
-                        fileData = JSON.parse(storedColumnsData);
-                        fileData.fileId = storedFileId;
-                        
-                        const numericColumns = fileData.numeric_columns || [];
-                        const rowsCount = fileData.rows_count || 0;
-                        
-                        fileDetails.textContent = `${numericColumns.length} числовых столбцов, ${rowsCount} наблюдений`;
-                        
-                        // Заполняем список переменных и загружаем данные для графика
-                        populateVariablesList();
-                        loadTimeSeriesData();
-                        
-                    } catch (error) {
-                        console.error('Ошибка при разборе данных о столбцах:', error);
-                        fileDetails.textContent = 'Файл загружен';
-                    }
-                } else {
-                    // Нет загруженного файла
-                    fileInfoPanel.style.display = 'none';
-                    noDataMessage.style.display = 'block';
-                    transformationContent.style.display = 'none';
-                }
+    // Адаптивность при изменении размера окна
+    window.addEventListener('resize', function() {
+        if (window.innerWidth >= 992) {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            document.body.classList.remove('sidebar-open');
+        }
+    });
+    
+    // Модальное окно загрузки
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    const loadingMessage = document.getElementById('loadingMessage');
+    const loadingDetails = document.getElementById('loadingDetails');
+    
+    // Элементы DOM для отображения информации о файле
+    const fileInfoPanel = document.getElementById('fileInfoPanel');
+    const fileName = document.getElementById('fileName');
+    const fileDetails = document.getElementById('fileDetails');
+    const noDataMessage = document.getElementById('noDataMessage');
+    const transformationContent = document.getElementById('transformationContent');
+    const backToDataBtn = document.getElementById('backToDataBtn');
+    
+    // Элементы DOM для преобразования
+    const variablesList = document.getElementById('variablesList');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const transformBtn = document.getElementById('transformBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const previewBtn = document.getElementById('previewBtn');
+    const transformAlert = document.getElementById('transformAlert');
+    const transformMessage = document.getElementById('transformMessage');
+    
+    // Элементы DOM для графиков
+    const originalChartContainer = document.getElementById('originalChartContainer');
+    const previewChartContainer = document.getElementById('previewChartContainer');
+    const closePreviewBtn = document.getElementById('closePreviewBtn');
+    const chartLegend = document.getElementById('chartLegend');
+    const previewLegend = document.getElementById('previewLegend');
+    const toggleAllSeriesBtn = document.getElementById('toggleAllSeriesBtn');
+    
+    // Глобальные переменные
+    let originalChart = null;
+    let previewChart = null;
+    let fileData = null;
+    let selectedVariables = [];
+    let transformedData = null;
+    let allSeriesVisible = true;
+    let chartColors = [
+        '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+        '#ec4899', '#6366f1', '#14b8a6', '#f97316', '#a855f7'
+    ];
+    
+    // Проверяем, есть ли загруженный файл
+    checkLoadedFile();
+    
+    // Слушатель для кнопки "К списку данных"
+    backToDataBtn.addEventListener('click', function() {
+        window.location.href = '/data';
+    });
+    
+    // Слушатель для чекбокса "Выбрать все"
+    selectAllCheckbox.addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.transform-checkbox');
+        checkboxes.forEach(checkbox => {
+            if (!checkbox.closest('.variable-row')?.classList.contains('not-numeric') && checkbox.id !== 'selectAllCheckbox') {
+                checkbox.checked = selectAllCheckbox.checked;
             }
+        });
+        updateSelectedVariables();
+    });
+    
+    // Слушатель для кнопки преобразования
+    transformBtn.addEventListener('click', transformData);
+    
+    // Слушатель для кнопки скачивания
+    downloadBtn.addEventListener('click', downloadTransformedData);
+    
+    // Слушатель для кнопки предпросмотра
+    previewBtn.addEventListener('click', previewTransformation);
+    
+    // Слушатель для кнопки закрытия предпросмотра
+    closePreviewBtn.addEventListener('click', function() {
+        previewChartContainer.style.display = 'none';
+    });
+    
+    // Слушатель для кнопки показать/скрыть все ряды
+    toggleAllSeriesBtn.addEventListener('click', toggleAllSeries);
+    
+    // Функция проверки наличия загруженного файла
+    function checkLoadedFile() {
+        const storedFileId = localStorage.getItem('fileId');
+        const storedFileName = localStorage.getItem('fileName');
+        const storedColumnsData = localStorage.getItem('fileColumnsData');
+        
+        if (storedFileId && storedFileName && storedColumnsData) {
+            // Есть загруженный файл
+            fileInfoPanel.style.display = 'flex';
+            noDataMessage.style.display = 'none';
+            transformationContent.style.display = 'block';
             
-            // Функция для заполнения списка переменных
-            function populateVariablesList() {
-                variablesList.innerHTML = ''; // Очищаем список
+            // Отображаем информацию о файле
+            fileName.textContent = storedFileName;
+            
+            try {
+                fileData = JSON.parse(storedColumnsData);
+                fileData.fileId = storedFileId;
                 
                 const numericColumns = fileData.numeric_columns || [];
-                const allColumns = fileData.columns || [];
+                const rowsCount = fileData.rows_count || 0;
                 
-                // Для каждой колонки создаем строку в таблице
-                allColumns.forEach(column => {
-                    // Пропускаем колонку с датами
-                    if (column === fileData.date_column) {
-                        return;
-                    }
-                    
-                    // Определяем, является ли колонка числовой
-                    const isNumeric = numericColumns.includes(column);
-                    
-                    // Создаем строку с переменной
-                    const row = document.createElement('div');
-                    row.className = `variable-row ${isNumeric ? '' : 'not-numeric'}`;
-                    
-                    // Название переменной
-                    const nameDiv = document.createElement('div');
-                    nameDiv.className = 'variable-name';
-                    nameDiv.textContent = column;
-                    
-                    // Если не числовая, добавляем информацию
-                    if (!isNumeric) {
-                        const infoTooltip = document.createElement('div');
-                        infoTooltip.className = 'info-tooltip';
-                        infoTooltip.innerHTML = '<i class="fas fa-info-circle"></i>';
-                        
-                        const tooltipText = document.createElement('span');
-                        tooltipText.className = 'tooltip-text';
-                        tooltipText.textContent = 'Эта переменная не является числовой и не может быть преобразована.';
-                        
-                        infoTooltip.appendChild(tooltipText);
-                        nameDiv.appendChild(infoTooltip);
-                    }
-                    
-                    // Статус переменной - добавим после тестов на стационарность
-                    const statusDiv = document.createElement('div');
-                    statusDiv.className = 'variable-status';
-                    statusDiv.textContent = 'Определяется...';
-                    
-                    // Опции преобразования
-                    const optionsDiv = document.createElement('div');
-                    optionsDiv.className = 'transformation-options';
-                    
-                    // Селект с порядком интеграции
-                    const selectWrapper = document.createElement('div');
-                    selectWrapper.className = 'select-wrapper';
-                    
-                    const select = document.createElement('select');
-                    select.className = 'integration-order';
-                    select.dataset.variable = column;
-                    
-                    // Опции для селекта
-                    const options = [
-                        { value: 'none', text: 'Оставить как есть' },
-                        { value: 'I(0)', text: 'Привести к I(0) - стационарный' },
-                        { value: 'I(1)', text: 'Привести к I(1) - первый порядок интеграции' },
-                        { value: 'I(2)', text: 'Привести к I(2) - второй порядок интеграции' }
-                    ];
-                    
-                    options.forEach(opt => {
-                        const option = document.createElement('option');
-                        option.value = opt.value;
-                        option.textContent = opt.text;
-                        select.appendChild(option);
-                    });
-                    
-                    selectWrapper.appendChild(select);
-                    
-                    // Чекбокс для выбора
-                    const checkboxWrapper = document.createElement('div');
-                    checkboxWrapper.className = 'checkbox-wrapper';
-                    
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.className = 'transform-checkbox';
-                    checkbox.id = `transform_${column}`;
-                    checkbox.dataset.variable = column;
-                    checkbox.addEventListener('change', updateSelectedVariables);
-                    
-                    const label = document.createElement('label');
-                    label.setAttribute('for', `transform_${column}`);
-                    label.textContent = 'Выбрать';
-                    
-                    checkboxWrapper.appendChild(checkbox);
-                    checkboxWrapper.appendChild(label);
-                    
-                    // Добавляем элементы в строку
-                    optionsDiv.appendChild(selectWrapper);
-                    optionsDiv.appendChild(checkboxWrapper);
-                    
-                    row.appendChild(nameDiv);
-                    row.appendChild(statusDiv);
-                    row.appendChild(optionsDiv);
-                    
-                    // Добавляем строку в список
-                    variablesList.appendChild(row);
-                }
+                fileDetails.textContent = `${numericColumns.length} числовых столбцов, ${rowsCount} наблюдений`;
                 
-                // После заполнения запускаем анализ стационарности
-                analyzStationarity();
+                // Заполняем список переменных и загружаем данные для графика
+                populateVariablesList();
+                loadTimeSeriesData();
+                
+            } catch (error) {
+                console.error('Ошибка при разборе данных о столбцах:', error);
+                fileDetails.textContent = 'Файл загружен';
+            }
+        } else {
+            // Нет загруженного файла
+            fileInfoPanel.style.display = 'none';
+            noDataMessage.style.display = 'block';
+            transformationContent.style.display = 'none';
+        }
+    }
+    
+    // Функция для заполнения списка переменных
+    function populateVariablesList() {
+        variablesList.innerHTML = ''; // Очищаем список
+        
+        const numericColumns = fileData.numeric_columns || [];
+        const allColumns = fileData.columns || [];
+        
+        // Для каждой колонки создаем строку в таблице
+        numericColumns.forEach(column => {
+            // Пропускаем колонку с датами
+            if (column === fileData.date_column) {
+                return;
             }
             
-            // Функция для запроса данных временных рядов для графика
-            async function loadTimeSeriesData() {
-                try {
-                    // Показываем сообщение о загрузке в контейнере графика
-                    originalChartContainer.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Загрузка данных...</p></div>';
-                    
-                    const fileId = fileData.fileId;
-                    const dateColumn = fileData.date_column || 'Дата';
-                    const numericColumns = fileData.numeric_columns || [];
-                    
-                    // Если нет числовых колонок, выходим
-                    if (numericColumns.length === 0) {
-                        originalChartContainer.innerHTML = '<div class="text-center p-5 text-muted">Нет числовых данных для отображения</div>';
-                        return;
-                    }
-                    
-                    // Запрашиваем данные для каждой колонки
-                    const datasets = [];
-                    for (const column of numericColumns) {
-                        const formData = new FormData();
-                        formData.append('file_id', fileId);
-                        formData.append('date_column', dateColumn);
-                        formData.append('column', column);
-                        
-                        const response = await fetch(`${API_URL}/get-time-series-data`, {
-                            method: 'POST',
-                            body: formData
-                        });
-                        
-                        if (!response.ok) {
-                            throw new Error(`Ошибка при получении данных для ${column}`);
-                        }
-                        
-                        const data = await response.json();
-                        
-                        // Формируем датасет для графика
-                        datasets.push({
-                            label: column,
-                            data: data.map(item => ({ x: new Date(item.date), y: item.value })),
-                            borderColor: chartColors[datasets.length % chartColors.length],
-                            backgroundColor: chartColors[datasets.length % chartColors.length] + '33',
-                            borderWidth: 2,
-                            pointRadius: 0,
-                            tension: 0.2
-                        });
-                    }
-                    
-                    // Создаем график
-                    createOriginalChart(datasets);
-                    
-                } catch (error) {
-                    console.error('Ошибка при загрузке данных для графика:', error);
-                    originalChartContainer.innerHTML = `<div class="text-center p-5 text-danger"><i class="fas fa-exclamation-circle fa-2x mb-3"></i><p>Ошибка при загрузке данных: ${error.message}</p></div>`;
-                }
+            // Создаем строку с переменной
+            const row = document.createElement('div');
+            row.className = 'variable-row';
+            
+            // Название переменной
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'variable-name';
+            nameDiv.textContent = column;
+            
+            // Статус переменной (порядок интеграции)
+            const statusDiv = document.createElement('div');
+            statusDiv.className = 'variable-status';
+            
+            // Определение текущего порядка интеграции на основе имени
+            let currentOrder = "Не определен";
+            let statusBadge = "";
+            
+            if (column.endsWith("_I0")) {
+                currentOrder = "I(0) - стационарный";
+                statusBadge = '<span class="status-badge stationary">I(0)</span>';
+            } else if (column.endsWith("_I1")) {
+                currentOrder = "I(1) - первый порядок";
+                statusBadge = '<span class="status-badge non-stationary">I(1)</span>';
+            } else if (column.endsWith("_I2")) {
+                currentOrder = "I(2) - второй порядок";
+                statusBadge = '<span class="status-badge non-stationary">I(2)</span>';
+            } else {
+                statusBadge = '<span class="text-muted">Не определен</span>';
             }
             
-            // Функция для создания графика исходных данных
-            function createOriginalChart(datasets) {
-                // Очищаем контейнер графика и легенду
-                document.getElementById('originalChart').remove();
-                const canvas = document.createElement('canvas');
-                canvas.id = 'originalChart';
-                document.querySelector('#originalChartContainer .chart-wrapper').appendChild(canvas);
+            statusDiv.innerHTML = statusBadge;
+            
+            // Опции преобразования
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'transformation-options';
+            
+            // Селект с порядком интеграции
+            const selectWrapper = document.createElement('div');
+            selectWrapper.className = 'select-wrapper';
+            
+            const select = document.createElement('select');
+            select.className = 'integration-order';
+            select.dataset.variable = column;
+            
+            // Опции для селекта
+            const options = [
+                { value: 'none', text: 'Оставить как есть' },
+                { value: 'I(0)', text: 'Привести к I(0) - стационарный' },
+                { value: 'I(1)', text: 'Привести к I(1) - первый порядок интеграции' },
+                { value: 'I(2)', text: 'Привести к I(2) - второй порядок интеграции' }
+            ];
+            
+            options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = opt.text;
+                select.appendChild(option);
+            });
+            
+            selectWrapper.appendChild(select);
+            
+            // Чекбокс для выбора
+            const checkboxWrapper = document.createElement('div');
+            checkboxWrapper.className = 'checkbox-wrapper';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'transform-checkbox';
+            checkbox.id = `transform_${column}`;
+            checkbox.dataset.variable = column;
+            checkbox.addEventListener('change', updateSelectedVariables);
+            
+            const label = document.createElement('label');
+            label.setAttribute('for', `transform_${column}`);
+            label.textContent = 'Выбрать';
+            
+            checkboxWrapper.appendChild(checkbox);
+            checkboxWrapper.appendChild(label);
+            
+            // Добавляем элементы в строку
+            optionsDiv.appendChild(selectWrapper);
+            optionsDiv.appendChild(checkboxWrapper);
+            
+            row.appendChild(nameDiv);
+            row.appendChild(statusDiv);
+            row.appendChild(optionsDiv);
+            
+            // Добавляем строку в список
+            variablesList.appendChild(row);
+        });
+        
+        // Если нет числовых переменных
+        if (numericColumns.length === 0 || numericColumns.length === 1 && numericColumns[0] === fileData.date_column) {
+            const noVarsMsg = document.createElement('div');
+            noVarsMsg.className = 'text-center p-4 text-muted';
+            noVarsMsg.innerHTML = '<i class="fas fa-exclamation-circle mb-2"></i><p>Нет числовых переменных для преобразования</p>';
+            variablesList.appendChild(noVarsMsg);
+        }
+    }
+    
+    // Функция для запроса данных временных рядов для графика
+    async function loadTimeSeriesData() {
+        try {
+            // Показываем сообщение о загрузке в контейнере графика
+            originalChartContainer.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Загрузка данных...</p></div>';
+            
+            const fileId = fileData.fileId;
+            const dateColumn = fileData.date_column || 'Дата';
+            const numericColumns = fileData.numeric_columns || [];
+            
+            // Если нет числовых колонок, выходим
+            if (numericColumns.length === 0) {
+                originalChartContainer.innerHTML = '<div class="text-center p-5 text-muted">Нет числовых данных для отображения</div>';
+                return;
+            }
+            
+            // Запрашиваем данные для каждой колонки
+            const datasets = [];
+            for (const column of numericColumns) {
+                // Пропускаем колонку с датами
+                if (column === dateColumn) {
+                    continue;
+                }
                 
-                chartLegend.innerHTML = '';
+                const formData = new FormData();
+                formData.append('file_id', fileId);
+                formData.append('date_column', dateColumn);
+                formData.append('column', column);
                 
-                // Создаем легенду
-                datasets.forEach((dataset, index) => {
-                    const legendItem = document.createElement('div');
-                    legendItem.className = 'legend-item';
-                    
-                    const colorBox = document.createElement('div');
-                    colorBox.className = 'legend-color';
+                const response = await fetch(`${API_URL}/get-time-series-data`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Ошибка при получении данных для ${column}`);
+                }
+                
+                const data = await response.json();
+                
+                // Формируем датасет для графика
+                datasets.push({
+                    label: column,
+                    data: data.map(item => ({ x: new Date(item.date), y: item.value })),
+                    borderColor: chartColors[datasets.length % chartColors.length],
+                    backgroundColor: chartColors[datasets.length % chartColors.length] + '33',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.2
+                });
+            }
+            
+            // Создаем график
+            createOriginalChart(datasets);
+            
+            // Восстанавливаем контейнер графика, если были ошибки
+            originalChartContainer.innerHTML = `
+                <div class="chart-header">
+                    <div class="chart-title">Исходные данные</div>
+                    <div class="chart-controls">
+                        <button id="toggleAllSeriesBtn" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-eye me-1"></i> Показать/скрыть все
+                        </button>
+                    </div>
+                </div>
+                <div class="legend" id="chartLegend"></div>
+                <div class="chart-wrapper">
+                    <canvas id="originalChart"></canvas>
+                </div>
+            `;
+            
+        } catch (error) {
+            console.error('Ошибка при загрузке данных для графика:', error);
+            originalChartContainer.innerHTML = `<div class="text-center p-5 text-danger"><i class="fas fa-exclamation-circle fa-2x mb-3"></i><p>Ошибка при загрузке данных: ${error.message}</p></div>`;
+        }
+    }
+    
+    // Функция для создания графика исходных данных
+    function createOriginalChart(datasets) {
+        // Очищаем контейнер графика и легенду
+        chartLegend.innerHTML = '';
+        
+        // Создаем новый canvas для графика
+        const chartWrapper = document.querySelector('#originalChartContainer .chart-wrapper');
+        chartWrapper.innerHTML = '<canvas id="originalChart"></canvas>';
+        
+        // Создаем легенду
+        datasets.forEach((dataset, index) => {
+            const legendItem = document.createElement('div');
+            legendItem.className = 'legend-item';
+            
+            const colorBox = document.createElement('div');
+            colorBox.className = 'legend-color';
+            colorBox.style.backgroundColor = dataset.borderColor;
+            
+            const labelText = document.createElement('span');
+            labelText.textContent = dataset.label;
+            
+            legendItem.appendChild(colorBox);
+            legendItem.appendChild(labelText);
+            
+            // Добавляем интерактивность легенде
+            legendItem.addEventListener('click', () => {
+                const chartDataset = originalChart.data.datasets[index];
+                chartDataset.hidden = !chartDataset.hidden;
+                originalChart.update();
+                
+                // Обновляем стиль легенды
+                if (chartDataset.hidden) {
+                    legendItem.style.opacity = '0.5';
+                    colorBox.style.backgroundColor = '#cbd5e1';
+                } else {
+                    legendItem.style.opacity = '1';
                     colorBox.style.backgroundColor = dataset.borderColor;
-                    
-                    const labelText = document.createElement('span');
-                    labelText.textContent = dataset.label;
-                    
-                    legendItem.appendChild(colorBox);
-                    legendItem.appendChild(labelText);
-                    
-                    // Добавляем интерактивность легенде
-                    legendItem.addEventListener('click', () => {
-                        const chartDataset = originalChart.data.datasets[index];
-                        chartDataset.hidden = !chartDataset.hidden;
-                        originalChart.update();
-                        
-                        // Обновляем стиль легенды
-                        if (chartDataset.hidden) {
-                            legendItem.style.opacity = '0.5';
-                            colorBox.style.backgroundColor = '#cbd5e1';
-                        } else {
-                            legendItem.style.opacity = '1';
-                            colorBox.style.backgroundColor = dataset.borderColor;
-                        }
-                    });
-                    
-                    chartLegend.appendChild(legendItem);
-                });
-                
-                // Создаем график
-                originalChart = new Chart(document.getElementById('originalChart').getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        datasets: datasets
+                }
+            });
+            
+            chartLegend.appendChild(legendItem);
+        });
+        
+        // Создаем график
+        originalChart = new Chart(document.getElementById('originalChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false // Используем свою легенду
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false // Используем свою легенду
-                            },
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'month',
+                            displayFormats: {
+                                month: 'MMM yyyy'
                             }
                         },
-                        scales: {
-                            x: {
-                                type: 'time',
-                                time: {
-                                    unit: 'month',
-                                    displayFormats: {
-                                        month: 'MMM yyyy'
-                                    }
-                                },
-                                title: {
-                                    display: true,
-                                    text: 'Дата'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Значение'
-                                }
-                            }
-                        },
-                        interaction: {
-                            mode: 'nearest',
-                            axis: 'x',
-                            intersect: false
+                        title: {
+                            display: true,
+                            text: 'Дата'
                         }
-                    }
-                });
-            }
-            
-            // Функция для запуска анализа стационарности
-            async function analyzStationarity() {
-                try {
-                    const fileId = fileData.fileId;
-                    const dateColumn = fileData.date_column || 'Дата';
-                    const numericColumns = fileData.numeric_columns || [];
-                    
-                    // Если нет числовых колонок, выходим
-                    if (numericColumns.length === 0) {
-                        return;
-                    }
-                    
-                    // Для каждой числовой колонки запускаем тесты на стационарность
-                    const formData = new FormData();
-                    formData.append('file_id', fileId);
-                    formData.append('date_column', dateColumn);
-                    formData.append('endogenous_vars', JSON.stringify(numericColumns));
-                    
-                    const response = await fetch(`${API_URL}/analyze-with-file-id`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('Ошибка при анализе стационарности данных');
-                    }
-                    
-                    const results = await response.json();
-                    console.log('Результаты анализа стационарности:', results);
-                    
-                    // Обновляем информацию о стационарности в интерфейсе
-                    updateStationarityInfo(results);
-                    
-                } catch (error) {
-                    console.error('Ошибка при анализе стационарности:', error);
-                    
-                    // Обновляем статусы ошибкой
-                    const statusDivs = document.querySelectorAll('.variable-status');
-                    statusDivs.forEach(div => {
-                        div.innerHTML = '<span class="text-danger">Ошибка анализа</span>';
-                    });
-                }
-            }
-            
-            // Функция для обновления информации о стационарности
-            function updateStationarityInfo(results) {
-                // Обрабатываем результаты переменных
-                if (results.variable_results) {
-                    for (const [variable, result] of Object.entries(results.variable_results)) {
-                        const row = Array.from(document.querySelectorAll('.variable-row')).find(
-                            row => row.querySelector('.variable-name').textContent.trim() === variable
-                        );
-                        
-                        if (row) {
-                            const statusDiv = row.querySelector('.variable-status');
-                            const selectEl = row.querySelector('select.integration-order');
-                            
-                            // Определяем текущий порядок интеграции
-                            const dValue = result.d_value;
-                            let statusHTML = '';
-                            
-                            // Устанавливаем значение селекта по умолчанию в зависимости от d_value
-                            if (dValue === 0) {
-                                statusHTML = '<span class="status-badge stationary">I(0) - стационарный</span>';
-                                selectEl.value = 'none'; // Оставить как есть, т.к. уже стационарный
-                            } else if (dValue === 1) {
-                                statusHTML = '<span class="status-badge non-stationary">I(1) - первый порядок</span>';
-                                selectEl.value = 'none'; // Оставить как есть
-                            } else if (dValue === 2) {
-                                statusHTML = '<span class="status-badge non-stationary">I(2) - второй порядок</span>';
-                                selectEl.value = 'none'; // Оставить как есть
-                            } else {
-                                statusHTML = '<span class="text-muted">Не определен</span>';
-                            }
-                            
-                            statusDiv.innerHTML = statusHTML;
-                        }
-                    }
-                }
-            }
-            
-            // Функция для обновления списка выбранных переменных
-            function updateSelectedVariables() {
-                selectedVariables = [];
-                const checkboxes = document.querySelectorAll('.transform-checkbox:checked');
-                
-                checkboxes.forEach(checkbox => {
-                    const variable = checkbox.dataset.variable;
-                    if (variable) {
-                        selectedVariables.push(variable);
-                    }
-                });
-                
-                // Обновляем состояние кнопки преобразования
-                transformBtn.disabled = selectedVariables.length === 0;
-                previewBtn.disabled = selectedVariables.length === 0;
-                
-                console.log('Выбранные переменные:', selectedVariables);
-            }
-            
-            // Функция для переключения видимости всех рядов
-            function toggleAllSeries() {
-                allSeriesVisible = !allSeriesVisible;
-                
-                if (originalChart) {
-                    originalChart.data.datasets.forEach((dataset, index) => {
-                        dataset.hidden = !allSeriesVisible;
-                        
-                        // Обновляем стиль легенды
-                        const legendItems = chartLegend.querySelectorAll('.legend-item');
-                        if (legendItems[index]) {
-                            if (dataset.hidden) {
-                                legendItems[index].style.opacity = '0.5';
-                                legendItems[index].querySelector('.legend-color').style.backgroundColor = '#cbd5e1';
-                            } else {
-                                legendItems[index].style.opacity = '1';
-                                legendItems[index].querySelector('.legend-color').style.backgroundColor = dataset.borderColor;
-                            }
-                        }
-                    });
-                    
-                    originalChart.update();
-                }
-            }
-            
-            // Функция для предпросмотра трансформации
-            async function previewTransformation() {
-                if (selectedVariables.length === 0) {
-                    alert('Пожалуйста, выберите хотя бы одну переменную для преобразования.');
-                    return;
-                }
-                
-                // Показываем модальное окно загрузки
-                loadingMessage.textContent = 'Подготовка предпросмотра...';
-                loadingDetails.textContent = 'Вычисление преобразованных рядов...';
-                loadingModal.show();
-                
-                try {
-                    // Получаем настройки преобразования для каждой переменной
-                    const transformationSettings = {};
-                    selectedVariables.forEach(variable => {
-                        const selectEl = document.querySelector(`select[data-variable="${variable}"]`);
-                        if (selectEl) {
-                            transformationSettings[variable] = selectEl.value;
-                        }
-                    });
-                    
-                    // Готовим данные для запроса
-                    const fileId = fileData.fileId;
-                    const dateColumn = fileData.date_column || 'Дата';
-                    
-                    // Запрос к API для преобразования
-                    const formData = new FormData();
-                    formData.append('file_id', fileId);
-                    formData.append('date_column', dateColumn);
-                    formData.append('transformation_settings', JSON.stringify(transformationSettings));
-                    formData.append('preview', 'true');
-                    
-                    // Создаем новый API-эндпоинт для трансформации данных
-                    const response = await fetch(`${API_URL}/transform-integration-order`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('Ошибка при преобразовании данных');
-                    }
-                    
-                    const previewData = await response.json();
-                    console.log('Данные предпросмотра:', previewData);
-                    
-                    // Создаем график с предпросмотром
-                    createPreviewChart(previewData);
-                    
-                    // Показываем контейнер с предпросмотром
-                    previewChartContainer.style.display = 'block';
-                    
-                } catch (error) {
-                    console.error('Ошибка при предпросмотре:', error);
-                    alert(`Ошибка при формировании предпросмотра: ${error.message}`);
-                } finally {
-                    // Скрываем модальное окно загрузки
-                    loadingModal.hide();
-                }
-            }
-            
-            // Функция для создания графика предпросмотра
-            function createPreviewChart(previewData) {
-                // Очищаем контейнер графика и легенду
-                document.getElementById('previewChart').remove();
-                const canvas = document.createElement('canvas');
-                canvas.id = 'previewChart';
-                document.querySelector('#previewChartContainer .chart-wrapper').appendChild(canvas);
-                
-                previewLegend.innerHTML = '';
-                
-                // Создаем датасеты для графика
-                const datasets = [];
-                
-                // Добавляем исходные данные
-                selectedVariables.forEach((variable, index) => {
-                    // Ищем исходные данные в originalChart
-                    const originalDataset = originalChart.data.datasets.find(ds => ds.label === variable);
-                    
-                    if (originalDataset) {
-                        datasets.push({
-                            label: `${variable} (исходный)`,
-                            data: originalDataset.data,
-                            borderColor: originalDataset.borderColor,
-                            borderWidth: 2,
-                            borderDash: [5, 5], // Пунктирная линия для исходных данных
-                            pointRadius: 0,
-                            tension: 0.2
-                        });
-                    }
-                });
-                
-                // Добавляем преобразованные данные
-                Object.entries(previewData.transformed_data).forEach(([variable, data], index) => {
-                    const originalColor = datasets.find(ds => ds.label === `${variable} (исходный)`)?.borderColor;
-                    
-                    datasets.push({
-                        label: `${variable} (преобразованный)`,
-                        data: data.map(item => ({ x: new Date(item.date), y: item.value })),
-                        borderColor: originalColor || chartColors[index % chartColors.length],
-                        backgroundColor: (originalColor || chartColors[index % chartColors.length]) + '33',
-                        borderWidth: 3,
-                        pointRadius: 0,
-                        tension: 0.2
-                    });
-                });
-                
-                // Создаем легенду
-                datasets.forEach((dataset, index) => {
-                    const legendItem = document.createElement('div');
-                    legendItem.className = 'legend-item';
-                    
-                    const colorBox = document.createElement('div');
-                    colorBox.className = 'legend-color';
-                    colorBox.style.backgroundColor = dataset.borderColor;
-                    
-                    const labelText = document.createElement('span');
-                    labelText.textContent = dataset.label;
-                    
-                    legendItem.appendChild(colorBox);
-                    legendItem.appendChild(labelText);
-                    
-                    // Добавляем интерактивность легенде
-                    legendItem.addEventListener('click', () => {
-                        const chartDataset = previewChart.data.datasets[index];
-                        chartDataset.hidden = !chartDataset.hidden;
-                        previewChart.update();
-                        
-                        // Обновляем стиль легенды
-                        if (chartDataset.hidden) {
-                            legendItem.style.opacity = '0.5';
-                            colorBox.style.backgroundColor = '#cbd5e1';
-                        } else {
-                            legendItem.style.opacity = '1';
-                            colorBox.style.backgroundColor = dataset.borderColor;
-                        }
-                    });
-                    
-                    previewLegend.appendChild(legendItem);
-                });
-                
-                // Создаем график
-                previewChart = new Chart(document.getElementById('previewChart').getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        datasets: datasets
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false // Используем свою легенду
-                            },
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false
-                            }
-                        },
-                        scales: {
-                            x: {
-                                type: 'time',
-                                time: {
-                                    unit: 'month',
-                                    displayFormats: {
-                                        month: 'MMM yyyy'
-                                    }
-                                },
-                                title: {
-                                    display: true,
-                                    text: 'Дата'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Значение'
-                                }
-                            }
-                        },
-                        interaction: {
-                            mode: 'nearest',
-                            axis: 'x',
-                            intersect: false
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Значение'
                         }
                     }
-                });
-            }
-            
-            // Функция для преобразования данных
-            async function transformData() {
-                if (selectedVariables.length === 0) {
-                    alert('Пожалуйста, выберите хотя бы одну переменную для преобразования.');
-                    return;
-                }
-                
-                // Показываем модальное окно загрузки
-                loadingMessage.textContent = 'Преобразование данных...';
-                loadingDetails.textContent = 'Выполняется преобразование рядов к заданному порядку интеграции...';
-                loadingModal.show();
-                
-                try {
-                    // Получаем настройки преобразования для каждой переменной
-                    const transformationSettings = {};
-                    selectedVariables.forEach(variable => {
-                        const selectEl = document.querySelector(`select[data-variable="${variable}"]`);
-                        if (selectEl) {
-                            transformationSettings[variable] = selectEl.value;
-                        }
-                    });
-                    
-                    // Готовим данные для запроса
-                    const fileId = fileData.fileId;
-                    const dateColumn = fileData.date_column || 'Дата';
-                    
-                    // Запрос к API для преобразования
-                    const formData = new FormData();
-                    formData.append('file_id', fileId);
-                    formData.append('date_column', dateColumn);
-                    formData.append('transformation_settings', JSON.stringify(transformationSettings));
-                    formData.append('preview', 'false');
-                    
-                    // Отправляем запрос на трансформацию
-                    const response = await fetch(`${API_URL}/transform-integration-order`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('Ошибка при преобразовании данных');
-                    }
-                    
-                    const result = await response.json();
-                    console.log('Результат преобразования:', result);
-                    
-                    // Сохраняем результат для дальнейшего использования
-                    transformedData = result;
-                    
-                    // Обновляем localStorage с новыми данными
-                    if (result.updated_file_id) {
-                        localStorage.setItem('fileId', result.updated_file_id);
-                    }
-                    
-                    if (result.updated_columns_data) {
-                        localStorage.setItem('fileColumnsData', JSON.stringify(result.updated_columns_data));
-                    }
-                    
-                    // Активируем кнопку скачивания
-                    downloadBtn.disabled = false;
-                    
-                    // Показываем сообщение об успехе
-                    transformMessage.textContent = 'Преобразование успешно выполнено. Вы можете скачать новый файл или продолжить работу с преобразованными данными.';
-                    transformAlert.style.display = 'block';
-                    
-                    // Обновляем интерфейс с новыми данными
-                    if (result.updated_columns_data) {
-                        fileData = result.updated_columns_data;
-                        fileData.fileId = result.updated_file_id || fileData.fileId;
-                        
-                        // Обновляем информацию о файле
-                        const numericColumns = fileData.numeric_columns || [];
-                        const rowsCount = fileData.rows_count || 0;
-                        fileDetails.textContent = `${numericColumns.length} числовых столбцов, ${rowsCount} наблюдений`;
-                        
-                        // Перезагружаем список переменных и график
-                        populateVariablesList();
-                        loadTimeSeriesData();
-                    }
-                    
-                } catch (error) {
-                    console.error('Ошибка при преобразовании данных:', error);
-                    transformMessage.textContent = `Ошибка при преобразовании данных: ${error.message}`;
-                    transformAlert.className = 'alert alert-danger alert-transformation';
-                    transformAlert.style.display = 'block';
-                } finally {
-                    // Скрываем модальное окно загрузки
-                    loadingModal.hide();
-                }
-            }
-            
-            // Функция для скачивания преобразованных данных
-            async function downloadTransformedData() {
-                if (!transformedData || !transformedData.download_url) {
-                    alert('Нет данных для скачивания. Сначала выполните преобразование.');
-                    return;
-                }
-                
-                try {
-                    // Создаем ссылку для скачивания
-                    const downloadLink = document.createElement('a');
-                    downloadLink.href = transformedData.download_url;
-                    downloadLink.download = `transformed_${fileName.textContent}`;
-                    downloadLink.style.display = 'none';
-                    document.body.appendChild(downloadLink);
-                    downloadLink.click();
-                    document.body.removeChild(downloadLink);
-                } catch (error) {
-                    console.error('Ошибка при скачивании файла:', error);
-                    alert(`Ошибка при скачивании файла: ${error.message}`);
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
                 }
             }
         });
-    </script>
+        
+// Восстанавливаем кнопку переключения
+        const toggleAllSeriesBtn = document.getElementById('toggleAllSeriesBtn');
+        if (toggleAllSeriesBtn) {
+            toggleAllSeriesBtn.addEventListener('click', toggleAllSeries);
+        }
+    }
+    
+    // Функция для обновления списка выбранных переменных
+    function updateSelectedVariables() {
+        selectedVariables = [];
+        const checkboxes = document.querySelectorAll('.transform-checkbox');
+        
+        checkboxes.forEach(checkbox => {
+            const variable = checkbox.dataset.variable;
+            if (variable && checkbox.id !== 'selectAllCheckbox') {
+                if (checkbox.checked) {
+                    selectedVariables.push(variable);
+                }
+            }
+        });
+        
+        // Обновляем состояние кнопки преобразования
+        transformBtn.disabled = selectedVariables.length === 0;
+        previewBtn.disabled = selectedVariables.length === 0;
+        
+        console.log('Выбранные переменные:', selectedVariables);
+    }
+    
+    // Функция для переключения видимости всех рядов
+    function toggleAllSeries() {
+        allSeriesVisible = !allSeriesVisible;
+        
+        if (originalChart) {
+            originalChart.data.datasets.forEach((dataset, index) => {
+                dataset.hidden = !allSeriesVisible;
+                
+                // Обновляем стиль легенды
+                const legendItems = chartLegend.querySelectorAll('.legend-item');
+                if (legendItems[index]) {
+                    if (dataset.hidden) {
+                        legendItems[index].style.opacity = '0.5';
+                        legendItems[index].querySelector('.legend-color').style.backgroundColor = '#cbd5e1';
+                    } else {
+                        legendItems[index].style.opacity = '1';
+                        legendItems[index].querySelector('.legend-color').style.backgroundColor = dataset.borderColor;
+                    }
+                }
+            });
+            
+            originalChart.update();
+        }
+    }
+    
+    // Функция для предпросмотра трансформации
+    async function previewTransformation() {
+        if (selectedVariables.length === 0) {
+            alert('Пожалуйста, выберите хотя бы одну переменную для преобразования.');
+            return;
+        }
+        
+        // Показываем модальное окно загрузки
+        loadingMessage.textContent = 'Подготовка предпросмотра...';
+        loadingDetails.textContent = 'Вычисление преобразованных рядов...';
+        loadingModal.show();
+        
+        try {
+            // Получаем настройки преобразования для каждой переменной
+            const transformationSettings = {};
+            selectedVariables.forEach(variable => {
+                const selectEl = document.querySelector(`select[data-variable="${variable}"]`);
+                if (selectEl) {
+                    transformationSettings[variable] = selectEl.value;
+                }
+            });
+            
+            // Готовим данные для запроса
+            const fileId = fileData.fileId;
+            const dateColumn = fileData.date_column || 'Дата';
+            
+            // Запрос к API для преобразования
+            const formData = new FormData();
+            formData.append('file_id', fileId);
+            formData.append('date_column', dateColumn);
+            formData.append('transformation_settings', JSON.stringify(transformationSettings));
+            formData.append('preview', 'true');
+            
+            // Вызов API для трансформации данных
+            const response = await fetch(`${API_URL}/transform-integration-order`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error('Ошибка при преобразовании данных');
+            }
+            
+            const previewData = await response.json();
+            console.log('Данные предпросмотра:', previewData);
+            
+            // Создаем график с предпросмотром
+            createPreviewChart(previewData);
+            
+            // Показываем контейнер с предпросмотром
+            previewChartContainer.style.display = 'block';
+            
+        } catch (error) {
+            console.error('Ошибка при предпросмотре:', error);
+            alert(`Ошибка при формировании предпросмотра: ${error.message}`);
+        } finally {
+            // Скрываем модальное окно загрузки
+            loadingModal.hide();
+        }
+    }
+    
+    // Функция для создания графика предпросмотра
+    function createPreviewChart(previewData) {
+        // Очищаем контейнер графика и легенду
+        previewLegend.innerHTML = '';
+        
+        // Создаем новый canvas для графика
+        const previewChartWrapper = document.querySelector('#previewChartContainer .chart-wrapper');
+        previewChartWrapper.innerHTML = '<canvas id="previewChart"></canvas>';
+        
+        // Создаем датасеты для графика
+        const datasets = [];
+        
+        // Добавляем исходные данные
+        selectedVariables.forEach((variable, index) => {
+            // Ищем исходные данные в originalChart
+            const originalDataset = originalChart.data.datasets.find(ds => ds.label === variable);
+            
+            if (originalDataset) {
+                datasets.push({
+                    label: `${variable} (исходный)`,
+                    data: originalDataset.data,
+                    borderColor: originalDataset.borderColor,
+                    borderWidth: 2,
+                    borderDash: [5, 5], // Пунктирная линия для исходных данных
+                    pointRadius: 0,
+                    tension: 0.2
+                });
+            }
+        });
+        
+        // Добавляем преобразованные данные
+        Object.entries(previewData.transformed_data).forEach(([variable, data], index) => {
+            const originalColor = datasets.find(ds => ds.label === `${variable} (исходный)`)?.borderColor;
+            
+            datasets.push({
+                label: `${variable} (преобразованный)`,
+                data: data.map(item => ({ x: new Date(item.date), y: item.value })),
+                borderColor: originalColor || chartColors[index % chartColors.length],
+                backgroundColor: (originalColor || chartColors[index % chartColors.length]) + '33',
+                borderWidth: 3,
+                pointRadius: 0,
+                tension: 0.2
+            });
+        });
+        
+        // Создаем легенду
+        datasets.forEach((dataset, index) => {
+            const legendItem = document.createElement('div');
+            legendItem.className = 'legend-item';
+            
+            const colorBox = document.createElement('div');
+            colorBox.className = 'legend-color';
+            colorBox.style.backgroundColor = dataset.borderColor;
+            
+            const labelText = document.createElement('span');
+            labelText.textContent = dataset.label;
+            
+            legendItem.appendChild(colorBox);
+            legendItem.appendChild(labelText);
+            
+            // Добавляем интерактивность легенде
+            legendItem.addEventListener('click', () => {
+                const chartDataset = previewChart.data.datasets[index];
+                chartDataset.hidden = !chartDataset.hidden;
+                previewChart.update();
+                
+                // Обновляем стиль легенды
+                if (chartDataset.hidden) {
+                    legendItem.style.opacity = '0.5';
+                    colorBox.style.backgroundColor = '#cbd5e1';
+                } else {
+                    legendItem.style.opacity = '1';
+                    colorBox.style.backgroundColor = dataset.borderColor;
+                }
+            });
+            
+            previewLegend.appendChild(legendItem);
+        });
+        
+        // Создаем график
+        previewChart = new Chart(document.getElementById('previewChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false // Используем свою легенду
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'month',
+                            displayFormats: {
+                                month: 'MMM yyyy'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Дата'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Значение'
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
+            }
+        });
+        
+        // Восстанавливаем кнопку закрытия
+        const closePreviewBtn = document.getElementById('closePreviewBtn');
+        if (closePreviewBtn) {
+            closePreviewBtn.addEventListener('click', function() {
+                previewChartContainer.style.display = 'none';
+            });
+        }
+    }
+    
+    // Функция для преобразования данных
+    async function transformData() {
+        if (selectedVariables.length === 0) {
+            alert('Пожалуйста, выберите хотя бы одну переменную для преобразования.');
+            return;
+        }
+        
+        // Показываем модальное окно загрузки
+        loadingMessage.textContent = 'Преобразование данных...';
+        loadingDetails.textContent = 'Выполняется преобразование рядов к заданному порядку интеграции...';
+        loadingModal.show();
+        
+        try {
+            // Получаем настройки преобразования для каждой переменной
+            const transformationSettings = {};
+            selectedVariables.forEach(variable => {
+                const selectEl = document.querySelector(`select[data-variable="${variable}"]`);
+                if (selectEl) {
+                    transformationSettings[variable] = selectEl.value;
+                }
+            });
+            
+            // Готовим данные для запроса
+            const fileId = fileData.fileId;
+            const dateColumn = fileData.date_column || 'Дата';
+            
+            // Запрос к API для преобразования
+            const formData = new FormData();
+            formData.append('file_id', fileId);
+            formData.append('date_column', dateColumn);
+            formData.append('transformation_settings', JSON.stringify(transformationSettings));
+            formData.append('preview', 'false');
+            
+            // Отправляем запрос на трансформацию
+            const response = await fetch(`${API_URL}/transform-integration-order`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error('Ошибка при преобразовании данных');
+            }
+            
+            const result = await response.json();
+            console.log('Результат преобразования:', result);
+            
+            // Сохраняем результат для дальнейшего использования
+            transformedData = result;
+            
+            // Обновляем localStorage с новыми данными
+            if (result.updated_file_id) {
+                localStorage.setItem('fileId', result.updated_file_id);
+            }
+            
+            if (result.updated_columns_data) {
+                localStorage.setItem('fileColumnsData', JSON.stringify(result.updated_columns_data));
+            }
+            
+            // Активируем кнопку скачивания
+            downloadBtn.disabled = false;
+            
+            // Показываем сообщение об успехе
+            transformMessage.textContent = 'Преобразование успешно выполнено. Вы можете скачать новый файл или продолжить работу с преобразованными данными.';
+            transformAlert.className = 'alert alert-success alert-transformation';
+            transformAlert.style.display = 'block';
+            
+            // Обновляем интерфейс с новыми данными
+            if (result.updated_columns_data) {
+                fileData = result.updated_columns_data;
+                fileData.fileId = result.updated_file_id || fileData.fileId;
+                
+                // Обновляем информацию о файле
+                const numericColumns = fileData.numeric_columns || [];
+                const rowsCount = fileData.rows_count || 0;
+                fileDetails.textContent = `${numericColumns.length} числовых столбцов, ${rowsCount} наблюдений`;
+                
+                // Перезагружаем список переменных и график
+                populateVariablesList();
+                loadTimeSeriesData();
+            }
+            
+        } catch (error) {
+            console.error('Ошибка при преобразовании данных:', error);
+            transformMessage.textContent = `Ошибка при преобразовании данных: ${error.message}`;
+            transformAlert.className = 'alert alert-danger alert-transformation';
+            transformAlert.style.display = 'block';
+        } finally {
+            // Скрываем модальное окно загрузки
+            loadingModal.hide();
+        }
+    }
+    
+    // Функция для скачивания преобразованных данных
+    async function downloadTransformedData() {
+        if (!transformedData || !transformedData.download_url) {
+            alert('Нет данных для скачивания. Сначала выполните преобразование.');
+            return;
+        }
+        
+        try {
+            // Создаем ссылку для скачивания
+            const downloadLink = document.createElement('a');
+            downloadLink.href = transformedData.download_url;
+            downloadLink.download = `transformed_${fileName.textContent}`;
+            downloadLink.style.display = 'none';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        } catch (error) {
+            console.error('Ошибка при скачивании файла:', error);
+            alert(`Ошибка при скачивании файла: ${error.message}`);
+        }
+    }
+});
+</script>
 </body>
 </html>
