@@ -692,6 +692,7 @@ async def generate_demo_data():
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка при генерации демо-данных: {str(e)}")
+        
 @app.post("/transform-integration-order")
 async def transform_integration_order(
     file_id: str = Form(...),
@@ -709,7 +710,7 @@ async def transform_integration_order(
     
     Возможные значения порядка интеграции:
     - "none": Оставить как есть
-    - "I(0)": Привести к стационарному виду
+    - "I(0)": Привести к стационарному виду (дифференцирование до стационарности)
     - "I(1)": Привести к первому порядку интеграции
     - "I(2)": Привести к второму порядку интеграции
     """
@@ -775,34 +776,52 @@ async def transform_integration_order(
             
             # Преобразуем согласно выбранному порядку интеграции
             if transform_to == "I(0)":  # Привести к стационарному виду
-                transformed_series = transform_to_stationary(series)
-                transformed_df[f"{variable}_I0"] = transformed_series
-                
-                # Добавляем данные для предпросмотра
-                if is_preview:
-                    preview_data["transformed_data"][variable] = format_time_series_for_preview(
-                        transformed_df[date_column], transformed_series
-                    )
+                # Применяем первые разности
+                transformed_series = series.diff()
+                column_name = f"{variable}_I0"
                 
             elif transform_to == "I(1)":  # Привести к первому порядку интеграции
-                transformed_series = transform_to_first_order(series)
-                transformed_df[f"{variable}_I1"] = transformed_series
-                
-                # Добавляем данные для предпросмотра
-                if is_preview:
-                    preview_data["transformed_data"][variable] = format_time_series_for_preview(
-                        transformed_df[date_column], transformed_series
-                    )
+                if variable.endswith("_I0"):  # Если это уже I(0)
+                    # Интегрируем один раз
+                    transformed_series = series.cumsum()
+                    # Замена NaN начальным значением
+                    transformed_series.iloc[0] = series.iloc[0]
+                    column_name = variable.replace("_I0", "_I1")
+                else:
+                    # Оставляем как есть или применяем первые разности, если нужно
+                    transformed_series = series
+                    column_name = f"{variable}_I1"
                 
             elif transform_to == "I(2)":  # Привести к второму порядку интеграции
-                transformed_series = transform_to_second_order(series)
-                transformed_df[f"{variable}_I2"] = transformed_series
-                
-                # Добавляем данные для предпросмотра
-                if is_preview:
-                    preview_data["transformed_data"][variable] = format_time_series_for_preview(
-                        transformed_df[date_column], transformed_series
-                    )
+                if variable.endswith("_I0"):  # Если это I(0)
+                    # Интегрируем дважды
+                    temp_series = series.cumsum()
+                    transformed_series = temp_series.cumsum()
+                    # Замена NaN начальными значениями
+                    transformed_series.iloc[0] = series.iloc[0]
+                    transformed_series.iloc[1] = temp_series.iloc[1]
+                    column_name = variable.replace("_I0", "_I2")
+                elif variable.endswith("_I1"):  # Если это I(1)
+                    # Интегрируем один раз
+                    transformed_series = series.cumsum()
+                    # Замена NaN начальным значением
+                    transformed_series.iloc[0] = series.iloc[0]
+                    column_name = variable.replace("_I1", "_I2")
+                else:
+                    # Оставляем как есть
+                    transformed_series = series
+                    column_name = f"{variable}_I2"
+            
+            # Добавляем преобразованный ряд в DataFrame
+            transformed_df[column_name] = transformed_series
+            
+            # Добавляем данные для предпросмотра
+            if is_preview:
+                preview_data["transformed_data"][variable] = [
+                    {"date": date.strftime("%Y-%m-%d"), "value": float(value) if pd.notna(value) else None}
+                    for date, value in zip(transformed_df[date_column], transformed_series)
+                    if pd.notna(value)
+                ]
         
         # Если это предпросмотр, возвращаем только данные для визуализации
         if is_preview:
@@ -833,7 +852,7 @@ async def transform_integration_order(
         }
         
         # Формируем URL для скачивания
-        download_url = f"{API_URL}/temp-file/{new_file_id}" if API_URL else f"/temp-file/{new_file_id}"
+        download_url = f"/temp-file/{new_file_id}"
         
         # Возвращаем результаты
         return {
