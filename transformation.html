@@ -723,7 +723,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script>
-// transform-integration.js
 document.addEventListener('DOMContentLoaded', function() {
     // API URL
     const API_URL = 'http://37.252.23.30:8000';
@@ -776,21 +775,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const transformAlert = document.getElementById('transformAlert');
     const transformMessage = document.getElementById('transformMessage');
     
-    // Элементы DOM для графиков
-    const originalChartContainer = document.getElementById('originalChartContainer');
-    const previewChartContainer = document.getElementById('previewChartContainer');
-    const closePreviewBtn = document.getElementById('closePreviewBtn');
-    const chartLegend = document.getElementById('chartLegend');
-    const previewLegend = document.getElementById('previewLegend');
-    const toggleAllSeriesBtn = document.getElementById('toggleAllSeriesBtn');
-    
     // Глобальные переменные
-    let originalChart = null;
-    let previewChart = null;
     let fileData = null;
     let selectedVariables = [];
     let transformedData = null;
-    let allSeriesVisible = true;
     let chartColors = [
         '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
         '#ec4899', '#6366f1', '#14b8a6', '#f97316', '#a855f7'
@@ -824,14 +812,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Слушатель для кнопки предпросмотра
     previewBtn.addEventListener('click', previewTransformation);
     
-    // Слушатель для кнопки закрытия предпросмотра
-    closePreviewBtn.addEventListener('click', function() {
-        previewChartContainer.style.display = 'none';
-    });
-    
-    // Слушатель для кнопки показать/скрыть все ряды
-    toggleAllSeriesBtn.addEventListener('click', toggleAllSeries);
-    
     // Функция проверки наличия загруженного файла
     function checkLoadedFile() {
         const storedFileId = localStorage.getItem('fileId');
@@ -856,9 +836,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 fileDetails.textContent = `${numericColumns.length} числовых столбцов, ${rowsCount} наблюдений`;
                 
-                // Заполняем список переменных и загружаем данные для графика
+                // Заполняем список переменных
                 populateVariablesList();
-                loadTimeSeriesData();
                 
             } catch (error) {
                 console.error('Ошибка при разборе данных о столбцах:', error);
@@ -877,7 +856,6 @@ document.addEventListener('DOMContentLoaded', function() {
         variablesList.innerHTML = ''; // Очищаем список
         
         const numericColumns = fileData.numeric_columns || [];
-        const allColumns = fileData.columns || [];
         
         // Для каждой колонки создаем строку в таблице
         numericColumns.forEach(column => {
@@ -900,17 +878,13 @@ document.addEventListener('DOMContentLoaded', function() {
             statusDiv.className = 'variable-status';
             
             // Определение текущего порядка интеграции на основе имени
-            let currentOrder = "Не определен";
             let statusBadge = "";
             
             if (column.endsWith("_I0")) {
-                currentOrder = "I(0) - стационарный";
                 statusBadge = '<span class="status-badge stationary">I(0)</span>';
             } else if (column.endsWith("_I1")) {
-                currentOrder = "I(1) - первый порядок";
                 statusBadge = '<span class="status-badge non-stationary">I(1)</span>';
             } else if (column.endsWith("_I2")) {
-                currentOrder = "I(2) - второй порядок";
                 statusBadge = '<span class="status-badge non-stationary">I(2)</span>';
             } else {
                 statusBadge = '<span class="text-muted">Не определен</span>';
@@ -986,15 +960,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    
-        
-// Восстанавливаем кнопку переключения
-        const toggleAllSeriesBtn = document.getElementById('toggleAllSeriesBtn');
-        if (toggleAllSeriesBtn) {
-            toggleAllSeriesBtn.addEventListener('click', toggleAllSeries);
-        }
-    }
-    
     // Функция для обновления списка выбранных переменных
     function updateSelectedVariables() {
         selectedVariables = [];
@@ -1014,31 +979,6 @@ document.addEventListener('DOMContentLoaded', function() {
         previewBtn.disabled = selectedVariables.length === 0;
         
         console.log('Выбранные переменные:', selectedVariables);
-    }
-    
-    // Функция для переключения видимости всех рядов
-    function toggleAllSeries() {
-        allSeriesVisible = !allSeriesVisible;
-        
-        if (originalChart) {
-            originalChart.data.datasets.forEach((dataset, index) => {
-                dataset.hidden = !allSeriesVisible;
-                
-                // Обновляем стиль легенды
-                const legendItems = chartLegend.querySelectorAll('.legend-item');
-                if (legendItems[index]) {
-                    if (dataset.hidden) {
-                        legendItems[index].style.opacity = '0.5';
-                        legendItems[index].querySelector('.legend-color').style.backgroundColor = '#cbd5e1';
-                    } else {
-                        legendItems[index].style.opacity = '1';
-                        legendItems[index].querySelector('.legend-color').style.backgroundColor = dataset.borderColor;
-                    }
-                }
-            });
-            
-            originalChart.update();
-        }
     }
     
     // Функция для предпросмотра трансформации
@@ -1087,11 +1027,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const previewData = await response.json();
             console.log('Данные предпросмотра:', previewData);
             
-            // Создаем график с предпросмотром
-            createPreviewChart(previewData);
-            
-            // Показываем контейнер с предпросмотром
-            previewChartContainer.style.display = 'block';
+            // Показываем сообщение об успехе
+            transformMessage.textContent = 'Предпросмотр преобразования выполнен успешно.';
+            transformAlert.className = 'alert alert-success alert-transformation';
+            transformAlert.style.display = 'block';
             
         } catch (error) {
             console.error('Ошибка при предпросмотре:', error);
@@ -1099,141 +1038,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } finally {
             // Скрываем модальное окно загрузки
             loadingModal.hide();
-        }
-    }
-    
-    // Функция для создания графика предпросмотра
-    function createPreviewChart(previewData) {
-        // Очищаем контейнер графика и легенду
-        previewLegend.innerHTML = '';
-        
-        // Создаем новый canvas для графика
-        const previewChartWrapper = document.querySelector('#previewChartContainer .chart-wrapper');
-        previewChartWrapper.innerHTML = '<canvas id="previewChart"></canvas>';
-        
-        // Создаем датасеты для графика
-        const datasets = [];
-        
-        // Добавляем исходные данные
-        selectedVariables.forEach((variable, index) => {
-            // Ищем исходные данные в originalChart
-            const originalDataset = originalChart.data.datasets.find(ds => ds.label === variable);
-            
-            if (originalDataset) {
-                datasets.push({
-                    label: `${variable} (исходный)`,
-                    data: originalDataset.data,
-                    borderColor: originalDataset.borderColor,
-                    borderWidth: 2,
-                    borderDash: [5, 5], // Пунктирная линия для исходных данных
-                    pointRadius: 0,
-                    tension: 0.2
-                });
-            }
-        });
-        
-        // Добавляем преобразованные данные
-        Object.entries(previewData.transformed_data).forEach(([variable, data], index) => {
-            const originalColor = datasets.find(ds => ds.label === `${variable} (исходный)`)?.borderColor;
-            
-            datasets.push({
-                label: `${variable} (преобразованный)`,
-                data: data.map(item => ({ x: new Date(item.date), y: item.value })),
-                borderColor: originalColor || chartColors[index % chartColors.length],
-                backgroundColor: (originalColor || chartColors[index % chartColors.length]) + '33',
-                borderWidth: 3,
-                pointRadius: 0,
-                tension: 0.2
-            });
-        });
-        
-        // Создаем легенду
-        datasets.forEach((dataset, index) => {
-            const legendItem = document.createElement('div');
-            legendItem.className = 'legend-item';
-            
-            const colorBox = document.createElement('div');
-            colorBox.className = 'legend-color';
-            colorBox.style.backgroundColor = dataset.borderColor;
-            
-            const labelText = document.createElement('span');
-            labelText.textContent = dataset.label;
-            
-            legendItem.appendChild(colorBox);
-            legendItem.appendChild(labelText);
-            
-            // Добавляем интерактивность легенде
-            legendItem.addEventListener('click', () => {
-                const chartDataset = previewChart.data.datasets[index];
-                chartDataset.hidden = !chartDataset.hidden;
-                previewChart.update();
-                
-                // Обновляем стиль легенды
-                if (chartDataset.hidden) {
-                    legendItem.style.opacity = '0.5';
-                    colorBox.style.backgroundColor = '#cbd5e1';
-                } else {
-                    legendItem.style.opacity = '1';
-                    colorBox.style.backgroundColor = dataset.borderColor;
-                }
-            });
-            
-            previewLegend.appendChild(legendItem);
-        });
-        
-        // Создаем график
-        previewChart = new Chart(document.getElementById('previewChart').getContext('2d'), {
-            type: 'line',
-            data: {
-                datasets: datasets
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false // Используем свою легенду
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false
-                    }
-                },
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: {
-                            unit: 'month',
-                            displayFormats: {
-                                month: 'MMM yyyy'
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Дата'
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Значение'
-                        }
-                    }
-                },
-                interaction: {
-                    mode: 'nearest',
-                    axis: 'x',
-                    intersect: false
-                }
-            }
-        });
-        
-        // Восстанавливаем кнопку закрытия
-        const closePreviewBtn = document.getElementById('closePreviewBtn');
-        if (closePreviewBtn) {
-            closePreviewBtn.addEventListener('click', function() {
-                previewChartContainer.style.display = 'none';
-            });
         }
     }
     
@@ -1283,7 +1087,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
             console.log('Результат преобразования:', result);
             
-            // Сохраняем результат для дальнейшего использования
+// Сохраняем результат для дальнейшего использования
             transformedData = result;
             
             // Обновляем localStorage с новыми данными
@@ -1313,9 +1117,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const rowsCount = fileData.rows_count || 0;
                 fileDetails.textContent = `${numericColumns.length} числовых столбцов, ${rowsCount} наблюдений`;
                 
-                // Перезагружаем список переменных и график
+                // Перезагружаем список переменных
                 populateVariablesList();
-                loadTimeSeriesData();
             }
             
         } catch (error) {
