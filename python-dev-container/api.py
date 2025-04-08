@@ -692,7 +692,164 @@ async def generate_demo_data():
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка при генерации демо-данных: {str(e)}")
-
+@app.post("/transform-integration-order")
+async def transform_integration_order(
+    file_id: str = Form(...),
+    date_column: str = Form("Дата"),
+    transformation_settings: str = Form(...),
+    preview: str = Form("false")
+):
+    """
+    Преобразование временных рядов к заданному порядку интеграции
+    
+    - **file_id**: Идентификатор загруженного файла
+    - **date_column**: Имя столбца с датами
+    - **transformation_settings**: JSON со структурой {переменная: порядок_интеграции}
+    - **preview**: Если "true", то возвращает только данные для предпросмотра без сохранения
+    
+    Возможные значения порядка интеграции:
+    - "none": Оставить как есть
+    - "I(0)": Привести к стационарному виду
+    - "I(1)": Привести к первому порядку интеграции
+    - "I(2)": Привести к второму порядку интеграции
+    """
+    # Проверяем наличие файла
+    file_path = TEMP_FILES_DIR / file_id
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Файл не найден или срок его хранения истек")
+    
+    try:
+        # Разбираем настройки преобразования
+        settings = json.loads(transformation_settings)
+        is_preview = preview.lower() == "true"
+        
+        # Определяем тип файла по расширению
+        file_extension = os.path.splitext(str(file_path))[1].lower()
+        
+        # Чтение данных из файла
+        if file_extension == '.csv':
+            df = pd.read_csv(file_path)
+        elif file_extension in ['.xlsx', '.xls']:
+            df = pd.read_excel(file_path)
+        else:
+            # Пытаемся определить тип файла автоматически
+            try:
+                df = pd.read_excel(file_path)
+            except:
+                try:
+                    df = pd.read_csv(file_path)
+                except:
+                    raise HTTPException(status_code=400, detail="Неподдерживаемый формат файла")
+        
+        # Проверка наличия столбца с датами
+        if date_column not in df.columns:
+            return {"error": f"Столбец {date_column} не найден в файле", "columns": df.columns.tolist()}
+            
+        # Преобразование столбца даты
+        try:
+            df[date_column] = pd.to_datetime(df[date_column])
+            # Сортировка по дате для корректности расчетов
+            df = df.sort_values(by=date_column)
+        except Exception as e:
+            return {"error": f"Ошибка при преобразовании столбца даты: {str(e)}"}
+        
+        # Данные для предпросмотра трансформации
+        preview_data = {"transformed_data": {}}
+        
+        # Создаем новый DataFrame для измененных данных
+        transformed_df = df.copy()
+        
+        # Преобразуем каждую переменную согласно настройкам
+        for variable, transform_to in settings.items():
+            # Пропускаем, если оставляем как есть
+            if transform_to == "none":
+                continue
+                
+            # Проверяем, есть ли переменная в DataFrame
+            if variable not in df.columns:
+                continue
+                
+            # Получаем временной ряд
+            series = df[variable].copy()
+            
+            # Преобразуем согласно выбранному порядку интеграции
+            if transform_to == "I(0)":  # Привести к стационарному виду
+                transformed_series = transform_to_stationary(series)
+                transformed_df[f"{variable}_I0"] = transformed_series
+                
+                # Добавляем данные для предпросмотра
+                if is_preview:
+                    preview_data["transformed_data"][variable] = format_time_series_for_preview(
+                        transformed_df[date_column], transformed_series
+                    )
+                
+            elif transform_to == "I(1)":  # Привести к первому порядку интеграции
+                transformed_series = transform_to_first_order(series)
+                transformed_df[f"{variable}_I1"] = transformed_series
+                
+                # Добавляем данные для предпросмотра
+                if is_preview:
+                    preview_data["transformed_data"][variable] = format_time_series_for_preview(
+                        transformed_df[date_column], transformed_series
+                    )
+                
+            elif transform_to == "I(2)":  # Привести к второму порядку интеграции
+                transformed_series = transform_to_second_order(series)
+                transformed_df[f"{variable}_I2"] = transformed_series
+                
+                # Добавляем данные для предпросмотра
+                if is_preview:
+                    preview_data["transformed_data"][variable] = format_time_series_for_preview(
+                        transformed_df[date_column], transformed_series
+                    )
+        
+        # Если это предпросмотр, возвращаем только данные для визуализации
+        if is_preview:
+            return preview_data
+        
+        # Сохраняем преобразованные данные в новый файл
+        new_file_id = str(uuid.uuid4())
+        new_file_path = TEMP_FILES_DIR / new_file_id
+        
+        # Сохраняем файл в том же формате, что и исходный
+        if file_extension == '.csv':
+            transformed_df.to_csv(new_file_path, index=False)
+        else:
+            transformed_df.to_excel(new_file_path, index=False)
+        
+        # Запоминаем время загрузки нового файла
+        file_timestamps[new_file_id] = time.time()
+        
+        # Анализируем столбцы нового файла
+        numeric_columns = [col for col in transformed_df.columns if pd.api.types.is_numeric_dtype(transformed_df[col])]
+        
+        # Готовим данные для обновления localStorage
+        updated_columns_data = {
+            "columns": transformed_df.columns.tolist(),
+            "numeric_columns": numeric_columns,
+            "rows_count": len(transformed_df),
+            "date_column": date_column,
+        }
+        
+        # Формируем URL для скачивания
+        download_url = f"{API_URL}/temp-file/{new_file_id}" if API_URL else f"/temp-file/{new_file_id}"
+        
+        # Возвращаем результаты
+        return {
+            "success": True,
+            "message": "Преобразование успешно выполнено",
+            "updated_file_id": new_file_id,
+            "updated_columns_data": updated_columns_data,
+            "download_url": download_url
+        }
+            
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Ошибка при преобразовании данных: {str(e)}")
+# Установка URL API для формирования URL скачивания
+API_URL = "http://37.252.23.30:8000" 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
