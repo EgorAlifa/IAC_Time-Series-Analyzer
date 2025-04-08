@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Преобразование порядков интеграции - Аналитическая система</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <style>
+        /* Дополнительные стили для страницы преобразования данных */
+        .data-table {
+            width: 100%;
+            overflow-x: auto;
+            margin-bottom: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
+        }
+        
+        .data-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table th {
+            background-color: #f1f5f9;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 500;
+            color: #334155;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+        }
+        
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+        }
+        
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .data-table tr:hover td {
+            background-color: #f8fafc;
+        }
+        
+        .transformation-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .transformation-header {
+            padding: 15px 20px;
+            background-color: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .transformation-header h3 {
+            font-size: 18px;
+            font-weight: 500;
+            margin: 0;
+            color: #334155;
+            display: flex;
+            align-items: center;
+        }
+        
+        .transformation-header h3 i {
+            margin-right: 8px;
+            color: #3b82f6;
+        }
+        
+        .transformation-content {
+            padding: 20px;
+        }
+        
+        .variable-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .variable-row:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .variable-name {
+            flex: 1.2;
+            font-weight: 500;
+            color: #334155;
+            display: flex;
+            align-items: center;
+        }
+        
+        .variable-status {
+            flex: 0.8;
+            color: #64748b;
+            padding: 0 10px;
+        }
+        
+        .transformation-options {
+            flex: 1.5;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .select-wrapper {
+            position: relative;
+            flex: 1;
+        }
+        
+        .select-wrapper select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            background-color: #f8fafc;
+            color: #334155;
+            appearance: none;
+            font-size: 14px;
+        }
+        
+        .select-wrapper::after {
+            content: '\f107';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            pointer-events: none;
+        }
+        
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+        
+        .transform-checkbox {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        
+        .actions-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding: 15px 20px;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
+        }
+        
+        .actions-panel .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .actions-panel .btn-primary {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        
+        .actions-panel .btn-primary:hover {
+            background-color: #2563eb;
+            border-color: #2563eb;
+        }
+        
+        .actions-panel .btn-secondary {
+            background-color: #f1f5f9;
+            border-color: #e2e8f0;
+            color: #334155;
+        }
+        
+        .actions-panel .btn-secondary:hover {
+            background-color: #e2e8f0;
+            border-color: #cbd5e1;
+        }
+        
+        .alert-transformation {
+            margin-top: 20px;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .file-info-panel {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 20px;
+            background-color: #eff6ff;
+            border-radius: 8px;
+            color: #334155;
+        }
+        
+        .file-info-panel i {
+            font-size: 20px;
+            color: #3b82f6;
+        }
+        
+        .file-info-panel .file-actions {
+            margin-left: auto;
+        }
+        
+        .file-info-details strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .file-info-details span {
+            display: block;
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        .no-data-message {
+            text-align: center;
+            padding: 40px 20px;
+            background-color: #fef2f2;
+            border-radius: 8px;
+            margin-top: 20px;
+            color: #b91c1c;
+        }
+        
+        .no-data-message i {
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+        
+        .no-data-message h4 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-badge.stationary {
+            background-color: #ecfdf5;
+            color: #059669;
+        }
+        
+        .status-badge.non-stationary {
+            background-color: #fff1f2;
+            color: #e11d48;
+        }
+        
+        .tooltip-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            background-color: #e2e8f0;
+            color: #64748b;
+            border-radius: 50%;
+            font-size: 10px;
+            margin-left: 5px;
+            cursor: help;
+        }
+        
+        .info-tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 5px;
+        }
+        
+        .info-tooltip .tooltip-text {
+            visibility: hidden;
+            width: 250px;
+            background-color: #334155;
+            color: white;
+            text-align: left;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+            line-height: 1.4;
+            pointer-events: none;
+        }
+        
+        .info-tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #334155 transparent transparent transparent;
+        }
+        
+        .info-tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .chart-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .chart-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #334155;
+        }
+        
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chart-wrapper {
+            height: 300px;
+            width: 100%;
+        }
+        
+        .variable-row.not-numeric {
+            opacity: 0.7;
+        }
+        
+        .variable-row.not-numeric .transformation-options {
+            pointer-events: none;
+        }
+        
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #3b82f6;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+            font-size: 12px;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            margin-right: 5px;
+        }
+        
+        .legend {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        /* Стиль для вкладки "все переменные" */
+        .select-all-variables {
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            background-color: #f8fafc;
+            border-radius: 4px;
+        }
+        
+        .select-all-variables label {
+            margin-left: 8px;
+            font-weight: 500;
+            color: #334155;
+            cursor: pointer;
+        }
+        
+        /* Для адаптивности на мобильных устройствах */
+        @media (max-width: 767.98px) {
+            .variable-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .variable-name, .variable-status, .transformation-options {
+                width: 100%;
+                flex: none;
+                margin-bottom: 10px;
+            }
+            
+            .transformation-options {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .actions-panel {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .actions-panel .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .file-info-panel {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .file-info-panel .file-actions {
+                margin-left: 0;
+                margin-top: 10px;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Верхняя панель -->
+    <header class="top-panel">
+        <div class="d-flex align-items-center">
+            <button class="menu-toggle d-lg-none me-2" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo-container">
+                <div class="logo-square"></div>
+                <h1 class="app-title">Аналитическая система</h1>
+            </div>
+        </div>
+        <nav class="top-menu">
+            <ul>
+                <li><a href="/contacts">Контакты</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="main-container">
+        <!-- Боковая панель -->
+        <aside class="sidebar" id="sidebar">
+            <nav class="main-nav">
+                <ul>
+                    <li>
+                        <a href="/">
+                            <span class="nav-icon"><i class="fas fa-home"></i></span>
+                            Главная
+                        </a>
+                    </li>
+                    <li class="active">
+                        <a href="/data">
+                            <span class="nav-icon"><i class="fas fa-database"></i></span>
+                            Данные
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/analysis">
+                            <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+                            Анализ
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/forecasts">
+                            <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+                            Прогнозы
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/reports">
+                            <span class="nav-icon"><i class="fas fa-file-alt"></i></span>
+                            Отчеты
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/about">
+                            <span class="nav-icon"><i class="fas fa-question-circle"></i></span>
+                            О системе
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="version-info">
+                <p>Версия 3.2.1</p>
+                <p>Обновлено 28.03.2025</p>
+            </div>
+        </aside>
+
+        <!-- Основной контент -->
+        <main class="content">
+            <div class="breadcrumbs">
+                <span><a href="/">Главная</a></span>
+                <span class="separator">/</span>
+                <span><a href="/data">Данные</a></span>
+                <span class="separator">/</span>
+                <span>Преобразование порядков интеграции</span>
+            </div>
+
+            <div class="page-header">
+                <h2>Преобразование порядков интеграции</h2>
+                <p class="subtitle">Приведение временных рядов к необходимому порядку интеграции для дальнейшего анализа</p>
+            </div>
+
+            <!-- Информация о загруженном файле (отображается, если файл загружен) -->
+            <div id="fileInfoPanel" class="file-info-panel" style="display: none;">
+                <i class="fas fa-file-excel"></i>
+                <div class="file-info-details">
+                    <strong id="fileName">Название файла</strong>
+                    <span id="fileDetails">Информация о файле</span>
+                </div>
+                <div class="file-actions">
+                    <button id="backToDataBtn" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-chevron-left me-1"></i> К списку данных
+                    </button>
+                </div>
+            </div>
+
+            <!-- Сообщение, если нет загруженных данных -->
+            <div id="noDataMessage" class="no-data-message" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h4>Нет загруженных данных</h4>
+                <p>Для преобразования временных рядов необходимо сначала загрузить файл с данными.</p>
+                <a href="/data" class="btn btn-danger mt-2">
+                    <i class="fas fa-upload me-2"></i>К загрузке данных
+                </a>
+            </div>
+
+            <!-- Контент для преобразования данных (отображается, если файл загружен) -->
+            <div id="transformationContent" style="display: none;">
+                <!-- Блок с графиком исходных данных -->
+                <div id="originalChartContainer" class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title">Исходные данные</div>
+                        <div class="chart-controls">
+                            <button id="toggleAllSeriesBtn" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-eye me-1"></i> Показать/скрыть все
+                            </button>
+                        </div>
+                    </div>
+                    <div class="legend" id="chartLegend">
+                        <!-- Легенда будет заполнена динамически -->
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="originalChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Блок с настройками преобразования -->
+                <div class="transformation-card">
+                    <div class="transformation-header">
+                        <h3><i class="fas fa-magic"></i> Настройки преобразования</h3>
+                    </div>
+                    <div class="transformation-content">
+                        <p>Выберите переменные для преобразования и установите необходимый порядок интеграции для каждой из них. <span class="text-muted">Преобразованные данные будут добавлены в новых столбцах, исходные данные сохранятся.</span></p>
+                        
+                        <!-- Опция "Выбрать все переменные" -->
+                        <div class="select-all-variables">
+                            <input type="checkbox" id="selectAllCheckbox" class="transform-checkbox">
+                            <label for="selectAllCheckbox">Выбрать все числовые переменные</label>
+                        </div>
+                        
+                        <!-- Таблица переменных с настройками -->
+                        <div id="variablesList">
+                            <!-- Список переменных будет заполнен динамически -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Панель действий -->
+                <div class="actions-panel">
+                    <div>
+                        <button id="previewBtn" class="btn btn-secondary">
+                            <i class="fas fa-eye"></i> Предпросмотр
+                        </button>
+                    </div>
+                    <div>
+                        <button id="transformBtn" class="btn btn-primary" disabled>
+                            <i class="fas fa-magic"></i> Преобразовать данные
+                        </button>
+                        <button id="downloadBtn" class="btn btn-secondary" disabled>
+                            <i class="fas fa-download"></i> Скачать файл
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Блок с графиком предпросмотра -->
+                <div id="previewChartContainer" class="chart-container" style="display: none;">
+                    <div class="chart-header">
+                        <div class="chart-title">Предпросмотр преобразования</div>
+                        <div class="chart-controls">
+                            <button id="closePreviewBtn" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i> Закрыть
+                            </button>
+                        </div>
+                    </div>
+                    <div class="legend" id="previewLegend">
+                        <!-- Легенда предпросмотра будет заполнена динамически -->
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="previewChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Сообщение о результате преобразования -->
+                <div id="transformAlert" class="alert alert-success alert-transformation" style="display: none;">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span id="transformMessage">Преобразование успешно выполнено.</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Модальное окно загрузки -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center p-4">
+                    <div class="mb-3">
+                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                    </div>
+                    <h5 id="loadingMessage">Обработка данных...</h5>
+                    <p id="loadingDetails" class="text-muted">Пожалуйста, подождите. Это может занять несколько секунд.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // API URL
+            const API_URL = 'http://37.252.23.30:8000';
+            
+            // Обработка мобильного меню
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                sidebarOverlay.classList.toggle('active');
+                document.body.classList.toggle('sidebar-open');
+            });
+            
+            sidebarOverlay.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
+            });
+
+            // Адаптивность при изменении размера окна
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 992) {
+                    sidebar.classList.remove('active');
+                    sidebarOverlay.classList.remove('active');
+                    document.body.classList.remove('sidebar-open');
+                }
+            });
+            
+            // Модальное окно загрузки
+            const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+            const loadingMessage = document.getElementById('loadingMessage');
+            const loadingDetails = document.getElementById('loadingDetails');
+            
+            // Элементы DOM для отображения информации о файле
+            const fileInfoPanel = document.getElementById('fileInfoPanel');
+            const fileName = document.getElementById('fileName');
+            const fileDetails = document.getElementById('fileDetails');
+            const noDataMessage = document.getElementById('noDataMessage');
+            const transformationContent = document.getElementById('transformationContent');
+            const backToDataBtn = document.getElementById('backToDataBtn');
+            
+            // Элементы DOM для преобразования
+            const variablesList = document.getElementById('variablesList');
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const transformBtn = document.getElementById('transformBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const previewBtn = document.getElementById('previewBtn');
+            const transformAlert = document.getElementById('transformAlert');
+            const transformMessage = document.getElementById('transformMessage');
+            
+            // Элементы DOM для графиков
+            const originalChartContainer = document.getElementById('originalChartContainer');
+            const previewChartContainer = document.getElementById('previewChartContainer');
+            const closePreviewBtn = document.getElementById('closePreviewBtn');
+            const chartLegend = document.getElementById('chartLegend');
+            const previewLegend = document.getElementById('previewLegend');
+            const toggleAllSeriesBtn = document.getElementById('toggleAllSeriesBtn');
+            
+            // Контексты для графиков
+            const originalChartCtx = document.getElementById('originalChart').getContext('2d');
+            const previewChartCtx = document.getElementById('previewChart').getContext('2d');
+            
+            // Глобальные переменные
+            let originalChart = null;
+            let previewChart = null;
+            let fileData = null;
+            let selectedVariables = [];
+            let transformedData = null;
+            let allSeriesVisible = true;
+            let chartColors = [
+                '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+                '#ec4899', '#6366f1', '#14b8a6', '#f97316', '#a855f7'
+            ];
+            
+            // Проверяем, есть ли загруженный файл
+            checkLoadedFile();
+            
+            // Слушатель для кнопки "К списку данных"
+            backToDataBtn.addEventListener('click', function() {
+                window.location.href = '/data';
+            });
+            
+            // Слушатель для чекбокса "Выбрать все"
+            selectAllCheckbox.addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('.transform-checkbox');
+                checkboxes.forEach(checkbox => {
+                    if (!checkbox.closest('.variable-row').classList.contains('not-numeric')) {
+                        checkbox.checked = selectAllCheckbox.checked;
+                    }
+                });
+                updateSelectedVariables();
+            });
+            
+            // Слушатель для кнопки преобразования
+            transformBtn.addEventListener('click', transformData);
+            
+            // Слушатель для кнопки скачивания
+            downloadBtn.addEventListener('click', downloadTransformedData);
+            
+            // Слушатель для кнопки предпросмотра
+            previewBtn.addEventListener('click', previewTransformation);
+            
+            // Слушатель для кнопки закрытия предпросмотра
+            closePreviewBtn.addEventListener('click', function() {
+                previewChartContainer.style.display = 'none';
+            });
+            
+            // Слушатель для кнопки показать/скрыть все ряды
+            toggleAllSeriesBtn.addEventListener('click', toggleAllSeries);
+            
+            // Функция проверки наличия загруженного файла
+            function checkLoadedFile() {
+                const storedFileId = localStorage.getItem('fileId');
+                const storedFileName = localStorage.getItem('fileName');
+                const storedColumnsData = localStorage.getItem('fileColumnsData');
+                
+                if (storedFileId && storedFileName && storedColumnsData) {
+                    // Есть загруженный файл
+                    fileInfoPanel.style.display = 'flex';
+                    noDataMessage.style.display = 'none';
+                    transformationContent.style.display = 'block';
+                    
+                    // Отображаем информацию о файле
+                    fileName.textContent = storedFileName;
+                    
+                    try {
+                        fileData = JSON.parse(storedColumnsData);
+                        fileData.fileId = storedFileId;
+                        
+                        const numericColumns = fileData.numeric_columns || [];
+                        const rowsCount = fileData.rows_count || 0;
+                        
+                        fileDetails.textContent = `${numericColumns.length} числовых столбцов, ${rowsCount} наблюдений`;
+                        
+                        // Заполняем список переменных и загружаем данные для графика
+                        populateVariablesList();
+                        loadTimeSeriesData();
+                        
+                    } catch (error) {
+                        console.error('Ошибка при разборе данных о столбцах:', error);
+                        fileDetails.textContent = 'Файл загружен';
+                    }
+                } else {
+                    // Нет загруженного файла
+                    fileInfoPanel.style.display = 'none';
+                    noDataMessage.style.display = 'block';
+                    transformationContent.style.display = 'none';
+                }
+            }
+            
+            // Функция для заполнения списка переменных
+            function populateVariablesList() {
+                variablesList.innerHTML = ''; // Очищаем список
+                
+                const numericColumns = fileData.numeric_columns || [];
+                const allColumns = fileData.columns || [];
+                
+                // Для каждой колонки создаем строку в таблице
+                allColumns.forEach(column => {
+                    // Пропускаем колонку с датами
+                    if (column === fileData.date_column) {
+                        return;
+                    }
+                    
+                    // Определяем, является ли колонка числовой
+                    const isNumeric = numericColumns.includes(column);
+                    
+                    // Создаем строку с переменной
+                    const row = document.createElement('div');
+                    row.className = `variable-row ${isNumeric ? '' : 'not-numeric'}`;
+                    
+                    // Название переменной
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'variable-name';
+                    nameDiv.textContent = column;
+                    
+                    // Если не числовая, добавляем информацию
+                    if (!isNumeric) {
+                        const infoTooltip = document.createElement('div');
+                        infoTooltip.className = 'info-tooltip';
+                        infoTooltip.innerHTML = '<i class="fas fa-info-circle"></i>';
+                        
+                        const tooltipText = document.createElement('span');
+                        tooltipText.className = 'tooltip-text';
+                        tooltipText.textContent = 'Эта переменная не является числовой и не может быть преобразована.';
+                        
+                        infoTooltip.appendChild(tooltipText);
+                        nameDiv.appendChild(infoTooltip);
+                    }
+                    
+                    // Статус переменной - добавим после тестов на стационарность
+                    const statusDiv = document.createElement('div');
+                    statusDiv.className = 'variable-status';
+                    statusDiv.textContent = 'Определяется...';
+                    
+                    // Опции преобразования
+                    const optionsDiv = document.createElement('div');
+                    optionsDiv.className = 'transformation-options';
+                    
+                    // Селект с порядком интеграции
+                    const selectWrapper = document.createElement('div');
+                    selectWrapper.className = 'select-wrapper';
+                    
+                    const select = document.createElement('select');
+                    select.className = 'integration-order';
+                    select.dataset.variable = column;
+                    
+                    // Опции для селекта
+                    const options = [
+                        { value: 'none', text: 'Оставить как есть' },
+                        { value: 'I(0)', text: 'Привести к I(0) - стационарный' },
+                        { value: 'I(1)', text: 'Привести к I(1) - первый порядок интеграции' },
+                        { value: 'I(2)', text: 'Привести к I(2) - второй порядок интеграции' }
+                    ];
+                    
+                    options.forEach(opt => {
+                        const option = document.createElement('option');
+                        option.value = opt.value;
+                        option.textContent = opt.text;
+                        select.appendChild(option);
+                    });
+                    
+                    selectWrapper.appendChild(select);
+                    
+                    // Чекбокс для выбора
+                    const checkboxWrapper = document.createElement('div');
+                    checkboxWrapper.className = 'checkbox-wrapper';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.className = 'transform-checkbox';
+                    checkbox.id = `transform_${column}`;
+                    checkbox.dataset.variable = column;
+                    checkbox.addEventListener('change', updateSelectedVariables);
+                    
+                    const label = document.createElement('label');
+                    label.setAttribute('for', `transform_${column}`);
+                    label.textContent = 'Выбрать';
+                    
+                    checkboxWrapper.appendChild(checkbox);
+                    checkboxWrapper.appendChild(label);
+                    
+                    // Добавляем элементы в строку
+                    optionsDiv.appendChild(selectWrapper);
+                    optionsDiv.appendChild(checkboxWrapper);
+                    
+                    row.appendChild(nameDiv);
+                    row.appendChild(statusDiv);
+                    row.appendChild(optionsDiv);
+                    
+                    // Добавляем строку в список
+                    variablesList.appendChild(row);
+                }
+                
+                // После заполнения запускаем анализ стационарности
+                analyzStationarity();
+            }
+            
+            // Функция для запроса данных временных рядов для графика
+            async function loadTimeSeriesData() {
+                try {
+                    // Показываем сообщение о загрузке в контейнере графика
+                    originalChartContainer.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Загрузка данных...</p></div>';
+                    
+                    const fileId = fileData.fileId;
+                    const dateColumn = fileData.date_column || 'Дата';
+                    const numericColumns = fileData.numeric_columns || [];
+                    
+                    // Если нет числовых колонок, выходим
+                    if (numericColumns.length === 0) {
+                        originalChartContainer.innerHTML = '<div class="text-center p-5 text-muted">Нет числовых данных для отображения</div>';
+                        return;
+                    }
+                    
+                    // Запрашиваем данные для каждой колонки
+                    const datasets = [];
+                    for (const column of numericColumns) {
+                        const formData = new FormData();
+                        formData.append('file_id', fileId);
+                        formData.append('date_column', dateColumn);
+                        formData.append('column', column);
+                        
+                        const response = await fetch(`${API_URL}/get-time-series-data`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`Ошибка при получении данных для ${column}`);
+                        }
+                        
+                        const data = await response.json();
+                        
+                        // Формируем датасет для графика
+                        datasets.push({
+                            label: column,
+                            data: data.map(item => ({ x: new Date(item.date), y: item.value })),
+                            borderColor: chartColors[datasets.length % chartColors.length],
+                            backgroundColor: chartColors[datasets.length % chartColors.length] + '33',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.2
+                        });
+                    }
+                    
+                    // Создаем график
+                    createOriginalChart(datasets);
+                    
+                } catch (error) {
+                    console.error('Ошибка при загрузке данных для графика:', error);
+                    originalChartContainer.innerHTML = `<div class="text-center p-5 text-danger"><i class="fas fa-exclamation-circle fa-2x mb-3"></i><p>Ошибка при загрузке данных: ${error.message}</p></div>`;
+                }
+            }
+            
+            // Функция для создания графика исходных данных
+            function createOriginalChart(datasets) {
+                // Очищаем контейнер графика и легенду
+                document.getElementById('originalChart').remove();
+                const canvas = document.createElement('canvas');
+                canvas.id = 'originalChart';
+                document.querySelector('#originalChartContainer .chart-wrapper').appendChild(canvas);
+                
+                chartLegend.innerHTML = '';
+                
+                // Создаем легенду
+                datasets.forEach((dataset, index) => {
+                    const legendItem = document.createElement('div');
+                    legendItem.className = 'legend-item';
+                    
+                    const colorBox = document.createElement('div');
+                    colorBox.className = 'legend-color';
+                    colorBox.style.backgroundColor = dataset.borderColor;
+                    
+                    const labelText = document.createElement('span');
+                    labelText.textContent = dataset.label;
+                    
+                    legendItem.appendChild(colorBox);
+                    legendItem.appendChild(labelText);
+                    
+                    // Добавляем интерактивность легенде
+                    legendItem.addEventListener('click', () => {
+                        const chartDataset = originalChart.data.datasets[index];
+                        chartDataset.hidden = !chartDataset.hidden;
+                        originalChart.update();
+                        
+                        // Обновляем стиль легенды
+                        if (chartDataset.hidden) {
+                            legendItem.style.opacity = '0.5';
+                            colorBox.style.backgroundColor = '#cbd5e1';
+                        } else {
+                            legendItem.style.opacity = '1';
+                            colorBox.style.backgroundColor = dataset.borderColor;
+                        }
+                    });
+                    
+                    chartLegend.appendChild(legendItem);
+                });
+                
+                // Создаем график
+                originalChart = new Chart(document.getElementById('originalChart').getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false // Используем свою легенду
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    unit: 'month',
+                                    displayFormats: {
+                                        month: 'MMM yyyy'
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Дата'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Значение'
+                                }
+                            }
+                        },
+                        interaction: {
+                            mode: 'nearest',
+                            axis: 'x',
+                            intersect: false
+                        }
+                    }
+                });
+            }
+            
+            // Функция для запуска анализа стационарности
+            async function analyzStationarity() {
+                try {
+                    const fileId = fileData.fileId;
+                    const dateColumn = fileData.date_column || 'Дата';
+                    const numericColumns = fileData.numeric_columns || [];
+                    
+                    // Если нет числовых колонок, выходим
+                    if (numericColumns.length === 0) {
+                        return;
+                    }
+                    
+                    // Для каждой числовой колонки запускаем тесты на стационарность
+                    const formData = new FormData();
+                    formData.append('file_id', fileId);
+                    formData.append('date_column', dateColumn);
+                    formData.append('endogenous_vars', JSON.stringify(numericColumns));
+                    
+                    const response = await fetch(`${API_URL}/analyze-with-file-id`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Ошибка при анализе стационарности данных');
+                    }
+                    
+                    const results = await response.json();
+                    console.log('Результаты анализа стационарности:', results);
+                    
+                    // Обновляем информацию о стационарности в интерфейсе
+                    updateStationarityInfo(results);
+                    
+                } catch (error) {
+                    console.error('Ошибка при анализе стационарности:', error);
+                    
+                    // Обновляем статусы ошибкой
+                    const statusDivs = document.querySelectorAll('.variable-status');
+                    statusDivs.forEach(div => {
+                        div.innerHTML = '<span class="text-danger">Ошибка анализа</span>';
+                    });
+                }
+            }
+            
+            // Функция для обновления информации о стационарности
+            function updateStationarityInfo(results) {
+                // Обрабатываем результаты переменных
+                if (results.variable_results) {
+                    for (const [variable, result] of Object.entries(results.variable_results)) {
+                        const row = Array.from(document.querySelectorAll('.variable-row')).find(
+                            row => row.querySelector('.variable-name').textContent.trim() === variable
+                        );
+                        
+                        if (row) {
+                            const statusDiv = row.querySelector('.variable-status');
+                            const selectEl = row.querySelector('select.integration-order');
+                            
+                            // Определяем текущий порядок интеграции
+                            const dValue = result.d_value;
+                            let statusHTML = '';
+                            
+                            // Устанавливаем значение селекта по умолчанию в зависимости от d_value
+                            if (dValue === 0) {
+                                statusHTML = '<span class="status-badge stationary">I(0) - стационарный</span>';
+                                selectEl.value = 'none'; // Оставить как есть, т.к. уже стационарный
+                            } else if (dValue === 1) {
+                                statusHTML = '<span class="status-badge non-stationary">I(1) - первый порядок</span>';
+                                selectEl.value = 'none'; // Оставить как есть
+                            } else if (dValue === 2) {
+                                statusHTML = '<span class="status-badge non-stationary">I(2) - второй порядок</span>';
+                                selectEl.value = 'none'; // Оставить как есть
+                            } else {
+                                statusHTML = '<span class="text-muted">Не определен</span>';
+                            }
+                            
+                            statusDiv.innerHTML = statusHTML;
+                        }
+                    }
+                }
+            }
+            
+            // Функция для обновления списка выбранных переменных
+            function updateSelectedVariables() {
+                selectedVariables = [];
+                const checkboxes = document.querySelectorAll('.transform-checkbox:checked');
+                
+                checkboxes.forEach(checkbox => {
+                    const variable = checkbox.dataset.variable;
+                    if (variable) {
+                        selectedVariables.push(variable);
+                    }
+                });
+                
+                // Обновляем состояние кнопки преобразования
+                transformBtn.disabled = selectedVariables.length === 0;
+                previewBtn.disabled = selectedVariables.length === 0;
+                
+                console.log('Выбранные переменные:', selectedVariables);
+            }
+            
+            // Функция для переключения видимости всех рядов
+            function toggleAllSeries() {
+                allSeriesVisible = !allSeriesVisible;
+                
+                if (originalChart) {
+                    originalChart.data.datasets.forEach((dataset, index) => {
+                        dataset.hidden = !allSeriesVisible;
+                        
+                        // Обновляем стиль легенды
+                        const legendItems = chartLegend.querySelectorAll('.legend-item');
+                        if (legendItems[index]) {
+                            if (dataset.hidden) {
+                                legendItems[index].style.opacity = '0.5';
+                                legendItems[index].querySelector('.legend-color').style.backgroundColor = '#cbd5e1';
+                            } else {
+                                legendItems[index].style.opacity = '1';
+                                legendItems[index].querySelector('.legend-color').style.backgroundColor = dataset.borderColor;
+                            }
+                        }
+                    });
+                    
+                    originalChart.update();
+                }
+            }
+            
+            // Функция для предпросмотра трансформации
+            async function previewTransformation() {
+                if (selectedVariables.length === 0) {
+                    alert('Пожалуйста, выберите хотя бы одну переменную для преобразования.');
+                    return;
+                }
+                
+                // Показываем модальное окно загрузки
+                loadingMessage.textContent = 'Подготовка предпросмотра...';
+                loadingDetails.textContent = 'Вычисление преобразованных рядов...';
+                loadingModal.show();
+                
+                try {
+                    // Получаем настройки преобразования для каждой переменной
+                    const transformationSettings = {};
+                    selectedVariables.forEach(variable => {
+                        const selectEl = document.querySelector(`select[data-variable="${variable}"]`);
+                        if (selectEl) {
+                            transformationSettings[variable] = selectEl.value;
+                        }
+                    });
+                    
+                    // Готовим данные для запроса
+                    const fileId = fileData.fileId;
+                    const dateColumn = fileData.date_column || 'Дата';
+                    
+                    // Запрос к API для преобразования
+                    const formData = new FormData();
+                    formData.append('file_id', fileId);
+                    formData.append('date_column', dateColumn);
+                    formData.append('transformation_settings', JSON.stringify(transformationSettings));
+                    formData.append('preview', 'true');
+                    
+                    // Создаем новый API-эндпоинт для трансформации данных
+                    const response = await fetch(`${API_URL}/transform-integration-order`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Ошибка при преобразовании данных');
+                    }
+                    
+                    const previewData = await response.json();
+                    console.log('Данные предпросмотра:', previewData);
+                    
+                    // Создаем график с предпросмотром
+                    createPreviewChart(previewData);
+                    
+                    // Показываем контейнер с предпросмотром
+                    previewChartContainer.style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Ошибка при предпросмотре:', error);
+                    alert(`Ошибка при формировании предпросмотра: ${error.message}`);
+                } finally {
+                    // Скрываем модальное окно загрузки
+                    loadingModal.hide();
+                }
+            }
+            
+            // Функция для создания графика предпросмотра
+            function createPreviewChart(previewData) {
+                // Очищаем контейнер графика и легенду
+                document.getElementById('previewChart').remove();
+                const canvas = document.createElement('canvas');
+                canvas.id = 'previewChart';
+                document.querySelector('#previewChartContainer .chart-wrapper').appendChild(canvas);
+                
+                previewLegend.innerHTML = '';
+                
+                // Создаем датасеты для графика
+                const datasets = [];
+                
+                // Добавляем исходные данные
+                selectedVariables.forEach((variable, index) => {
+                    // Ищем исходные данные в originalChart
+                    const originalDataset = originalChart.data.datasets.find(ds => ds.label === variable);
+                    
+                    if (originalDataset) {
+                        datasets.push({
+                            label: `${variable} (исходный)`,
+                            data: originalDataset.data,
+                            borderColor: originalDataset.borderColor,
+                            borderWidth: 2,
+                            borderDash: [5, 5], // Пунктирная линия для исходных данных
+                            pointRadius: 0,
+                            tension: 0.2
+                        });
+                    }
+                });
+                
+                // Добавляем преобразованные данные
+                Object.entries(previewData.transformed_data).forEach(([variable, data], index) => {
+                    const originalColor = datasets.find(ds => ds.label === `${variable} (исходный)`)?.borderColor;
+                    
+                    datasets.push({
+                        label: `${variable} (преобразованный)`,
+                        data: data.map(item => ({ x: new Date(item.date), y: item.value })),
+                        borderColor: originalColor || chartColors[index % chartColors.length],
+                        backgroundColor: (originalColor || chartColors[index % chartColors.length]) + '33',
+                        borderWidth: 3,
+                        pointRadius: 0,
+                        tension: 0.2
+                    });
+                });
+                
+                // Создаем легенду
+                datasets.forEach((dataset, index) => {
+                    const legendItem = document.createElement('div');
+                    legendItem.className = 'legend-item';
+                    
+                    const colorBox = document.createElement('div');
+                    colorBox.className = 'legend-color';
+                    colorBox.style.backgroundColor = dataset.borderColor;
+                    
+                    const labelText = document.createElement('span');
+                    labelText.textContent = dataset.label;
+                    
+                    legendItem.appendChild(colorBox);
+                    legendItem.appendChild(labelText);
+                    
+                    // Добавляем интерактивность легенде
+                    legendItem.addEventListener('click', () => {
+                        const chartDataset = previewChart.data.datasets[index];
+                        chartDataset.hidden = !chartDataset.hidden;
+                        previewChart.update();
+                        
+                        // Обновляем стиль легенды
+                        if (chartDataset.hidden) {
+                            legendItem.style.opacity = '0.5';
+                            colorBox.style.backgroundColor = '#cbd5e1';
+                        } else {
+                            legendItem.style.opacity = '1';
+                            colorBox.style.backgroundColor = dataset.borderColor;
+                        }
+                    });
+                    
+                    previewLegend.appendChild(legendItem);
+                });
+                
+                // Создаем график
+                previewChart = new Chart(document.getElementById('previewChart').getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false // Используем свою легенду
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    unit: 'month',
+                                    displayFormats: {
+                                        month: 'MMM yyyy'
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Дата'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Значение'
+                                }
+                            }
+                        },
+                        interaction: {
+                            mode: 'nearest',
+                            axis: 'x',
+                            intersect: false
+                        }
+                    }
+                });
+            }
+            
+            // Функция для преобразования данных
+            async function transformData() {
+                if (selectedVariables.length === 0) {
+                    alert('Пожалуйста, выберите хотя бы одну переменную для преобразования.');
+                    return;
+                }
+                
+                // Показываем модальное окно загрузки
+                loadingMessage.textContent = 'Преобразование данных...';
+                loadingDetails.textContent = 'Выполняется преобразование рядов к заданному порядку интеграции...';
+                loadingModal.show();
+                
+                try {
+                    // Получаем настройки преобразования для каждой переменной
+                    const transformationSettings = {};
+                    selectedVariables.forEach(variable => {
+                        const selectEl = document.querySelector(`select[data-variable="${variable}"]`);
+                        if (selectEl) {
+                            transformationSettings[variable] = selectEl.value;
+                        }
+                    });
+                    
+                    // Готовим данные для запроса
+                    const fileId = fileData.fileId;
+                    const dateColumn = fileData.date_column || 'Дата';
+                    
+                    // Запрос к API для преобразования
+                    const formData = new FormData();
+                    formData.append('file_id', fileId);
+                    formData.append('date_column', dateColumn);
+                    formData.append('transformation_settings', JSON.stringify(transformationSettings));
+                    formData.append('preview', 'false');
+                    
+                    // Отправляем запрос на трансформацию
+                    const response = await fetch(`${API_URL}/transform-integration-order`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Ошибка при преобразовании данных');
+                    }
+                    
+                    const result = await response.json();
+                    console.log('Результат преобразования:', result);
+                    
+                    // Сохраняем результат для дальнейшего использования
+                    transformedData = result;
+                    
+                    // Обновляем localStorage с новыми данными
+                    if (result.updated_file_id) {
+                        localStorage.setItem('fileId', result.updated_file_id);
+                    }
+                    
+                    if (result.updated_columns_data) {
+                        localStorage.setItem('fileColumnsData', JSON.stringify(result.updated_columns_data));
+                    }
+                    
+                    // Активируем кнопку скачивания
+                    downloadBtn.disabled = false;
+                    
+                    // Показываем сообщение об успехе
+                    transformMessage.textContent = 'Преобразование успешно выполнено. Вы можете скачать новый файл или продолжить работу с преобразованными данными.';
+                    transformAlert.style.display = 'block';
+                    
+                    // Обновляем интерфейс с новыми данными
+                    if (result.updated_columns_data) {
+                        fileData = result.updated_columns_data;
+                        fileData.fileId = result.updated_file_id || fileData.fileId;
+                        
+                        // Обновляем информацию о файле
+                        const numericColumns = fileData.numeric_columns || [];
+                        const rowsCount = fileData.rows_count || 0;
+                        fileDetails.textContent = `${numericColumns.length} числовых столбцов, ${rowsCount} наблюдений`;
+                        
+                        // Перезагружаем список переменных и график
+                        populateVariablesList();
+                        loadTimeSeriesData();
+                    }
+                    
+                } catch (error) {
+                    console.error('Ошибка при преобразовании данных:', error);
+                    transformMessage.textContent = `Ошибка при преобразовании данных: ${error.message}`;
+                    transformAlert.className = 'alert alert-danger alert-transformation';
+                    transformAlert.style.display = 'block';
+                } finally {
+                    // Скрываем модальное окно загрузки
+                    loadingModal.hide();
+                }
+            }
+            
+            // Функция для скачивания преобразованных данных
+            async function downloadTransformedData() {
+                if (!transformedData || !transformedData.download_url) {
+                    alert('Нет данных для скачивания. Сначала выполните преобразование.');
+                    return;
+                }
+                
+                try {
+                    // Создаем ссылку для скачивания
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = transformedData.download_url;
+                    downloadLink.download = `transformed_${fileName.textContent}`;
+                    downloadLink.style.display = 'none';
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                } catch (error) {
+                    console.error('Ошибка при скачивании файла:', error);
+                    alert(`Ошибка при скачивании файла: ${error.message}`);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
