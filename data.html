@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Данные - Аналитическая система</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <style>
+        .data-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .data-action-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            height: 100%;
+        }
+        
+        .data-action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.12);
+        }
+        
+        .data-action-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: #3b82f6;
+        }
+        
+        .data-action-content {
+            padding: 20px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .data-action-icon {
+            background-color: #eff6ff;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            color: #3b82f6;
+            font-size: 20px;
+        }
+        
+        .data-action-card h3 {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: #334155;
+        }
+        
+        .data-action-card p {
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            flex-grow: 1;
+        }
+        
+        .data-action-card .btn {
+            align-self: flex-start;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            font-size: 14px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .data-action-card .btn:hover {
+            background-color: #2563eb;
+        }
+        
+        .data-action-card .btn-secondary {
+            background-color: #f1f5f9;
+            color: #334155;
+        }
+        
+        .data-action-card .btn-secondary:hover {
+            background-color: #e2e8f0;
+        }
+        
+        .file-info-banner {
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 20px;
+            background-color: #eff6ff;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .file-info-banner i {
+            font-size: 24px;
+            color: #3b82f6;
+        }
+        
+        .file-info-details strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        
+        .file-info-details span {
+            display: block;
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        .no-file-warning {
+            text-align: center;
+            padding: 30px;
+            background-color: #fef2f2;
+            border-radius: 8px;
+            border-left: 4px solid #ef4444;
+            color: #b91c1c;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .no-file-warning i {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+        
+        .no-file-warning h4 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        .no-file-warning p {
+            margin-bottom: 15px;
+        }
+        
+        .no-file-warning .btn {
+            background-color: #ef4444;
+            border: none;
+        }
+        
+        .no-file-warning .btn:hover {
+            background-color: #dc2626;
+        }
+        
+        @media (max-width: 767.98px) {
+            .data-actions-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .file-info-banner {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Верхняя панель -->
+    <header class="top-panel">
+        <div class="d-flex align-items-center">
+            <button class="menu-toggle d-lg-none me-2" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo-container">
+                <div class="logo-square"></div>
+                <h1 class="app-title">Аналитическая система</h1>
+            </div>
+        </div>
+        <nav class="top-menu">
+            <ul>
+                <li><a href="/contacts">Контакты</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="main-container">
+        <!-- Боковая панель -->
+        <aside class="sidebar" id="sidebar">
+            <nav class="main-nav">
+                <ul>
+                    <li>
+                        <a href="/">
+                            <span class="nav-icon"><i class="fas fa-home"></i></span>
+                            Главная
+                        </a>
+                    </li>
+                    <li class="active">
+                        <a href="/data">
+                            <span class="nav-icon"><i class="fas fa-database"></i></span>
+                            Данные
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/analysis">
+                            <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+                            Анализ
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/forecasts">
+                            <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+                            Прогнозы
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/reports">
+                            <span class="nav-icon"><i class="fas fa-file-alt"></i></span>
+                            Отчеты
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/about">
+                            <span class="nav-icon"><i class="fas fa-question-circle"></i></span>
+                            О системе
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="version-info">
+                <p>Версия 3.2.1</p>
+                <p>Обновлено 28.03.2025</p>
+            </div>
+        </aside>
+
+        <!-- Основной контент -->
+        <main class="content">
+            <div class="breadcrumbs">
+                <span><a href="/">Главная</a></span>
+                <span class="separator">/</span>
+                <span>Данные</span>
+            </div>
+
+            <div class="page-header">
+                <h2>Работа с данными</h2>
+                <p class="subtitle">Подготовка, обработка и преобразование данных для анализа</p>
+            </div>
+
+            <!-- Информация о загруженном файле (отображается, если файл загружен) -->
+            <div id="fileInfoBanner" class="file-info-banner" style="display: none;">
+                <i class="fas fa-file-excel"></i>
+                <div class="file-info-details">
+                    <strong id="fileName">Название файла</strong>
+                    <span id="fileDetails">Информация о файле</span>
+                </div>
+            </div>
+
+            <!-- Предупреждение, если файл не загружен -->
+            <div id="noFileWarning" class="no-file-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h4>Нет загруженных данных</h4>
+                <p>Для работы с данными необходимо сначала загрузить файл.</p>
+                <a href="/data/upload" class="btn btn-danger">
+                    <i class="fas fa-upload me-2"></i>Перейти к загрузке данных
+                </a>
+            </div>
+
+            <!-- Сетка с действиями для работы с данными -->
+            <div class="data-actions-grid">
+                <!-- Загрузка данных -->
+                <div class="data-action-card">
+                    <div class="data-action-content">
+                        <div class="data-action-icon">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                        <h3>Загрузка данных</h3>
+                        <p>Загрузка новых данных в формате Excel (.xlsx, .xls) или CSV для дальнейшего анализа и обработки.</p>
+                        <a href="/data/upload" class="btn">
+                            <i class="fas fa-arrow-right me-1"></i> Перейти
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Преобразование порядков интеграции -->
+                <div class="data-action-card" id="transformationCard">
+                    <div class="data-action-content">
+                        <div class="data-action-icon">
+                            <i class="fas fa-magic"></i>
+                        </div>
+                        <h3>Преобразование порядков интеграции</h3>
+                        <p>Приведение временных рядов к заданному порядку интеграции для корректной спецификации моделей и улучшения результатов прогнозирования.</p>
+                        <a href="/data/transformation" class="btn" id="transformationBtn">
+                            <i class="fas fa-arrow-right me-1"></i> Перейти
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Визуализация данных -->
+                <div class="data-action-card">
+                    <div class="data-action-content">
+                        <div class="data-action-icon">
+                            <i class="fas fa-chart-area"></i>
+                        </div>
+                        <h3>Визуализация данных</h3>
+                        <p>Построение графиков и диаграмм для предварительного исследования и визуального анализа временных рядов.</p>
+                        <a href="/data/visualization" class="btn btn-secondary">
+                            <i class="fas fa-arrow-right me-1"></i> Перейти
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Очистка данных -->
+                <div class="data-action-card">
+                    <div class="data-action-content">
+                        <div class="data-action-icon" style="background-color: #f1f5f9; color: #94a3b8;">
+                            <i class="fas fa-broom"></i>
+                        </div>
+                        <h3 style="color: #94a3b8;">Очистка данных</h3>
+                        <p style="color: #94a3b8;">Обработка выбросов, заполнение пропущенных значений и стандартизация данных для повышения качества анализа.</p>
+                        <button class="btn btn-secondary" style="background-color: #e2e8f0; color: #94a3b8; cursor: not-allowed;">
+                            Скоро будет доступно
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Обработка мобильного меню
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                sidebarOverlay.classList.toggle('active');
+                document.body.classList.toggle('sidebar-open');
+            });
+            
+            sidebarOverlay.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
+            });
+
+            // Адаптивность при изменении размера окна
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 992) {
+                    sidebar.classList.remove('active');
+                    sidebarOverlay.classList.remove('active');
+                    document.body.classList.remove('sidebar-open');
+                }
+            });
+            
+            // Проверка наличия загруженного файла в localStorage
+            const fileInfoBanner = document.getElementById('fileInfoBanner');
+            const fileName = document.getElementById('fileName');
+            const fileDetails = document.getElementById('fileDetails');
+            const noFileWarning = document.getElementById('noFileWarning');
+            const transformationBtn = document.getElementById('transformationBtn');
+            
+            // Получаем данные о файле из localStorage
+            const storedFileId = localStorage.getItem('fileId');
+            const storedFileName = localStorage.getItem('fileName');
+            const storedColumnsData = localStorage.getItem('fileColumnsData');
+            
+            if (storedFileId && storedFileName && storedColumnsData) {
+                // Есть загруженный файл
+                fileInfoBanner.style.display = 'flex';
+                noFileWarning.style.display = 'none';
+                
+                // Отображаем информацию о файле
+                fileName.textContent = storedFileName;
+                
+                try {
+                    const columnsData = JSON.parse(storedColumnsData);
+                    const numericColumns = columnsData.numeric_columns || [];
+                    const rowsCount = columnsData.rows_count || 0;
+                    
+                    fileDetails.textContent = `${numericColumns.length} числовых столбцов, ${rowsCount} наблюдений`;
+                } catch (error) {
+                    console.error('Ошибка при разборе данных о столбцах:', error);
+                    fileDetails.textContent = 'Файл загружен';
+                }
+                
+                // Разблокируем кнопку преобразования
+                transformationBtn.classList.remove('btn-secondary');
+                transformationBtn.classList.add('btn-primary');
+            } else {
+                // Нет загруженного файла
+                fileInfoBanner.style.display = 'none';
+                noFileWarning.style.display = 'block';
+                
+                // Блокируем кнопку преобразования
+                transformationBtn.classList.remove('btn-primary');
+                transformationBtn.classList.add('btn-secondary');
+                transformationBtn.style.pointerEvents = 'none';
+                transformationBtn.style.opacity = '0.7';
+            }
+        });
+    </script>
+</body>
+</html>
