@@ -620,3 +620,122 @@ def cleanup_old_messages():
 # Запускаем поток для очистки старых сообщений
 cleanup_thread = threading.Thread(target=cleanup_old_messages, daemon=True)
 cleanup_thread.start()
+
+def transform_to_stationary(series):
+    """
+    Преобразование ряда к стационарному виду (I(0)) с использованием 
+    последовательных разностей и тестов на стационарность
+    """
+    # Проверяем исходный ряд на стационарность
+    is_stationary, _ = check_stationarity(series, "")
+    
+    if is_stationary == "Стационарен":
+        # Если ряд уже стационарен, возвращаем его без изменений
+        return series
+    
+    # Пробуем первые разности
+    diff1 = series.diff().dropna()
+    is_stationary, _ = check_stationarity(diff1, "")
+    
+    if is_stationary == "Стационарен":
+        # Пополняем пропущенные значения (первое наблюдение)
+        padded_series = pd.Series([None] + diff1.tolist(), index=series.index)
+        return padded_series
+    
+    # Пробуем вторые разности
+    diff2 = diff1.diff().dropna()
+    is_stationary, _ = check_stationarity(diff2, "")
+    
+    if is_stationary == "Стационарен":
+        # Пополняем пропущенные значения (первые два наблюдения)
+        padded_series = pd.Series([None, None] + diff2.tolist(), index=series.index)
+        return padded_series
+    
+    # Если не удалось достичь стационарности, возвращаем вторые разности
+    padded_series = pd.Series([None, None] + diff2.tolist(), index=series.index)
+    return padded_series
+
+def transform_to_first_order(series):
+    """
+    Преобразование ряда к первому порядку интеграции (I(1))
+    """
+    # Проверяем исходный ряд
+    is_stationary, _ = check_stationarity(series, "")
+    
+    if is_stationary == "Стационарен":
+        # Если ряд стационарен (I(0)), интегрируем его один раз
+        integrated = series.cumsum()
+        return integrated
+    
+    # Проверяем первые разности
+    diff1 = series.diff().dropna()
+    is_stationary, _ = check_stationarity(diff1, "")
+    
+    if is_stationary == "Стационарен":
+        # Если первые разности стационарны (I(1)), оставляем исходный ряд
+        return series
+    
+    # Проверяем вторые разности
+    diff2 = diff1.diff().dropna()
+    is_stationary, _ = check_stationarity(diff2, "")
+    
+    if is_stationary == "Стационарен":
+        # Если вторые разности стационарны (I(2)), интегрируем один раз
+        # Начинаем с первой разности и интегрируем
+        padded_diff1 = pd.Series([0] + diff1.tolist(), index=series.index)
+        integrated = padded_diff1.cumsum()
+        return integrated
+    
+    # Если не определено, возвращаем исходный ряд
+    return series
+
+def transform_to_second_order(series):
+    """
+    Преобразование ряда ко второму порядку интеграции (I(2))
+    """
+    # Проверяем исходный ряд
+    is_stationary, _ = check_stationarity(series, "")
+    
+    if is_stationary == "Стационарен":
+        # Если ряд стационарен (I(0)), интегрируем его дважды
+        integrated1 = series.cumsum()
+        integrated2 = integrated1.cumsum()
+        return integrated2
+    
+    # Проверяем первые разности
+    diff1 = series.diff().dropna()
+    is_stationary, _ = check_stationarity(diff1, "")
+    
+    if is_stationary == "Стационарен":
+        # Если первые разности стационарны (I(1)), интегрируем один раз
+        integrated = series.cumsum()
+        return integrated
+    
+    # Проверяем вторые разности
+    diff2 = diff1.diff().dropna()
+    is_stationary, _ = check_stationarity(diff2, "")
+    
+    if is_stationary == "Стационарен":
+        # Если вторые разности стационарны (I(2)), оставляем исходный ряд
+        return series
+    
+    # Если не определено, возвращаем исходный ряд
+    return series
+
+def format_time_series_for_preview(dates, values):
+    """
+    Форматирует временной ряд для предпросмотра в формате для JSON
+    
+    Returns:
+    --------
+    list: Список словарей {date: str, value: float}
+    """
+    result = []
+    for date, value in zip(dates, values):
+        if pd.notna(value):  # Исключаем NaN значения
+            result.append({
+                "date": date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date),
+                "value": float(value)
+            })
+    
+    return result
