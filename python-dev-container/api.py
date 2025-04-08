@@ -852,7 +852,7 @@ async def transform_integration_order(
         }
         
         # Формируем URL для скачивания
-        download_url = f"http://37.252.23.30:8000/temp-file/{new_file_id}"
+        download_url = f"http://37.252.23.30:8000/temp-file/{new_file_id}.xlsx"
         
         # Возвращаем результаты
         return {
