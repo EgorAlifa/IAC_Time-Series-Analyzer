@@ -827,9 +827,10 @@ async def transform_integration_order(
         if is_preview:
             return preview_data
         
-        # Сохраняем преобразованные данные в новый файл
+        # Сохраняем преобразованные данные в новый файл с правильным расширением
         new_file_id = str(uuid.uuid4())
-        new_file_path = TEMP_FILES_DIR / new_file_id
+        new_file_path = TEMP_FILES_DIR / f"{new_file_id}{file_extension}"
+
         
         # Сохраняем файл в том же формате, что и исходный
         if file_extension == '.csv':
@@ -851,8 +852,8 @@ async def transform_integration_order(
             "date_column": date_column,
         }
         
-        # Формируем URL для скачивания
-        download_url = f"http://37.252.23.30:8000/temp-file/{new_file_id}.xlsx"
+        # Формируем URL для скачивания с сохранением расширения
+        download_url = f"http://37.252.23.30:8000/temp-file/{new_file_id}{file_extension}"
         
         # Возвращаем результаты
         return {
