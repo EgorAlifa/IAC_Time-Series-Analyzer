@@ -1,0 +1,79 @@
+Вот пошаговый план:
+
+Создадим директорию для проекта:
+
+mkdir python-dev-container
+cd python-dev-container
+
+python-dev-container/
+└── Dockerfile
+└── api.py
+└── requirements.txt
+└── ts_analysis.py
+Дополнительные команды
+
+Остановить контейнер:
+
+docker stop ts-analysis-container
+
+Запустить остановленный контейнер:
+
+docker start ts-analysis-container
+
+Удалить контейнер (сначала нужно остановить):
+
+docker rm ts-analysis-container
+
+Посмотреть логи контейнера:
+
+docker logs ts-analysis-container
+
+Войти внутрь работающего контейнера:
+
+docker exec -it ts-analysis-container bash
+
+
+Шаг 3: Соберите Docker-образ
+docker build -t ts-analysis-api .
+Шаг 4: Запустите Docker-контейнер
+docker run -d --name ts-analysis-container -p 8000:8000 ts-analysis-api
+
+git config --global user.email "tujh2012@bk.ru"
+git config --global user.name "Egor"
+
+536840Egor.
+
+# Перейдите в директорию репозитория
+cd ~/IAC_Time-Series-Analyzer
+
+# Получите последние изменения
+git pull
+
+docker build -t ts-analysis-api .
+
+
+uvicorn api:app --reload --host 0.0.0.0 --port 8000
+
+Проверьте, запустился ли контейнер:
+
+docker ps
+
+токен гита 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
+
+
+Запустите Docker Compose с опцией -d для работы в фоновом режиме:
+
+docker-compose up -d
+
+Проверьте статус запущенных контейнеров:
+
+docker-compose ps
+
+После изменения файла nginx/conf/site.conf достаточно перезапустить контейнер:
+docker-compose down
+docker-compose up -d
+Эта команда остановит существующий контейнер и запустит его заново с обновленной конфигурацией. Docker Compose автоматически использует новую версию монтированного файла конфигурации.
+
+Чтобы посмотреть логи контейнера Nginx, вы можете использовать следующую команду:
+docker logs time-series-nginx
+Это покажет общие логи Nginx.
