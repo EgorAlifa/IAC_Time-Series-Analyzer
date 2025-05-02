@@ -424,6 +424,7 @@ ul {
 
 .video-header {
     margin-bottom: 20px;
+    text-align: center;
 }
 
 .video-header h3 {
@@ -437,9 +438,16 @@ ul {
     color: #64748b;
 }
 
+.video-wrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
 .video-player {
     position: relative;
     width: 100%;
+    max-width: 640px; /* Ограничиваем максимальную ширину */
     border-radius: 8px;
     overflow: hidden;
     background-color: #f8fafc;
@@ -497,6 +505,10 @@ video {
         width: 50px;
         height: 50px;
         font-size: 20px;
+    }
+    
+    .video-player {
+        max-width: 100%; /* На мобильных устройствах занимает всю ширину */
     }
 }
 
