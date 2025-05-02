@@ -411,6 +411,7 @@ ul {
     .news-container {
         padding: 15px;
     }
+}
 /* Стили для видео-секции */
 .video-container {
     background-color: white;
@@ -505,5 +506,4 @@ video {
         height: 40px;
         font-size: 16px;
     }
-}
 }
