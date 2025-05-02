@@ -141,7 +141,7 @@ async def root():
 @app.get("/api/news")
 async def get_news_endpoint(
     q: str = Query(default="Ставка", description="Поисковый запрос"),
-    limit: int = Query(default=5, description="Лимит количества новостей")
+    limit: int = Query(default=7, description="Лимит количества новостей")
 ):
     try:
         print(f"Запрос новостей с параметрами: q={q}, limit={limit}")
