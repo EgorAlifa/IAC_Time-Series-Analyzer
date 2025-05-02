@@ -476,7 +476,32 @@
                             <h5 class="section-subtitle" style="color: #94a3b8;">
                                 <i class="fas fa-chart-line" style="color: #94a3b8;"></i> Модели для включения в отчет
                             </h5>
-                            
+                            <!-- Модель VARX -->
+                            <div class="model-item">
+                                <div class="model-header">
+                                    <input type="checkbox" id="model-varx" class="model-checkbox" disabled>
+                                    <label for="model-varx" class="model-title" style="color: #94a3b8;">Модель VARX</label>
+                                </div>
+                                <div class="model-params">
+                                    <div class="param-row">
+                                        <label class="param-label" style="color: #94a3b8;">Количество лагов:</label>
+                                        <input type="number" class="param-input" value="2" min="1" max="8" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Модель VAR -->
+                            <div class="model-item">
+                                <div class="model-header">
+                                    <input type="checkbox" id="model-var" class="model-checkbox" disabled>
+                                    <label for="model-var" class="model-title" style="color: #94a3b8;">Модель VAR</label>
+                                </div>
+                                <div class="model-params">
+                                    <div class="param-row">
+                                        <label class="param-label" style="color: #94a3b8;">Количество лагов:</label>
+                                        <input type="number" class="param-input" value="2" min="1" max="8" disabled>
+                                    </div>
+                                </div>
+                            </div>
                             <!-- Модель ARDL -->
                             <div class="model-item">
                                 <div class="model-header">
@@ -502,21 +527,6 @@
                                     </div>
                                 </div>
                             </div>
-                            
-                            <!-- Модель VAR -->
-                            <div class="model-item">
-                                <div class="model-header">
-                                    <input type="checkbox" id="model-var" class="model-checkbox" disabled>
-                                    <label for="model-var" class="model-title" style="color: #94a3b8;">Модель VAR</label>
-                                </div>
-                                <div class="model-params">
-                                    <div class="param-row">
-                                        <label class="param-label" style="color: #94a3b8;">Количество лагов:</label>
-                                        <input type="number" class="param-input" value="2" min="1" max="8" disabled>
-                                    </div>
-                                </div>
-                            </div>
-                            
                             <!-- Модель VECM -->
                             <div class="model-item">
                                 <div class="model-header">
