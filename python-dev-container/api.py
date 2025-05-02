@@ -171,7 +171,7 @@ async def get_news_endpoint(
             # Фильтруем статьи
             filtered_articles = [
                 article for article in articles
-                if "путин" not in article.get('title', '').lower() and "война" not in article.get('title', '').lower()
+                if "путин" not in article.get('title', '').lower() and "война" not in article.get('title', '').lower() and "войны" not in article.get('title', '').lower()
             ]
             
             # Ограничиваем количество новостей
