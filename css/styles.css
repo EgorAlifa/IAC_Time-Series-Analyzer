@@ -411,4 +411,99 @@ ul {
     .news-container {
         padding: 15px;
     }
+/* Стили для видео-секции */
+.video-container {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+    margin-bottom: 30px;
+    position: relative;
+}
+
+.video-header {
+    margin-bottom: 20px;
+}
+
+.video-header h3 {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.video-subtitle {
+    font-size: 14px;
+    color: #64748b;
+}
+
+.video-player {
+    position: relative;
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #f8fafc;
+}
+
+.video-preview {
+    position: relative;
+    cursor: pointer;
+    width: 100%;
+}
+
+.preview-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+}
+
+.play-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    background-color: rgba(59, 130, 246, 0.8);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    transition: all 0.3s ease;
+}
+
+.video-preview:hover .play-button {
+    background-color: #3b82f6;
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+video {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+}
+
+/* Адаптивность для видео */
+@media (max-width: 767.98px) {
+    .video-container {
+        padding: 15px;
+    }
+    
+    .play-button {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .play-button {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+}
 }
