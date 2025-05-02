@@ -83,7 +83,25 @@
             <div class="breadcrumbs">
                 <span>Главная</span>
             </div>
-
+            <div class="video-container">
+                <div class="video-header">
+                    <h3>Краткая инструкция по работе с системой</h3>
+                    <p class="video-subtitle">Ознакомьтесь с основными возможностями аналитической системы</p>
+                </div>
+                
+                <div class="video-player">
+                    <div class="video-preview" id="videoPreview">
+                        <img src="video/preview.jpg" alt="Превью видео с инструкцией" class="preview-image">
+                        <div class="play-button">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </div>
+                    <video id="instructionVideo" controls style="display: none;">
+                        <source src="video/instruction.mp4" type="video/mp4">
+                        Ваш браузер не поддерживает видео.
+                    </video>
+                </div>
+            </div>
             <div class="page-header">
                 <h2>Новости и события</h2>
                 <p class="subtitle">Актуальная информация и события в мире финансов и экономики</p>
@@ -196,6 +214,26 @@
                     `;
                 });
         });
+        // Обработка видео
+        const videoPreview = document.getElementById('videoPreview');
+        const instructionVideo = document.getElementById('instructionVideo');
+        
+        if (videoPreview && instructionVideo) {
+            videoPreview.addEventListener('click', function() {
+                // Скрываем превью и показываем видео
+                videoPreview.style.display = 'none';
+                instructionVideo.style.display = 'block';
+                
+                // Автоматически запускаем видео
+                instructionVideo.play();
+            });
+            
+            // Когда видео заканчивается, показываем превью снова
+            instructionVideo.addEventListener('ended', function() {
+                videoPreview.style.display = 'block';
+                instructionVideo.style.display = 'none';
+            });
+        }
     </script>
 </body>
 </html>
