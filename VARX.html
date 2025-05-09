@@ -58,7 +58,7 @@
         }
 
         .input-label {
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 500;
             color: #334155;
             margin-bottom: 5px;
@@ -68,7 +68,8 @@
         .numeric-input {
             width: 100%;
             max-width: 200px;
-            padding: 8px 12px;
+            padding: 8px 12px; /* Внутренние отступы (сверху/снизу 8px, слева/справа 12px) */
+            margin: 0 15px;    /* Внешние отступы слева и справа по 15px */
             border: 1px solid #cbd5e1;
             border-radius: 6px;
             font-size: 14px;
@@ -1201,7 +1202,7 @@ function displayModelResults(results) {
     const modelTypeBadge = document.createElement('span');
     modelTypeBadge.className = 'model-type-badge';
     modelTypeBadge.textContent = modelInfo.model_type || 'VARX';
-    modelTypeBadge.style.backgroundColor = modelInfo.model_type === 'ARX' ? '#10b981' : '#3b82f6';
+    modelTypeBadge.style.backgroundColor = modelInfo.model_type === 'VARX' ? '#10b981' : '#3b82f6';
     modelTypeBadge.style.color = 'white';
     modelTypeBadge.style.padding = '3px 8px';
     modelTypeBadge.style.borderRadius = '4px';
@@ -1209,7 +1210,7 @@ function displayModelResults(results) {
     modelTypeBadge.style.marginLeft = '10px';
     
     const modelTypeElement = document.getElementById('model-type');
-    modelTypeElement.textContent = modelInfo.model_type || 'VARX';
+    modelTypeElement.textContent = modelInfo.model_type || 'Vcalc(var(--bs-border-width';
     modelTypeElement.appendChild(modelTypeBadge);
     
     if (modelInfo.aic !== undefined) modelAic.textContent = modelInfo.aic.toFixed(2);
