@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any, Union
 from fastapi import Query
@@ -1197,6 +1197,104 @@ async def download_varx_report(
     except Exception as e:
         import traceback
         print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Ошибка при создании отчета: {str(e)}")
+        
+# Добавьте следующий класс для описания структуры запроса
+class ReportRequest(BaseModel):
+    file_id: str
+    format: str = "docx"
+    tests: Dict[str, Union[bool, Dict[str, Any]]] = {}
+    models: Dict[str, Dict[str, Any]] = {}
+
+@app.post("/generate-report")
+async def generate_report(request: Request):
+    """
+    Генерация отчета на основе выбранных тестов и моделей
+    
+    Поддерживаемые форматы: DOCX
+    """
+    try:
+        # Получаем JSON-данные из тела запроса
+        data = await request.json()
+        
+        # Извлекаем параметры
+        file_id = data.get('file_id')
+        report_format = data.get('format', 'docx')
+        tests = data.get('tests', {})
+        models = data.get('models', {})
+        
+        # Проверка наличия файла
+        file_path = TEMP_FILES_DIR / file_id
+        if not file_path.exists():
+            raise HTTPException(status_code=404, detail="Файл не найден или срок его хранения истек")
+        
+        # Определяем тип файла по расширению
+        file_extension = os.path.splitext(str(file_path))[1].lower()
+        
+        # Чтение данных из файла
+        try:
+            if file_extension == '.csv':
+                df = pd.read_csv(file_path)
+            elif file_extension in ['.xlsx', '.xls']:
+                df = pd.read_excel(file_path)
+            else:
+                # Пытаемся определить тип файла автоматически
+                try:
+                    df = pd.read_excel(file_path)
+                except:
+                    try:
+                        df = pd.read_csv(file_path)
+                    except:
+                        raise HTTPException(status_code=400, detail="Неподдерживаемый формат файла")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Ошибка при чтении файла: {str(e)}")
+        
+        # Подготовка данных для теста
+        try:
+            date_column = "Дата"  # По умолчанию используем Дата
+            
+            # Проверка наличия столбца с датами
+            if date_column not in df.columns:
+                # Пытаемся найти столбец с датами
+                date_columns = [col for col in df.columns if 'дата' in col.lower() or 'date' in col.lower()]
+                if date_columns:
+                    date_column = date_columns[0]
+                else:
+                    raise HTTPException(status_code=400, content={"error": f"Столбец с датами не найден"})
+            
+            # Преобразование столбца даты
+            df[date_column] = pd.to_datetime(df[date_column])
+            df.set_index(date_column, inplace=True)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Ошибка при подготовке данных: {str(e)}")
+        
+        # Создание отчета в зависимости от выбранных тестов и моделей
+        if report_format == 'docx':
+            # Используем существующую функцию create_comprehensive_report из ts_analysis
+            from ts_analysis import create_comprehensive_report
+            
+            # Подготовка параметров для отчета
+            report_params = {
+                'date_column': date_column,
+                'tests': tests,
+                'models': models
+            }
+            
+            # Создаем отчет
+            report_path = create_comprehensive_report(df, report_params)
+            
+            # Отправляем файл в ответе
+            return FileResponse(
+                path=report_path,
+                filename=f"Аналитический_отчет.docx",
+                media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            )
+        else:
+            raise HTTPException(status_code=400, detail=f"Формат {report_format} не поддерживается")
+    
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Ошибка при создании отчета: {str(e)}")
 # Установка URL API для формирования URL скачивания
 API_URL = "http://37.252.23.30:8000" 
