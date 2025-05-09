@@ -895,9 +895,15 @@ async def transform_integration_order(
         
         # Сохраняем файл в том же формате, что и исходный
         if file_extension == '.csv':
+            new_file_path = TEMP_FILES_DIR / f"{new_file_id}.csv"
             transformed_df.to_csv(new_file_path, index=False)
-        else:
+        elif file_extension in ['.xlsx', '.xls']:
+            new_file_path = TEMP_FILES_DIR / f"{new_file_id}.xlsx"
             transformed_df.to_excel(new_file_path, index=False)
+        else:
+            # Fallback — сохраняем как CSV по умолчанию
+            new_file_path = TEMP_FILES_DIR / f"{new_file_id}.xlsx"
+            transformed_df.to_csv(new_file_path, index=False)
         
         # Запоминаем время загрузки нового файла
         file_timestamps[new_file_id] = time.time()
