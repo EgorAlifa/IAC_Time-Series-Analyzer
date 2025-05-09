@@ -1100,10 +1100,13 @@ def create_comprehensive_report(df, params):
     # Получаем числовые колонки (предполагаемые переменные)
     numeric_columns = [col for col in df.columns if pd.api.types.is_numeric_dtype(df[col])]
     
+    # Переменная для отслеживания номера раздела
+    section_number = 1
+    
     # Если выбран тест на стационарность
     if tests.get('stationary', False):
         # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
-        heading = doc.add_heading('1. Анализ стационарности временных рядов', level=1)
+        heading = doc.add_heading(f'{section_number}. Анализ стационарности временных рядов', level=1)
         # Применяем стиль к параграфу заголовка после его создания
         heading.style = heading1_style
         
@@ -1111,7 +1114,7 @@ def create_comprehensive_report(df, params):
         
         # Таблица с результатами
         # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
-        heading = doc.add_heading('1.1. Сводная таблица результатов', level=2)
+        heading = doc.add_heading(f'{section_number}.1. Сводная таблица результатов', level=2)
         heading.style = heading2_style
         
         # Создаем таблицу для результатов
@@ -1156,7 +1159,7 @@ def create_comprehensive_report(df, params):
             
             # Добавляем детальные результаты тестов
             # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
-            heading = doc.add_heading(f'1.2. Результаты тестов для переменной "{column}"', level=2)
+            heading = doc.add_heading(f'{section_number}.2. Результаты тестов для переменной "{column}"', level=2)
             heading.style = heading2_style
             
             for line in test_outputs:
@@ -1164,7 +1167,7 @@ def create_comprehensive_report(df, params):
             
             # Визуализация ряда и его разностей
             # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
-            heading = doc.add_heading(f'1.3. Визуализация ряда и его разностей для "{column}"', level=2)
+            heading = doc.add_heading(f'{section_number}.3. Визуализация ряда и его разностей для "{column}"', level=2)
             heading.style = heading2_style
             
             # Создаем диаграмму
@@ -1226,11 +1229,14 @@ def create_comprehensive_report(df, params):
             
             # Добавляем разрыв страницы
             doc.add_page_break()
+        
+        # Увеличиваем номер раздела
+        section_number += 1
     
     # Если выбран тест на коинтеграцию
     if tests.get('cointegration', False):
         # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
-        heading = doc.add_heading('2. Коинтеграционный анализ', level=1)
+        heading = doc.add_heading(f'{section_number}. Коинтеграционный анализ', level=1)
         heading.style = heading1_style
         
         doc.add_paragraph('В этом разделе представлены результаты тестов на коинтеграцию. Наличие коинтеграции позволяет строить модели, учитывающие долгосрочное равновесие между переменными.', style='NormalCustom')
@@ -1245,7 +1251,7 @@ def create_comprehensive_report(df, params):
         
         # Исследуем все пары переменных с тестом Энгла-Грейнджера
         # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
-        heading = doc.add_heading('2.1. Тест Энгла-Грейнджера', level=2)
+        heading = doc.add_heading(f'{section_number}.1. Тест Энгла-Грейнджера', level=2)
         heading.style = heading2_style
         
         doc.add_paragraph('Тест Энгла-Грейнджера проверяет наличие коинтеграции между парами переменных. Если p-значение меньше 0.05, отвергается нулевая гипотеза об отсутствии коинтеграции.', style='NormalCustom')
@@ -1297,7 +1303,7 @@ def create_comprehensive_report(df, params):
         
         # Тест Йохансена на коинтеграцию (для всех переменных сразу)
         # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
-        heading = doc.add_heading('2.2. Тест Йохансена', level=2)
+        heading = doc.add_heading(f'{section_number}.2. Тест Йохансена', level=2)
         heading.style = heading2_style
         
         doc.add_paragraph('Тест Йохансена позволяет определить количество коинтеграционных соотношений между несколькими переменными одновременно.', style='NormalCustom')
@@ -1321,7 +1327,7 @@ def create_comprehensive_report(df, params):
         # Визуализация отношения между коинтегрированными переменными
         if cointegrated_pairs:
             # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
-            heading = doc.add_heading('2.3. Визуализация коинтегрированных пар', level=2)
+            heading = doc.add_heading(f'{section_number}.3. Визуализация коинтегрированных пар', level=2)
             heading.style = heading2_style
             
             for var1, var2 in cointegrated_pairs[:3]:  # Ограничиваем до 3 пар для наглядности
@@ -1349,7 +1355,7 @@ def create_comprehensive_report(df, params):
         is_cointegrated = any_eg_cointegrated or is_cointegrated_johansen
         
         # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
-        heading = doc.add_heading('2.4. Общее заключение по коинтеграции', level=2)
+        heading = doc.add_heading(f'{section_number}.4. Общее заключение по коинтеграции', level=2)
         heading.style = heading2_style
         
         if is_cointegrated:
@@ -1361,48 +1367,261 @@ def create_comprehensive_report(df, params):
         
         # Добавляем разрыв страницы
         doc.add_page_break()
+        
+        # Увеличиваем номер раздела
+        section_number += 1
     
     # Если выбрана модель VARX
     if models.get('varx', False):
-        # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
-        heading = doc.add_heading('3. Модель векторной авторегрессии с экзогенными переменными (VARX)', level=1)
+        # ИСПРАВЛЕНО: используем номер раздела в заголовке
+        heading = doc.add_heading(f'{section_number}. Модель векторной авторегрессии с экзогенными переменными (VARX)', level=1)
         heading.style = heading1_style
         
         doc.add_paragraph('Модель VARX представляет собой расширение модели VAR, которая включает также экзогенные переменные. Она позволяет моделировать взаимозависимость между несколькими временными рядами с учетом внешних факторов.', style='NormalCustom')
         
-        # Получаем параметры модели
+        # Получаем параметры модели VARX
         varx_params = models.get('varx', {})
         lags = varx_params.get('lags', 2)
         
-        doc.add_paragraph(f'Количество лагов: {lags}', style='NormalCustom')
+        # Получаем эндогенные и экзогенные переменные из параметров модели, если они указаны
+        endogenous_vars = varx_params.get('endogenous_vars', [])
+        exogenous_vars = varx_params.get('exogenous_vars', [])
         
-        # Заготовка под будущую реализацию
-        doc.add_paragraph('Данная модель находится в стадии разработки и будет реализована в следующих версиях системы.', style='NormalCustom')
+        # Если эндогенные переменные не указаны, берем первые две числовые колонки
+        if not endogenous_vars:
+            # Берем только первые 2 колонки как эндогенные
+            endogenous_vars = numeric_columns[:min(2, len(numeric_columns))]
         
-        # Изображение-заготовка для модели VARX
-        plt.figure(figsize=(10, 6))
-        x = range(10)
-        y1 = [i**2 for i in x]
-        y2 = [i**2 + 10 for i in x]
-        plt.plot(x, y1, label='Переменная 1')
-        plt.plot(x, y2, label='Переменная 2')
-        plt.title('Пример моделирования VARX (иллюстративный)')
-        plt.xlabel('Время')
-        plt.ylabel('Значение')
-        plt.legend()
-        plt.grid(True)
+        # Вызываем существующую функцию построения модели VARX
+        try:
+            # Импорт функции
+            from ts_analysis import build_varx_model
+            
+            # Построение модели VARX
+            model_results = build_varx_model(
+                df, 
+                endogenous_vars, 
+                exogenous_vars, 
+                lags=lags
+            )
+            
+            # Добавляем информацию о модели
+            # ИСПРАВЛЕНО: используем номер подраздела
+            heading = doc.add_heading(f'{section_number}.1. Информация о модели', level=2)
+            heading.style = heading2_style
+            
+            # Определяем тип модели
+            model_type = model_results.get('model_info', {}).get('model_type', 'VARX')
+            if not model_type:
+                model_type = "ARX" if len(endogenous_vars) == 1 else "VARX"
+            
+            # Таблица с основными параметрами модели
+            table = doc.add_table(rows=1, cols=2)
+            table.style = 'Table Grid'
+            
+            hdr_cells = table.rows[0].cells
+            hdr_cells[0].text = 'Параметр'
+            hdr_cells[1].text = 'Значение'
+            
+            # Заполняем таблицу
+            params_items = [
+                ('Тип модели', model_type),
+                ('Эндогенные переменные', ', '.join(endogenous_vars)),
+                ('Экзогенные переменные', ', '.join(exogenous_vars) if exogenous_vars else 'Не используются'),
+                ('Количество лагов', str(lags))
+            ]
+            
+            # Добавляем параметры, если они есть в результатах
+            if 'model_info' in model_results:
+                model_info = model_results['model_info']
+                
+                if 'aic' in model_info and model_info['aic'] is not None:
+                    params_items.append(('AIC', f"{model_info['aic']:.4f}"))
+                
+                if 'bic' in model_info and model_info['bic'] is not None:
+                    params_items.append(('BIC', f"{model_info['bic']:.4f}"))
+                
+                if 'hqic' in model_info and model_info['hqic'] is not None:
+                    params_items.append(('HQIC', f"{model_info['hqic']:.4f}"))
+                
+                if 'train_size' in model_info:
+                    params_items.append(('Размер обучающей выборки', f"{model_info['train_size']} наблюдений"))
+                
+                if 'test_size' in model_info:
+                    params_items.append(('Размер тестовой выборки', f"{model_info['test_size']} наблюдений"))
+            
+            for param, value in params_items:
+                row_cells = table.add_row().cells
+                row_cells[0].text = param
+                row_cells[1].text = value
+            
+            # Добавляем раздел о выборе оптимального числа лагов, если есть
+            if 'diagnostics' in model_results and 'lag_analysis' in model_results['diagnostics']:
+                # ИСПРАВЛЕНО: обновляем номер подраздела
+                heading = doc.add_heading(f'{section_number}.2. Анализ оптимального числа лагов', level=2)
+                heading.style = heading2_style
+                
+                lag_analysis = model_results['diagnostics']['lag_analysis']
+                
+                # Создаем таблицу с оптимальными лагами
+                lag_table = doc.add_table(rows=1, cols=2)
+                lag_table.style = 'Table Grid'
+                
+                hdr_cells = lag_table.rows[0].cells
+                hdr_cells[0].text = 'Переменная'
+                hdr_cells[1].text = 'Оптимальное число лагов'
+                
+                # Заполняем таблицу для каждой переменной
+                for var, lag in lag_analysis['optimal_lags'].items():
+                    row_cells = lag_table.add_row().cells
+                    row_cells[0].text = var
+                    row_cells[1].text = str(lag)
+                
+                # Добавляем рекомендации
+                doc.add_paragraph(f"Рекомендуемое количество лагов (максимальное из оптимальных): {lag_analysis['optimal_lag_final']}")
+                doc.add_paragraph(f"В модели использовано: {lag_analysis['chosen_lag']} лагов")
+            
+            # Добавляем графики ACF и PACF, если они есть
+            if 'plots' in model_results and 'acf_pacf_plots' in model_results['plots']:
+                # ИСПРАВЛЕНО: обновляем номер подраздела
+                heading = doc.add_heading(f'{section_number}.3. Графики автокорреляционных функций', level=2)
+                heading.style = heading2_style
+                
+                for i, plot_base64 in enumerate(model_results['plots']['acf_pacf_plots']):
+                    # Преобразуем base64 в изображение
+                    import base64
+                    image_data = base64.b64decode(plot_base64)
+                    image_stream = io.BytesIO(image_data)
+                    
+                    # Добавляем изображение в документ
+                    try:
+                        doc.add_picture(image_stream, width=Inches(6))
+                        if i < len(endogenous_vars):
+                            doc.add_paragraph(f'ACF и PACF для переменной "{endogenous_vars[i]}"', style='NormalCustom')
+                        else:
+                            doc.add_paragraph(f'ACF и PACF график {i+1}', style='NormalCustom')
+                    except Exception as e:
+                        doc.add_paragraph(f'Не удалось добавить изображение графика: {str(e)}', style='NormalCustom')
+            
+            # Добавляем метрики прогнозирования, если они есть
+            if 'forecasts' in model_results and 'metrics' in model_results['forecasts']:
+                # ИСПРАВЛЕНО: обновляем номер подраздела
+                heading = doc.add_heading(f'{section_number}.4. Метрики качества прогноза', level=2)
+                heading.style = heading2_style
+                
+                metrics = model_results['forecasts']['metrics']
+                
+                # Определяем количество столбцов в таблице метрик
+                metrics_columns = 3  # по умолчанию: Переменная, MSE, MAE
+                if 'rmse' in metrics:
+                    metrics_columns += 1
+                if 'mape' in metrics:
+                    metrics_columns += 1
+                
+                metrics_table = doc.add_table(rows=1, cols=metrics_columns)
+                metrics_table.style = 'Table Grid'
+                
+                # Заголовки таблицы
+                hdr_cells = metrics_table.rows[0].cells
+                hdr_cells[0].text = 'Переменная'
+                hdr_cells[1].text = 'MSE'
+                hdr_cells[2].text = 'MAE'
+                
+                # Добавляем RMSE и MAPE, если есть
+                col_idx = 3
+                if 'rmse' in metrics:
+                    hdr_cells[col_idx].text = 'RMSE'
+                    col_idx += 1
+                if 'mape' in metrics:
+                    hdr_cells[col_idx].text = 'MAPE'
+                
+                # Заполняем таблицу метриками для каждой переменной
+                for variable in endogenous_vars:
+                    if variable in metrics['mse']:
+                        row_cells = metrics_table.add_row().cells
+                        row_cells[0].text = variable
+                        row_cells[1].text = f"{metrics['mse'][variable]:.4f}"
+                        row_cells[2].text = f"{metrics['mae'][variable]:.4f}"
+                        
+                        # Добавляем RMSE, если есть
+                        col_idx = 3
+                        if 'rmse' in metrics and variable in metrics['rmse']:
+                            row_cells[col_idx].text = f"{metrics['rmse'][variable]:.4f}"
+                            col_idx += 1
+                        elif 'rmse' in metrics:
+                            row_cells[col_idx].text = 'N/A'
+                            col_idx += 1
+                        
+                        # Добавляем MAPE, если есть
+                        if 'mape' in metrics and variable in metrics['mape']:
+                            import numpy as np
+                            if not np.isnan(metrics['mape'][variable]):
+                                row_cells[col_idx].text = f"{metrics['mape'][variable]:.2f}%"
+                            else:
+                                row_cells[col_idx].text = 'N/A'
+            
+            # Добавляем графики прогнозов, если они есть
+            if 'plots' in model_results and 'forecast_plots' in model_results['plots']:
+                # ИСПРАВЛЕНО: обновляем номер подраздела
+                heading = doc.add_heading(f'{section_number}.5. Графики прогнозов', level=2)
+                heading.style = heading2_style
+                
+                plots = model_results['plots']['forecast_plots']
+                
+                for i, plot_base64 in enumerate(plots):
+                    # Преобразуем base64 в изображение
+                    import base64
+                    image_data = base64.b64decode(plot_base64)
+                    image_stream = io.BytesIO(image_data)
+                    
+                    # Добавляем изображение в документ
+                    try:
+                        doc.add_picture(image_stream, width=Inches(6))
+                        if i < len(endogenous_vars):
+                            doc.add_paragraph(f'Прогноз для переменной "{endogenous_vars[i]}"', style='NormalCustom')
+                        else:
+                            doc.add_paragraph(f'Прогноз {i+1}', style='NormalCustom')
+                    except Exception as e:
+                        doc.add_paragraph(f'Не удалось добавить изображение графика: {str(e)}', style='NormalCustom')
+            
+        except Exception as e:
+            # В случае ошибки при построении модели, добавляем информацию об этом
+            heading = doc.add_heading(f'{section_number}.1. Информация о модели', level=2)
+            heading.style = heading2_style
+            
+            doc.add_paragraph(f"При построении модели VARX произошла ошибка: {str(e)}", style='NormalCustom')
+            
+            doc.add_paragraph('Модель VARX представляет собой расширение модели VAR, которая включает также экзогенные переменные. Она позволяет моделировать взаимозависимость между несколькими временными рядами с учетом внешних факторов.', style='NormalCustom')
+            
+            # Добавляем заглушку-пример графика
+            plt.figure(figsize=(10, 6))
+            x = range(10)
+            y1 = [i**2 for i in x]
+            y2 = [i**2 + 10 for i in x]
+            plt.plot(x, y1, label='Переменная 1')
+            plt.plot(x, y2, label='Переменная 2')
+            plt.title('Пример моделирования VARX (иллюстративный)')
+            plt.xlabel('Время')
+            plt.ylabel('Значение')
+            plt.legend()
+            plt.grid(True)
+            
+            # Сохраняем диаграмму в память
+            img_stream = io.BytesIO()
+            plt.savefig(img_stream, format='png')
+            img_stream.seek(0)
+            plt.close()
+            
+            # Добавляем изображение в документ
+            doc.add_picture(img_stream, width=Inches(6))
+            
+            doc.add_paragraph('Модель VARX может быть особенно полезна, когда некоторые внешние факторы оказывают влияние на систему взаимосвязанных временных рядов. В нормальном режиме работы система строит прогнозы и оценивает их качество по различным метрикам.', style='NormalCustom')
         
-        # Сохраняем диаграмму в память
-        img_stream = io.BytesIO()
-        plt.savefig(img_stream, format='png')
-        img_stream.seek(0)
-        plt.close()
+        # Добавляем разрыв страницы
+        doc.add_page_break()
         
-        # Добавляем изображение в документ
-        doc.add_picture(img_stream, width=Inches(6))
-        
-        # Заглушка для будущей реализации
-        doc.add_paragraph('Модель VARX может быть особенно полезна, когда некоторые внешние факторы оказывают влияние на систему взаимосвязанных временных рядов. В будущих версиях будет реализована возможность выбора эндогенных и экзогенных переменных, а также автоматический выбор оптимального числа лагов.', style='NormalCustom')
+        # Увеличиваем номер раздела
+        section_number += 1
     
     # Сохраняем документ
     with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_file:
