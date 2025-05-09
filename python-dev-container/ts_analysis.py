@@ -1016,3 +1016,377 @@ def build_varx_model(df, endogenous_vars, exogenous_vars=None, lags=1, train_siz
         results["traceback"] = traceback.format_exc()
     
     return results
+# Добавьте следующие функции в ts_analysis.py
+
+def create_comprehensive_report(df, params):
+    """
+    Создание комплексного отчета на основе выбранных тестов и моделей
+    
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        Датафрейм с временными рядами
+    params : dict
+        Параметры для отчета:
+            - tests: dict - выбранные тесты и их параметры
+            - models: dict - выбранные модели и их параметры
+    
+    Returns:
+    --------
+    str
+        Путь к созданному файлу отчета
+    """
+    from docx import Document
+    from docx.shared import Inches, Pt, RGBColor
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.enum.style import WD_STYLE_TYPE
+    import tempfile
+    import os
+    import matplotlib.pyplot as plt
+    import io
+    from datetime import datetime
+    
+    # Создаем новый документ Word
+    doc = Document()
+    
+    # Настройка стилей
+    styles = doc.styles
+    
+    # Стиль для заголовка
+    title_style = styles.add_style('ReportTitle', WD_STYLE_TYPE.PARAGRAPH)
+    title_font = title_style.font
+    title_font.name = 'Arial'
+    title_font.size = Pt(18)
+    title_font.bold = True
+    title_font.color.rgb = RGBColor(0x33, 0x41, 0x55)
+    
+    # Стиль для подзаголовка
+    heading1_style = styles.add_style('Heading1Custom', WD_STYLE_TYPE.PARAGRAPH)
+    heading1_font = heading1_style.font
+    heading1_font.name = 'Arial'
+    heading1_font.size = Pt(16)
+    heading1_font.bold = True
+    heading1_font.color.rgb = RGBColor(0x1E, 0x40, 0xAF)
+    
+    # Стиль для заголовка второго уровня
+    heading2_style = styles.add_style('Heading2Custom', WD_STYLE_TYPE.PARAGRAPH)
+    heading2_font = heading2_style.font
+    heading2_font.name = 'Arial'
+    heading2_font.size = Pt(14)
+    heading2_font.bold = True
+    heading2_font.color.rgb = RGBColor(0x33, 0x41, 0x55)
+    
+    # Стиль для обычного текста
+    normal_style = styles.add_style('NormalCustom', WD_STYLE_TYPE.PARAGRAPH)
+    normal_font = normal_style.font
+    normal_font.name = 'Arial'
+    normal_font.size = Pt(11)
+    normal_font.color.rgb = RGBColor(0x33, 0x41, 0x55)
+    
+    # Добавляем заголовок отчета
+    title = doc.add_paragraph('Аналитический отчет по временным рядам', style='ReportTitle')
+    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    
+    # Добавляем дату создания отчета
+    date_paragraph = doc.add_paragraph(f'Дата создания: {datetime.now().strftime("%d.%m.%Y %H:%M")}', style='NormalCustom')
+    date_paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    
+    # Добавляем разделитель
+    doc.add_paragraph('', style='NormalCustom')
+    
+    # Получаем выбранные тесты и модели
+    tests = params.get('tests', {})
+    models = params.get('models', {})
+    
+    # Получаем числовые колонки (предполагаемые переменные)
+    numeric_columns = [col for col in df.columns if pd.api.types.is_numeric_dtype(df[col])]
+    
+    # Если выбран тест на стационарность
+    if tests.get('stationary', False):
+        doc.add_heading('1. Анализ стационарности временных рядов', level=1, style='Heading1Custom')
+        
+        doc.add_paragraph('В этом разделе представлены результаты тестов на стационарность для всех числовых переменных в наборе данных. Используются три различных теста: расширенный тест Дики-Фуллера (ADF), тест Квятковски-Филлипса-Шмидта-Шина (KPSS) и тест Филлипса-Перрона.', style='NormalCustom')
+        
+        # Таблица с результатами
+        doc.add_heading('1.1. Сводная таблица результатов', level=2, style='Heading2Custom')
+        
+        # Создаем таблицу для результатов
+        table = doc.add_table(rows=1, cols=4)
+        table.style = 'Table Grid'
+        
+        # Заголовки таблицы
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = 'Переменная'
+        hdr_cells[1].text = 'Порядок интеграции'
+        hdr_cells[2].text = 'Статус'
+        hdr_cells[3].text = 'Рекомендация'
+        
+        # Выполняем анализ стационарности для каждой переменной
+        for column in numeric_columns:
+            # Анализ разностей для достижения стационарности
+            d_value, test_outputs = analyze_differences(df[column], column, max_diff=4)
+            
+            # Добавляем строку в таблицу
+            row_cells = table.add_row().cells
+            row_cells[0].text = column
+            
+            # Порядок интеграции
+            if isinstance(d_value, (int, float)):
+                row_cells[1].text = f'I({d_value})'
+            else:
+                row_cells[1].text = 'Не определен'
+            
+            # Статус
+            if d_value == 0:
+                row_cells[2].text = 'Стационарный'
+                row_cells[3].text = 'Может использоваться без преобразований'
+            elif d_value == 1:
+                row_cells[2].text = 'Интегрированный первого порядка'
+                row_cells[3].text = 'Рекомендуется использовать первые разности'
+            elif d_value == 2:
+                row_cells[2].text = 'Интегрированный второго порядка'
+                row_cells[3].text = 'Рекомендуется использовать вторые разности'
+            else:
+                row_cells[2].text = 'Высокий порядок интеграции или неопределен'
+                row_cells[3].text = 'Требуется дополнительный анализ'
+            
+            # Добавляем детальные результаты тестов
+            doc.add_heading(f'1.2. Результаты тестов для переменной "{column}"', level=2, style='Heading2Custom')
+            
+            for line in test_outputs:
+                doc.add_paragraph(line, style='NormalCustom')
+            
+            # Визуализация ряда и его разностей
+            doc.add_heading(f'1.3. Визуализация ряда и его разностей для "{column}"', level=2, style='Heading2Custom')
+            
+            # Создаем диаграмму
+            plt.figure(figsize=(10, 6))
+            plt.plot(df.index, df[column])
+            plt.title(f'Временной ряд {column}')
+            plt.xlabel('Дата')
+            plt.ylabel('Значение')
+            plt.grid(True)
+            
+            # Сохраняем диаграмму в память
+            img_stream = io.BytesIO()
+            plt.savefig(img_stream, format='png')
+            img_stream.seek(0)
+            plt.close()
+            
+            # Добавляем изображение в документ
+            doc.add_picture(img_stream, width=Inches(6))
+            
+            # Если порядок интеграции > 0, добавляем графики разностей
+            if isinstance(d_value, (int, float)) and d_value > 0:
+                # Первые разности
+                plt.figure(figsize=(10, 6))
+                diff1 = df[column].diff().dropna()
+                plt.plot(df.index[1:], diff1)
+                plt.title(f'Первые разности ряда {column}')
+                plt.xlabel('Дата')
+                plt.ylabel('Значение')
+                plt.grid(True)
+                
+                # Сохраняем диаграмму в память
+                img_stream = io.BytesIO()
+                plt.savefig(img_stream, format='png')
+                img_stream.seek(0)
+                plt.close()
+                
+                # Добавляем изображение в документ
+                doc.add_picture(img_stream, width=Inches(6))
+            
+            # Если порядок интеграции > 1, добавляем график вторых разностей
+            if isinstance(d_value, (int, float)) and d_value > 1:
+                # Вторые разности
+                plt.figure(figsize=(10, 6))
+                diff2 = df[column].diff().diff().dropna()
+                plt.plot(df.index[2:], diff2)
+                plt.title(f'Вторые разности ряда {column}')
+                plt.xlabel('Дата')
+                plt.ylabel('Значение')
+                plt.grid(True)
+                
+                # Сохраняем диаграмму в память
+                img_stream = io.BytesIO()
+                plt.savefig(img_stream, format='png')
+                img_stream.seek(0)
+                plt.close()
+                
+                # Добавляем изображение в документ
+                doc.add_picture(img_stream, width=Inches(6))
+            
+            # Добавляем разрыв страницы
+            doc.add_page_break()
+    
+    # Если выбран тест на коинтеграцию
+    if tests.get('cointegration', False):
+        doc.add_heading('2. Коинтеграционный анализ', level=1, style='Heading1Custom')
+        
+        doc.add_paragraph('В этом разделе представлены результаты тестов на коинтеграцию. Наличие коинтеграции позволяет строить модели, учитывающие долгосрочное равновесие между переменными.', style='NormalCustom')
+        
+        # Получаем параметры теста на коинтеграцию
+        coint_params = tests.get('cointegration', {})
+        if isinstance(coint_params, bool):
+            coint_params = {}
+        
+        det_order = coint_params.get('det_order', 1)
+        k_ar_diff = coint_params.get('k_ar_diff', 1)
+        
+        # Исследуем все пары переменных с тестом Энгла-Грейнджера
+        doc.add_heading('2.1. Тест Энгла-Грейнджера', level=2, style='Heading2Custom')
+        
+        doc.add_paragraph('Тест Энгла-Грейнджера проверяет наличие коинтеграции между парами переменных. Если p-значение меньше 0.05, отвергается нулевая гипотеза об отсутствии коинтеграции.', style='NormalCustom')
+        
+        # Создаем таблицу для результатов
+        table = doc.add_table(rows=1, cols=4)
+        table.style = 'Table Grid'
+        
+        # Заголовки таблицы
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = 'Переменная 1'
+        hdr_cells[1].text = 'Переменная 2'
+        hdr_cells[2].text = 'p-значение'
+        hdr_cells[3].text = 'Результат'
+        
+        # Проверяем все пары переменных
+        cointegrated_pairs = []
+        
+        for i in range(len(numeric_columns)):
+            for j in range(i+1, len(numeric_columns)):
+                var1 = numeric_columns[i]
+                var2 = numeric_columns[j]
+                
+                # Проверка на коинтеграцию
+                is_cointegrated, cointegration_output = test_cointegration(
+                    df[var1],
+                    df[var2],
+                    var1,
+                    var2
+                )
+                
+                # Ищем p-value в выводе теста
+                p_value = None
+                for line in cointegration_output:
+                    if 'p-value:' in line:
+                        p_value = line.split('p-value:')[1].strip()
+                        break
+                
+                # Добавляем строку в таблицу
+                row_cells = table.add_row().cells
+                row_cells[0].text = var1
+                row_cells[1].text = var2
+                row_cells[2].text = p_value if p_value else '-'
+                row_cells[3].text = 'Коинтегрированы' if is_cointegrated else 'Не коинтегрированы'
+                
+                # Сохраняем коинтегрированные пары
+                if is_cointegrated:
+                    cointegrated_pairs.append((var1, var2))
+        
+        # Тест Йохансена на коинтеграцию (для всех переменных сразу)
+        doc.add_heading('2.2. Тест Йохансена', level=2, style='Heading2Custom')
+        
+        doc.add_paragraph('Тест Йохансена позволяет определить количество коинтеграционных соотношений между несколькими переменными одновременно.', style='NormalCustom')
+        
+        # Параметры теста
+        doc.add_paragraph(f'Порядок детерминистических компонент: {det_order}', style='NormalCustom')
+        doc.add_paragraph(f'Количество лагов: {k_ar_diff}', style='NormalCustom')
+        
+        # Выполняем тест Йохансена
+        is_cointegrated_johansen, cointegration_output_johansen = johansen_test(
+            df,
+            numeric_columns,
+            det_order=det_order,
+            k_ar_diff=k_ar_diff
+        )
+        
+        # Выводим детальные результаты
+        for line in cointegration_output_johansen:
+            doc.add_paragraph(line, style='NormalCustom')
+        
+        # Визуализация отношения между коинтегрированными переменными
+        if cointegrated_pairs:
+            doc.add_heading('2.3. Визуализация коинтегрированных пар', level=2, style='Heading2Custom')
+            
+            for var1, var2 in cointegrated_pairs[:3]:  # Ограничиваем до 3 пар для наглядности
+                # Создаем диаграмму
+                plt.figure(figsize=(10, 6))
+                plt.plot(df.index, df[var1], label=var1)
+                plt.plot(df.index, df[var2], label=var2)
+                plt.title(f'Коинтегрированные переменные: {var1} и {var2}')
+                plt.xlabel('Дата')
+                plt.ylabel('Значение')
+                plt.legend()
+                plt.grid(True)
+                
+                # Сохраняем диаграмму в память
+                img_stream = io.BytesIO()
+                plt.savefig(img_stream, format='png')
+                img_stream.seek(0)
+                plt.close()
+                
+                # Добавляем изображение в документ
+                doc.add_picture(img_stream, width=Inches(6))
+        
+        # Общее заключение по коинтеграции
+        any_eg_cointegrated = len(cointegrated_pairs) > 0
+        is_cointegrated = any_eg_cointegrated or is_cointegrated_johansen
+        
+        doc.add_heading('2.4. Общее заключение по коинтеграции', level=2, style='Heading2Custom')
+        
+        if is_cointegrated:
+            conclusion = "Обнаружена коинтеграция между переменными. Рекомендуется использовать модель VECM для учета долгосрочных зависимостей."
+        else:
+            conclusion = "Коинтеграция между переменными не обнаружена. Рекомендуется использовать модель VAR в разностях."
+        
+        doc.add_paragraph(conclusion, style='NormalCustom')
+        
+        # Добавляем разрыв страницы
+        doc.add_page_break()
+    
+    # Если выбрана модель VARX
+    if models.get('varx', False):
+        doc.add_heading('3. Модель векторной авторегрессии с экзогенными переменными (VARX)', level=1, style='Heading1Custom')
+        
+        doc.add_paragraph('Модель VARX представляет собой расширение модели VAR, которая включает также экзогенные переменные. Она позволяет моделировать взаимозависимость между несколькими временными рядами с учетом внешних факторов.', style='NormalCustom')
+        
+        # Получаем параметры модели
+        varx_params = models.get('varx', {})
+        lags = varx_params.get('lags', 2)
+        
+        doc.add_paragraph(f'Количество лагов: {lags}', style='NormalCustom')
+        
+        # Заготовка под будущую реализацию
+        doc.add_paragraph('Данная модель находится в стадии разработки и будет реализована в следующих версиях системы.', style='NormalCustom')
+        
+        # Изображение-заготовка для модели VARX
+        plt.figure(figsize=(10, 6))
+        x = range(10)
+        y1 = [i**2 for i in x]
+        y2 = [i**2 + 10 for i in x]
+        plt.plot(x, y1, label='Переменная 1')
+        plt.plot(x, y2, label='Переменная 2')
+        plt.title('Пример моделирования VARX (иллюстративный)')
+        plt.xlabel('Время')
+        plt.ylabel('Значение')
+        plt.legend()
+        plt.grid(True)
+        
+        # Сохраняем диаграмму в память
+        img_stream = io.BytesIO()
+        plt.savefig(img_stream, format='png')
+        img_stream.seek(0)
+        plt.close()
+        
+        # Добавляем изображение в документ
+        doc.add_picture(img_stream, width=Inches(6))
+        
+        # Заглушка для будущей реализации
+        doc.add_paragraph('Модель VARX может быть особенно полезна, когда некоторые внешние факторы оказывают влияние на систему взаимосвязанных временных рядов. В будущих версиях будет реализована возможность выбора эндогенных и экзогенных переменных, а также автоматический выбор оптимального числа лагов.', style='NormalCustom')
+    
+    # Сохраняем документ
+    with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_file:
+        temp_path = temp_file.name
+        doc.save(temp_path)
+    
+    return temp_path
