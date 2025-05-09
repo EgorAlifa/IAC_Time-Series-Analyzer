@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Преобразование порядков интеграции - Аналитическая система</title>
+    <title>Преобразование временных рядов - Аналитическая система</title>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <style>
-        /* Дополнительные стили для страницы преобразования данных */
+        /* Улучшенные стили для страницы преобразования данных */
         .data-table {
             width: 100%;
             overflow-x: auto;
             margin-bottom: 20px;
             background-color: white;
             border-radius: 8px;
-            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         
         .data-table table {
@@ -27,7 +27,7 @@
         
         .data-table th {
             background-color: #f1f5f9;
-            padding: 12px 15px;
+            padding: 14px 16px;
             text-align: left;
             font-weight: 500;
             color: #334155;
@@ -37,7 +37,7 @@
         }
         
         .data-table td {
-            padding: 12px 15px;
+            padding: 14px 16px;
             border-bottom: 1px solid #e2e8f0;
             color: #334155;
         }
@@ -53,13 +53,18 @@
         .transformation-card {
             background-color: white;
             border-radius: 8px;
-            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
-            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
             overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .transformation-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         
         .transformation-header {
-            padding: 15px 20px;
+            padding: 16px 20px;
             background-color: #f8fafc;
             border-bottom: 1px solid #e2e8f0;
             display: flex;
@@ -77,20 +82,21 @@
         }
         
         .transformation-header h3 i {
-            margin-right: 8px;
+            margin-right: 10px;
             color: #3b82f6;
         }
         
         .transformation-content {
-            padding: 20px;
+            padding: 24px;
         }
         
         .variable-row {
             display: flex;
             align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
+            margin-bottom: 18px;
+            padding-bottom: 18px;
             border-bottom: 1px solid #f1f5f9;
+            transition: all 0.2s ease;
         }
         
         .variable-row:last-child {
@@ -127,21 +133,32 @@
         
         .select-wrapper select {
             width: 100%;
-            padding: 8px 12px;
+            padding: 10px 14px;
             border: 1px solid #e2e8f0;
-            border-radius: 4px;
+            border-radius: 6px;
             background-color: #f8fafc;
             color: #334155;
             appearance: none;
             font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .select-wrapper select:hover {
+            border-color: #cbd5e1;
+        }
+        
+        .select-wrapper select:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
         }
         
         .select-wrapper::after {
             content: '\f107';
-            font-family: 'Font Awesome 5 Free';
+            font-family: 'Font Awesome 6 Free';
             font-weight: 900;
             position: absolute;
-            right: 10px;
+            right: 12px;
             top: 50%;
             transform: translateY(-50%);
             color: #64748b;
@@ -155,30 +172,37 @@
         }
         
         .transform-checkbox {
-            width: 16px;
-            height: 16px;
-            margin-right: 8px;
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
             cursor: pointer;
+            accent-color: #3b82f6;
         }
         
         .actions-panel {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 20px;
-            padding: 15px 20px;
+            margin-top: 24px;
+            padding: 16px 24px;
             background-color: #f8fafc;
             border-radius: 8px;
-            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .actions-panel:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         
         .actions-panel .btn {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 16px;
+            padding: 10px 18px;
             font-weight: 500;
             transition: all 0.2s ease;
+            border-radius: 6px;
         }
         
         .actions-panel .btn-primary {
@@ -189,6 +213,13 @@
         .actions-panel .btn-primary:hover {
             background-color: #2563eb;
             border-color: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2);
+        }
+        
+        .actions-panel .btn-primary:active {
+            transform: translateY(1px);
+            box-shadow: none;
         }
         
         .actions-panel .btn-secondary {
@@ -200,26 +231,49 @@
         .actions-panel .btn-secondary:hover {
             background-color: #e2e8f0;
             border-color: #cbd5e1;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .actions-panel .btn-secondary:active {
+            transform: translateY(1px);
+            box-shadow: none;
         }
         
         .alert-transformation {
-            margin-top: 20px;
+            margin-top: 24px;
             border-left: 4px solid #3b82f6;
+            padding: 16px 20px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .alert-transformation i {
+            font-size: 20px;
+            margin-right: 12px;
         }
         
         .file-info-panel {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             display: flex;
             align-items: center;
-            gap: 15px;
-            padding: 15px 20px;
+            gap: 16px;
+            padding: 16px 24px;
             background-color: #eff6ff;
             border-radius: 8px;
             color: #334155;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .file-info-panel:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         
         .file-info-panel i {
-            font-size: 20px;
+            font-size: 22px;
             color: #3b82f6;
         }
         
@@ -229,7 +283,8 @@
         
         .file-info-details strong {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
+            font-size: 16px;
         }
         
         .file-info-details span {
@@ -240,31 +295,38 @@
         
         .no-data-message {
             text-align: center;
-            padding: 40px 20px;
+            padding: 48px 24px;
             background-color: #fef2f2;
             border-radius: 8px;
-            margin-top: 20px;
+            margin-top: 24px;
             color: #b91c1c;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .no-data-message:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         
         .no-data-message i {
-            font-size: 32px;
-            margin-bottom: 15px;
+            font-size: 36px;
+            margin-bottom: 18px;
         }
         
         .no-data-message h4 {
-            font-size: 18px;
-            margin-bottom: 10px;
+            font-size: 20px;
+            margin-bottom: 12px;
             font-weight: 500;
         }
         
         .status-badge {
             display: inline-flex;
             align-items: center;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 13px;
             font-weight: 500;
+            transition: all 0.2s ease;
         }
         
         .status-badge.stationary {
@@ -277,44 +339,56 @@
             color: #e11d48;
         }
         
+        .status-badge.normalized {
+            background-color: #dbeafe;
+            color: #3b82f6;
+        }
+        
         .tooltip-icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             background-color: #e2e8f0;
             color: #64748b;
             border-radius: 50%;
             font-size: 10px;
-            margin-left: 5px;
+            margin-left: 6px;
             cursor: help;
+            transition: all 0.2s ease;
+        }
+        
+        .tooltip-icon:hover {
+            background-color: #cbd5e1;
+            color: #334155;
         }
         
         .info-tooltip {
             position: relative;
             display: inline-block;
-            margin-left: 5px;
+            margin-left: 6px;
         }
         
         .info-tooltip .tooltip-text {
             visibility: hidden;
-            width: 250px;
+            width: 280px;
             background-color: #334155;
             color: white;
             text-align: left;
             border-radius: 6px;
-            padding: 8px;
+            padding: 10px 12px;
             position: absolute;
             z-index: 1;
             bottom: 125%;
             left: 50%;
             transform: translateX(-50%);
             opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 12px;
-            line-height: 1.4;
+            transition: opacity 0.3s, visibility 0.3s;
+            font-size: 13px;
+            line-height: 1.5;
             pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
         
         .info-tooltip .tooltip-text::after {
@@ -336,31 +410,36 @@
         .chart-container {
             background-color: white;
             border-radius: 8px;
-            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
-            padding: 20px;
-            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: all 0.3s ease;
+        }
+        
+        .chart-container:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         
         .chart-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
         
         .chart-title {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 500;
             color: #334155;
         }
         
         .chart-controls {
             display: flex;
-            gap: 10px;
+            gap: 12px;
         }
         
         .chart-wrapper {
-            height: 300px;
+            height: 350px;
             width: 100%;
         }
         
@@ -372,15 +451,16 @@
             pointer-events: none;
         }
         
+        /* Улучшенный спиннер загрузки */
         .loading-spinner {
             border: 3px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             border-top: 3px solid #3b82f6;
-            width: 16px;
-            height: 16px;
+            width: 20px;
+            height: 20px;
             animation: spin 1s linear infinite;
             display: inline-block;
-            margin-right: 5px;
+            margin-right: 8px;
         }
         
         @keyframes spin {
@@ -388,91 +468,177 @@
             100% { transform: rotate(360deg); }
         }
         
+        /* Стили для легенды графика */
+        .legend {
+            display: flex;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        
         .legend-item {
             display: flex;
             align-items: center;
-            margin-right: 15px;
-            font-size: 12px;
+            font-size: 13px;
+            color: #334155;
         }
         
         .legend-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 2px;
-            margin-right: 5px;
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            margin-right: 6px;
         }
         
-        .legend {
-            display: flex;
-            margin-bottom: 10px;
-        }
-        
-        /* Стиль для вкладки "все переменные" */
+        /* Улучшенный стиль для вкладки "все переменные" */
         .select-all-variables {
-            padding: 10px;
-            margin-bottom: 10px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
             display: flex;
             align-items: center;
-            background-color: #f8fafc;
-            border-radius: 4px;
+            background-color: #f1f5f9;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        
+        .select-all-variables:hover {
+            background-color: #e2e8f0;
         }
         
         .select-all-variables label {
-            margin-left: 8px;
+            margin-left: 10px;
             font-weight: 500;
             color: #334155;
             cursor: pointer;
         }
         
-        .integration-info {
+        /* Улучшенная информационная панель трансформации */
+        .transforms-info {
             background-color: #f8fafc;
             border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
+            padding: 18px 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
         }
         
-        .integration-info h4 {
+        .transforms-info:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .transforms-info h4 {
             font-size: 16px;
             font-weight: 500;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             color: #334155;
         }
         
-        .integration-info ul {
+        .transforms-info ul {
             list-style-type: none;
             padding-left: 0;
             margin-bottom: 0;
         }
         
-        .integration-info li {
+        .transforms-info li {
             position: relative;
-            padding-left: 20px;
-            margin-bottom: 8px;
+            padding-left: 22px;
+            margin-bottom: 10px;
             font-size: 14px;
             color: #64748b;
         }
         
-        .integration-info li::before {
+        .transforms-info li::before {
             content: '•';
             position: absolute;
             left: 0;
             color: #3b82f6;
             font-weight: bold;
+            font-size: 18px;
         }
         
-        .badge-i0 {
+        .transforms-info li:last-child {
+            margin-bottom: 0;
+        }
+        
+        /* Бейджи для методов преобразования */
+        .badge-transform {
+            background-color: #f1f5f9;
+            color: #475569;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+            margin-right: 4px;
+        }
+        
+        .badge-stationarity {
             background-color: #dcfce7;
             color: #15803d;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+            margin-right: 4px;
         }
         
-        .badge-i1 {
+        .badge-integration {
             background-color: #ffedd5;
             color: #c2410c;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+            margin-right: 4px;
         }
         
-        .badge-i2 {
+        .badge-extreme {
             background-color: #dbeafe;
             color: #1d4ed8;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+            margin-right: 4px;
+        }
+        
+        /* Переключатель отображения */
+        .display-toggle {
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background-color: #f1f5f9;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        
+        .display-toggle:hover {
+            background-color: #e2e8f0;
+        }
+        
+        .display-toggle-label {
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .toggle-options {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .toggle-option {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .toggle-option input {
+            margin-right: 6px;
+            accent-color: #3b82f6;
         }
         
         /* Для адаптивности на мобильных устройствах */
@@ -485,17 +651,17 @@
             .variable-name, .variable-status, .transformation-options {
                 width: 100%;
                 flex: none;
-                margin-bottom: 10px;
+                margin-bottom: 12px;
             }
             
             .transformation-options {
                 flex-direction: column;
-                gap: 10px;
+                gap: 12px;
             }
             
             .actions-panel {
                 flex-direction: column;
-                gap: 10px;
+                gap: 12px;
             }
             
             .actions-panel .btn {
@@ -510,7 +676,7 @@
             
             .file-info-panel .file-actions {
                 margin-left: 0;
-                margin-top: 10px;
+                margin-top: 12px;
                 width: 100%;
             }
         }
@@ -591,12 +757,12 @@
                 <span class="separator">/</span>
                 <span><a href="/data">Данные</a></span>
                 <span class="separator">/</span>
-                <span>Преобразование порядков интеграции</span>
+                <span>Преобразование временных рядов</span>
             </div>
 
             <div class="page-header">
-                <h2>Преобразование порядков интеграции</h2>
-                <p class="subtitle">Приведение временных рядов к необходимому порядку интеграции для дальнейшего анализа</p>
+                <h2>Преобразование временных рядов</h2>
+                <p class="subtitle">Нормализация, стационаризация и трансформация данных для аналитики и моделирования</p>
             </div>
 
             <!-- Информация о загруженном файле (отображается, если файл загружен) -->
@@ -625,16 +791,47 @@
 
             <!-- Контент для преобразования данных (отображается, если файл загружен) -->
             <div id="transformationContent" style="display: none;">
-                <!-- Информация о порядках интеграции -->
-                <div class="integration-info">
-                    <h4>Порядки интеграции временных рядов</h4>
+                <!-- Информация о типах преобразований -->
+                <div class="transforms-info">
+                    <h4>Доступные типы преобразований</h4>
                     <ul>
-                        <li><span class="badge badge-i0">I(0)</span> - <strong>Стационарный ряд</strong>: колеблется вокруг среднего значения, без тренда, дисперсия постоянна.</li>
-                        <li><span class="badge badge-i1">I(1)</span> - <strong>Первый порядок интеграции</strong>: нестационарный ряд, первые разности которого стационарны.</li>
-                        <li><span class="badge badge-i2">I(2)</span> - <strong>Второй порядок интеграции</strong>: нестационарный ряд, вторые разности которого стационарны.</li>
+                        <li><span class="badge-stationarity">Приведение к стационарности</span> - преобразование ряда, чтобы он колебался вокруг среднего значения, без тренда, с постоянной дисперсией.</li>
+                        <li><span class="badge-integration">Интеграция</span> - изменение порядка интеграции временного ряда (I(0), I(1), I(2)).</li>
+                        <li><span class="badge-extreme">Экстремальная нормализация</span> - комплексное преобразование с использованием методов Box-Cox, Yeo-Johnson, ранговой нормализации для улучшения статистических свойств.</li>
+                    </ul>
+                </div>
+                
+                <div class="transforms-info">
+                    <h4>Методы преобразования</h4>
+                    <ul>
+                        <li><span class="badge-transform">Простое дифференцирование</span> - метод вычисления изменений между последовательными наблюдениями.</li>
+                        <li><span class="badge-transform">Процентное изменение</span> - измерение относительного изменения в процентах между последовательными значениями.</li>
+                        <li><span class="badge-transform">Log-дифференцирование</span> - логарифм отношения текущего и предыдущего значений, приближение к процентному изменению.</li>
+                        <li><span class="badge-transform">Box-Cox</span> - параметрическое преобразование, нормализующее данные и стабилизирующее дисперсию.</li>
+                        <li><span class="badge-transform">Yeo-Johnson</span> - расширение Box-Cox для поддержки отрицательных значений.</li>
+                        <li><span class="badge-transform">Ранговая нормализация</span> - непараметрическое преобразование, приводящее ряд к нормальному распределению.</li>
+                        <li><span class="badge-transform">Экстремальное</span> - автоматический многоэтапный процесс нормализации, дифференцирования и винсоризации для оптимальных результатов.</li>
                     </ul>
                 </div>
 
+                <!-- Переключатель режима отображения -->
+                <div class="display-toggle">
+                    <span class="display-toggle-label">Режим отображения после преобразования:</span>
+                    <div class="toggle-options">
+                        <label class="toggle-option">
+                            <input type="radio" name="displayMode" id="displayModeAll" value="all" checked>
+                            Все ряды
+                        </label>
+                        <label class="toggle-option">
+                            <input type="radio" name="displayMode" id="displayModeTransformed" value="transformed">
+                            Только преобразованные ряды
+                        </label>
+                        <label class="toggle-option">
+                            <input type="radio" name="displayMode" id="displayModeOriginal" value="original">
+                            Только исходные ряды
+                        </label>
+                    </div>
+                </div>
 
                 <!-- Блок с настройками преобразования -->
                 <div class="transformation-card">
@@ -642,42 +839,9 @@
                         <h3><i class="fas fa-magic"></i> Настройки преобразования</h3>
                     </div>
                     <div class="transformation-content">
-                        <p>Выберите переменные для преобразования и установите необходимый порядок интеграции для каждой из них. <span class="text-muted">Преобразованные данные будут добавлены в новых столбцах, исходные данные сохранятся.</span></p>
+                        <p>Выберите переменные для преобразования и установите тип и метод трансформации для каждой из них. <span class="text-muted">Преобразованные данные будут добавлены в новых столбцах, исходные данные сохранятся.</span></p>
                         
                         <!-- Опция "Выбрать все переменные" -->
-                        <div class="select-all-variables">
-                            <input type="checkbox" id="selectAllCheckbox" class="transform-checkbox">
-                            <label for="selectAllCheckbox">Выбрать все числовые переменные</label>
-                        </div>
-                        
-                        <!-- Таблица переменных с настройками -->
-                        <div id="variablesList">
-                            <!-- Список переменных будет заполнен динамически -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Панель действий -->
-                <div class="actions-panel">
-                    <div>
-                        <button id="previewBtn" class="btn btn-secondary">
-                            <i class="fas fa-eye"></i> Предпросмотр
-                        </button>
-                    </div>
-                    <div>
-                        <button id="transformBtn" class="btn btn-primary" disabled>
-                            <i class="fas fa-magic"></i> Преобразовать данные
-                        </button>
-                        <button id="downloadBtn" class="btn btn-secondary" disabled>
-                            <i class="fas fa-download"></i> Скачать файл
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Блок с графиком предпросмотра -->
-                <div id="previewChartContainer" class="chart-container" style="display: none;">
-                    <div class="chart-header">
-                        <div class="chart-title">Предпросмотр преобразования</div>
                         <div class="chart-controls">
                             <button id="closePreviewBtn" class="btn btn-sm btn-outline-secondary">
                                 <i class="fas fa-times me-1"></i> Закрыть
@@ -751,6 +915,22 @@ document.addEventListener('DOMContentLoaded', function() {
             sidebarOverlay.classList.remove('active');
             document.body.classList.remove('sidebar-open');
         }
+    });
+    
+    // Режим отображения результатов
+    let displayMode = 'all'; // По умолчанию показываем все ряды
+    
+    // Обработчики переключения режима отображения
+    document.getElementById('displayModeAll').addEventListener('change', function() {
+        if(this.checked) displayMode = 'all';
+    });
+    
+    document.getElementById('displayModeTransformed').addEventListener('change', function() {
+        if(this.checked) displayMode = 'transformed';
+    });
+    
+    document.getElementById('displayModeOriginal').addEventListener('change', function() {
+        if(this.checked) displayMode = 'original';
     });
     
     // Модальное окно загрузки
@@ -873,11 +1053,11 @@ document.addEventListener('DOMContentLoaded', function() {
             nameDiv.className = 'variable-name';
             nameDiv.textContent = column;
             
-            // Статус переменной (порядок интеграции)
+            // Статус переменной (порядок интеграции или тип преобразования)
             const statusDiv = document.createElement('div');
             statusDiv.className = 'variable-status';
             
-            // Определение текущего порядка интеграции на основе имени
+            // Определение текущего статуса на основе имени
             let statusBadge = "";
             
             if (column.endsWith("_I0")) {
@@ -886,8 +1066,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 statusBadge = '<span class="status-badge non-stationary">I(1)</span>';
             } else if (column.endsWith("_I2")) {
                 statusBadge = '<span class="status-badge non-stationary">I(2)</span>';
+            } else if (column.includes("_norm") || column.includes("_boxcox") || column.includes("_yeojohnson")) {
+                statusBadge = '<span class="status-badge normalized">Нормализованный</span>';
             } else {
-                statusBadge = '<span class="text-muted">Не определен</span>';
+                statusBadge = '<span class="text-muted">Исходный</span>';
             }
             
             statusDiv.innerHTML = statusBadge;
@@ -896,7 +1078,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const optionsDiv = document.createElement('div');
             optionsDiv.className = 'transformation-options';
             
-            // Селект с порядком интеграции
+            // Селект с типом преобразования
             const selectWrapper = document.createElement('div');
             selectWrapper.className = 'select-wrapper';
             
@@ -904,12 +1086,13 @@ document.addEventListener('DOMContentLoaded', function() {
             select.className = 'integration-order';
             select.dataset.variable = column;
             
-            // Опции для селекта
+            // Опции для селекта с типами преобразования
             const options = [
                 { value: 'none', text: 'Оставить как есть' },
-                { value: 'I(0)', text: 'Привести к I(0) - стационарный' },
-                { value: 'I(1)', text: 'Привести к I(1) - первый порядок интеграции' },
-                { value: 'I(2)', text: 'Привести к I(2) - второй порядок интеграции' }
+                { value: 'I(0)', text: 'Стационаризация - I(0)' },
+                { value: 'I(1)', text: 'Интеграция - I(1)' },
+                { value: 'I(2)', text: 'Интеграция - I(2)' },
+                { value: 'normalize', text: 'Нормализация' }
             ];
             
             options.forEach(opt => {
@@ -919,7 +1102,63 @@ document.addEventListener('DOMContentLoaded', function() {
                 select.appendChild(option);
             });
             
+            // Добавляем селект с методом преобразования
+            const methodWrapper = document.createElement('div');
+            methodWrapper.className = 'select-wrapper diff-method-wrapper';
+            methodWrapper.dataset.variable = column;
+            methodWrapper.style.display = 'none'; // По умолчанию скрыт
+            
+            const methodSelect = document.createElement('select');
+            methodSelect.className = 'diff-method';
+            methodSelect.dataset.variable = column;
+            
+            // Обработчик изменения типа преобразования
+            select.addEventListener('change', function() {
+                const selectedType = this.value;
+                
+                // Показываем селект с методом в зависимости от выбранного типа
+                if (selectedType === 'I(0)' || selectedType === 'normalize') {
+                    methodWrapper.style.display = 'block';
+                    
+                    // Очищаем текущие опции
+                    methodSelect.innerHTML = '';
+                    
+                    // Добавляем подходящие методы в зависимости от выбранного типа преобразования
+                    if (selectedType === 'I(0)') {
+                        // Методы для стационаризации
+                        [
+                            { value: 'simple', text: 'Простое дифференцирование' },
+                            { value: 'percentage', text: 'Процентное изменение' },
+                            { value: 'log', text: 'Логарифмическое изменение' },
+                            { value: 'extreme', text: 'Экстремальное преобразование' }
+                        ].forEach(method => {
+                            const option = document.createElement('option');
+                            option.value = method.value;
+                            option.textContent = method.text;
+                            methodSelect.appendChild(option);
+                        });
+                    } else if (selectedType === 'normalize') {
+                        // Методы для нормализации
+                        [
+                            { value: 'boxcox', text: 'Преобразование Бокса-Кокса' },
+                            { value: 'yeojohnson', text: 'Преобразование Йео-Джонсона' },
+                            { value: 'rank', text: 'Ранговая нормализация' },
+                            { value: 'auto', text: 'Автоматический выбор метода' },
+                            { value: 'extreme', text: 'Экстремальная нормализация' }
+                        ].forEach(method => {
+                            const option = document.createElement('option');
+                            option.value = method.value;
+                            option.textContent = method.text;
+                            methodSelect.appendChild(option);
+                        });
+                    }
+                } else {
+                    methodWrapper.style.display = 'none';
+                }
+            });
+            
             selectWrapper.appendChild(select);
+            methodWrapper.appendChild(methodSelect);
             
             // Чекбокс для выбора
             const checkboxWrapper = document.createElement('div');
@@ -941,6 +1180,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Добавляем элементы в строку
             optionsDiv.appendChild(selectWrapper);
+            optionsDiv.appendChild(methodWrapper);
             optionsDiv.appendChild(checkboxWrapper);
             
             row.appendChild(nameDiv);
@@ -981,6 +1221,37 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Выбранные переменные:', selectedVariables);
     }
     
+    // Функция для сбора настроек преобразования
+    function getTransformationSettings() {
+        const settings = {};
+        
+        selectedVariables.forEach(variable => {
+            const selectEl = document.querySelector(`select.integration-order[data-variable="${variable}"]`);
+            if (selectEl) {
+                const transformType = selectEl.value;
+                
+                // Получаем метод преобразования, если доступен
+                const methodEl = document.querySelector(`select.diff-method[data-variable="${variable}"]`);
+                const methodValue = methodEl && methodEl.style.display !== 'none' ? methodEl.value : 'simple';
+                
+                // Если выбрана нормализация, меняем формат данных
+                if (transformType === 'normalize') {
+                    settings[variable] = {
+                        transformTo: 'normalize',
+                        diffMethod: methodValue
+                    };
+                } else {
+                    settings[variable] = {
+                        transformTo: transformType,
+                        diffMethod: methodValue
+                    };
+                }
+            }
+        });
+        
+        return settings;
+    }
+    
     // Функция для предпросмотра трансформации
     async function previewTransformation() {
         if (selectedVariables.length === 0) {
@@ -994,14 +1265,8 @@ document.addEventListener('DOMContentLoaded', function() {
         loadingModal.show();
         
         try {
-            // Получаем настройки преобразования для каждой переменной
-            const transformationSettings = {};
-            selectedVariables.forEach(variable => {
-                const selectEl = document.querySelector(`select[data-variable="${variable}"]`);
-                if (selectEl) {
-                    transformationSettings[variable] = selectEl.value;
-                }
-            });
+            // Получаем настройки преобразования
+            const transformationSettings = getTransformationSettings();
             
             // Готовим данные для запроса
             const fileId = fileData.fileId;
@@ -1013,6 +1278,7 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('date_column', dateColumn);
             formData.append('transformation_settings', JSON.stringify(transformationSettings));
             formData.append('preview', 'true');
+            formData.append('display_mode', displayMode);
             
             // Вызов API для трансформации данных
             const response = await fetch(`${API_URL}/transform-integration-order`, {
@@ -1026,6 +1292,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const previewData = await response.json();
             console.log('Данные предпросмотра:', previewData);
+            
+            // Отображаем график предпросмотра
+            displayPreviewChart(previewData);
             
             // Показываем сообщение об успехе
             transformMessage.textContent = 'Предпросмотр преобразования выполнен успешно.';
@@ -1041,6 +1310,160 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Функция для отображения графика предпросмотра
+    function displayPreviewChart(previewData) {
+        const chartContainer = document.getElementById('previewChartContainer');
+        const previewLegend = document.getElementById('previewLegend');
+        const canvas = document.getElementById('previewChart');
+        
+        // Очищаем существующую легенду
+        previewLegend.innerHTML = '';
+        
+        // Подготавливаем данные для графика
+        const datasets = [];
+        const chartLabels = [];
+        
+        // Преобразуем данные для графика
+        for (const variable in previewData.transformed_data) {
+            const originalData = [];
+            const transformedData = [];
+            
+            previewData.transformed_data[variable].forEach(point => {
+                if (!chartLabels.includes(point.date)) {
+                    chartLabels.push(point.date);
+                }
+                
+                if (point.original !== undefined) {
+                    originalData.push({
+                        x: point.date,
+                        y: point.original
+                    });
+                }
+                
+                if (point.transformed !== undefined) {
+                    transformedData.push({
+                        x: point.date,
+                        y: point.transformed
+                    });
+                }
+            });
+            
+            // Добавляем исходный ряд
+            if (originalData.length > 0 && (displayMode === 'all' || displayMode === 'original')) {
+                datasets.push({
+                    label: `${variable} (исходный)`,
+                    data: originalData,
+                    borderColor: chartColors[datasets.length % chartColors.length],
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    tension: 0.1
+                });
+                
+                // Добавляем в легенду
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                
+                const colorBox = document.createElement('div');
+                colorBox.className = 'legend-color';
+                colorBox.style.backgroundColor = chartColors[datasets.length - 1 % chartColors.length];
+                
+                const legendText = document.createElement('span');
+                legendText.textContent = `${variable} (исходный)`;
+                
+                legendItem.appendChild(colorBox);
+                legendItem.appendChild(legendText);
+                previewLegend.appendChild(legendItem);
+            }
+            
+            // Добавляем преобразованный ряд
+            if (transformedData.length > 0 && (displayMode === 'all' || displayMode === 'transformed')) {
+                datasets.push({
+                    label: `${variable} (преобразованный)`,
+                    data: transformedData,
+                    borderColor: chartColors[(datasets.length) % chartColors.length],
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    tension: 0.1
+                });
+                
+                // Добавляем в легенду
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                
+                const colorBox = document.createElement('div');
+                colorBox.className = 'legend-color';
+                colorBox.style.backgroundColor = chartColors[datasets.length - 1 % chartColors.length];
+                
+                const legendText = document.createElement('span');
+                legendText.textContent = `${variable} (преобразованный)`;
+                
+                legendItem.appendChild(colorBox);
+                legendItem.appendChild(legendText);
+                previewLegend.appendChild(legendItem);
+            }
+        }
+        
+        // Создаем график
+        const ctx = canvas.getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartLabels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        enabled: true,
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'category',
+                        title: {
+                            display: true,
+                            text: 'Дата'
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Значение'
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Показываем контейнер с графиком
+        chartContainer.style.display = 'block';
+        
+        // Кнопка закрытия графика
+        document.getElementById('closePreviewBtn').addEventListener('click', function() {
+            chartContainer.style.display = 'none';
+            chart.destroy();
+        });
+    }
+    
     // Функция для преобразования данных
     async function transformData() {
         if (selectedVariables.length === 0) {
@@ -1050,18 +1473,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Показываем модальное окно загрузки
         loadingMessage.textContent = 'Преобразование данных...';
-        loadingDetails.textContent = 'Выполняется преобразование рядов к заданному порядку интеграции...';
+        loadingDetails.textContent = 'Выполняется преобразование временных рядов...';
         loadingModal.show();
         
         try {
-            // Получаем настройки преобразования для каждой переменной
-            const transformationSettings = {};
-            selectedVariables.forEach(variable => {
-                const selectEl = document.querySelector(`select[data-variable="${variable}"]`);
-                if (selectEl) {
-                    transformationSettings[variable] = selectEl.value;
-                }
-            });
+            // Получаем настройки преобразования
+            const transformationSettings = getTransformationSettings();
             
             // Готовим данные для запроса
             const fileId = fileData.fileId;
@@ -1073,6 +1490,7 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('date_column', dateColumn);
             formData.append('transformation_settings', JSON.stringify(transformationSettings));
             formData.append('preview', 'false');
+            formData.append('display_mode', displayMode);
             
             // Отправляем запрос на трансформацию
             const response = await fetch(`${API_URL}/transform-integration-order`, {
@@ -1087,7 +1505,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
             console.log('Результат преобразования:', result);
             
-// Сохраняем результат для дальнейшего использования
+            // Сохраняем результат для дальнейшего использования
             transformedData = result;
             
             // Обновляем localStorage с новыми данными
@@ -1154,6 +1572,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
-</script>
+    </script>
 </body>
 </html>
