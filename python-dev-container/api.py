@@ -17,7 +17,7 @@ import threading
 import time
 from pathlib import Path
 
-from ts_analysis import analyze_data, create_word_report, test_cointegration, johansen_test, save_message, cleanup_old_messages, FeedbackForm, transform_to_stationary, transform_to_first_order, transform_to_second_order, format_time_series_for_preview
+from ts_analysis import analyze_data, create_word_report, test_cointegration, johansen_test, save_message, cleanup_old_messages, FeedbackForm, transform_to_stationary, transform_to_first_order, transform_to_second_order, format_time_series_for_preview, extreme_transform_to_stationary
 
 app = FastAPI(title="Анализ стационарности временных рядов")
 from fastapi.middleware.cors import CORSMiddleware
@@ -774,7 +774,6 @@ async def transform_integration_order(
         transformed_df = df.copy()
         
         # Импортируем функции для преобразования
-        from extreme_transformation import extreme_transform_to_stationary
         from ts_analysis import transform_to_stationary, transform_to_first_order, transform_to_second_order
         
         # Преобразуем каждую переменную согласно настройкам
