@@ -1378,7 +1378,27 @@ function displayModelResults(results) {
             
             // Добавляем модальное окно в body
             document.body.appendChild(modal);
+                });
+                
+                // Добавляем подпись с именем переменной
+                if (index < modelInfo.endogenous_vars.length) {
+                    const caption = document.createElement('div');
+                    caption.className = 'acf-pacf-caption';
+                    caption.textContent = `ACF и PACF для "${modelInfo.endogenous_vars[index]}"`;
+                    caption.style.textAlign = 'center';
+                    caption.style.marginTop = '10px';
+                    caption.style.fontWeight = '500';
+                    plotItem.appendChild(caption);
+                }
+                
+                plotItem.appendChild(img);
+                plotsGrid.appendChild(plotItem);
+            });
+            
+            plotsContainer.appendChild(plotsGrid);
+            lagAnalysisContainer.appendChild(plotsContainer);
         }
+    }
     
     // Заполняем метрики прогнозирования
     if (results.forecasts && results.forecasts.metrics) {
@@ -1555,7 +1575,7 @@ function displayModelResults(results) {
                 }
             });
         });
-    }}});
+    });
     </script>
 </body>
 </html>
