@@ -3,12 +3,399 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Аналитическая система</title>
+    <title>VARX Модель - Аналитическая система</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <style>
+        /* Дополнительные стили для страницы VARX */
+        .model-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .selector-container {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .selector-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .var-select {
+            width: 100%;
+            max-width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #334155;
+            background-color: white;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .var-select:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .numeric-input {
+            width: 100%;
+            max-width: 200px;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #334155;
+        }
+
+        .train-size-slider {
+            width: 100%;
+            max-width: 200px;
+            margin-top: 10px;
+        }
+
+        .build-model-btn {
+            background: linear-gradient(to right, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 15px;
+        }
+
+        .build-model-btn:hover {
+            background: linear-gradient(to right, #2563eb, #1d4ed8);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            margin: 30px auto;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .model-results {
+            display: none;
+        }
+
+        .results-section {
+            margin-top: 30px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 15px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background-color: #3b82f6;
+            border-radius: 3px;
+        }
+
+        .card-section {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            padding: 15px;
+            background-color: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .info-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 15px;
+            font-weight: 500;
+            color: #334155;
+        }
+
+        .metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .metrics-table th,
+        .metrics-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .metrics-table th {
+            background-color: #f1f5f9;
+            font-weight: 500;
+            color: #334155;
+        }
+
+        .forecast-chart {
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .lag-selection-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .lag-selection-table th,
+        .lag-selection-table td {
+            padding: 10px 15px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .lag-selection-table th {
+            background-color: #f1f5f9;
+            font-weight: 500;
+            color: #334155;
+        }
+
+        .optimal-value {
+            color: #16a34a;
+            font-weight: 600;
+        }
+
+        .error-message {
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .download-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .download-btn {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .download-btn i {
+            margin-right: 8px;
+        }
+
+        .download-btn:hover {
+            background-color: #2563eb;
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+        }
+        
+        /* Стили для мультиселекта */
+        .multi-select-container {
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+            margin-bottom: 15px;
+        }
+        
+        .selected-items {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 5px;
+            min-height: 40px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background-color: white;
+        }
+        
+        .selected-item {
+            display: inline-flex;
+            align-items: center;
+            background-color: #eff6ff;
+            border-radius: 4px;
+            padding: 5px 10px;
+            margin: 3px;
+            font-size: 13px;
+            color: #3b82f6;
+        }
+        
+        .selected-item .remove-item {
+            margin-left: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        .dropdown-container {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            margin-top: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        
+        .dropdown-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #334155;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f1f5f9;
+        }
+        
+        .dropdown-search {
+            padding: 10px;
+            position: sticky;
+            top: 0;
+            background-color: white;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .dropdown-search input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .multi-select-toggle {
+            width: 100%;
+            text-align: left;
+            padding: 10px 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #334155;
+            background-color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .multi-select-toggle i {
+            margin-left: 10px;
+            color: #64748b;
+        }
+
+        /* Медиа-запросы для адаптивности */
+        @media (max-width: 991.98px) {
+            .info-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .info-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .metrics-table, .lag-selection-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .numeric-input, .train-size-slider {
+                max-width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Верхняя панель -->
@@ -24,9 +411,7 @@
         </div>
         <nav class="top-menu">
             <ul>
-                <li><a href="#">О системе</a></li>
-                <li><a href="#">Справка</a></li>
-                <li><a href="#">Контакты</a></li>
+                <li><a href="/contacts">Контакты</a></li>
             </ul>
         </nav>
     </header>
@@ -36,7 +421,7 @@
         <aside class="sidebar" id="sidebar">
             <nav class="main-nav">
                 <ul>
-                    <li class="active">
+                    <li>
                         <a href="/">
                             <span class="nav-icon"><i class="fas fa-home"></i></span>
                             Главная
@@ -51,64 +436,213 @@
                     <li>
                         <a href="/analysis">
                             <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
-                            Стационарный анализ
+                            Анализ
                         </a>
                     </li>
-                    <li>
-                        <a href="/analysis_cointegration">
-                            <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
-                            Коинтеграционный анализ 
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#">
+                    <li class="active">
+                        <a href="/forecasts">
                             <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
                             Прогнозы
                         </a>
                     </li>
                     <li>
-                        <a href="#">
+                        <a href="/reports">
                             <span class="nav-icon"><i class="fas fa-file-alt"></i></span>
                             Отчеты
                         </a>
                     </li>
                     <li>
-                        <a href="#">
+                        <a href="/about">
                             <span class="nav-icon"><i class="fas fa-question-circle"></i></span>
-                            Справка
+                            О системе
                         </a>
                     </li>
                 </ul>
             </nav>
             <div class="version-info">
-                <p>Версия 3.2.1</p>
-                <p>Обновлено 28.03.2025</p>
+                <p>Версия 3.2.2</p>
+                <p>Обновлено 20.04.2025</p>
             </div>
         </aside>
 
         <!-- Основной контент -->
         <main class="content">
             <div class="breadcrumbs">
-                <span>Главная</span>
+                <span><a href="/">Главная</a></span>
+                <span class="separator">/</span>
+                <span><a href="/forecasts">Прогнозы</a></span>
+                <span class="separator">/</span>
+                <span>VARX Модель</span>
             </div>
 
             <div class="page-header">
-                <h2>Новости и события</h2>
-                <p class="subtitle">Актуальная информация и события в мире финансов и экономики</p>
+                <h2>Построение VARX модели</h2>
+                <p class="subtitle">Авторегрессионная векторная модель с экзогенными переменными</p>
             </div>
 
-            <div class="news-container">
-                <div id="news-list">
-                    <!-- Новости будут загружены с помощью JavaScript -->
-                    <div class="loading-indicator">Загрузка новостей...</div>
-                </div>
-                
-                <div class="update-info">
-                    <div class="update-date">
-                        <span class="date-badge">22.03.2025</span>
+            <div class="error-message" id="error-container">
+                Произошла ошибка при загрузке данных. Пожалуйста, убедитесь, что файл был загружен корректно.
+            </div>
+
+            <div class="model-container">
+                <div class="selector-container">
+                    <h3 class="section-title">Параметры модели</h3>
+                    
+                    <div class="input-group">
+                        <label class="input-label" for="endogenous-select">Эндогенные переменные (зависимые):</label>
+                        <div class="multi-select-container" id="endogenous-container">
+                            <button type="button" class="multi-select-toggle" id="endogenous-toggle">
+                                <span>Выберите переменные...</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="selected-items" id="endogenous-selected"></div>
+                            <div class="dropdown-container" id="endogenous-dropdown">
+                                <div class="dropdown-search">
+                                    <input type="text" placeholder="Поиск переменных..." id="endogenous-search">
+                                </div>
+                                <div class="dropdown-items" id="endogenous-items">
+                                    <!-- Переменные будут добавлены динамически -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <h3>Выпущено обновление аналитической системы</h3>
-                    <span class="version-badge">v3.2.1</span>
+                    
+                    <div class="input-group">
+                        <label class="input-label" for="exogenous-select">Экзогенные переменные (независимые):</label>
+                        <div class="multi-select-container" id="exogenous-container">
+                            <button type="button" class="multi-select-toggle" id="exogenous-toggle">
+                                <span>Выберите переменные...</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="selected-items" id="exogenous-selected"></div>
+                            <div class="dropdown-container" id="exogenous-dropdown">
+                                <div class="dropdown-search">
+                                    <input type="text" placeholder="Поиск переменных..." id="exogenous-search">
+                                </div>
+                                <div class="dropdown-items" id="exogenous-items">
+                                    <!-- Переменные будут добавлены динамически -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label" for="lags-input">Количество лагов:</label>
+                        <input type="number" id="lags-input" class="numeric-input" min="1" max="10" value="1">
+                        <div class="input-hint">Количество предыдущих периодов, используемых для прогноза</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label class="input-label" for="train-size">Доля данных для обучения:</label>
+                        <input type="range" id="train-size" class="train-size-slider" min="0.5" max="0.95" step="0.05" value="0.8">
+                        <div class="input-value"><span id="train-size-value">80%</span> данных будет использовано для обучения</div>
+                    </div>
+                    
+                    <button id="build-model-btn" class="build-model-btn">
+                        <i class="fas fa-cogs"></i> Построить модель
+                    </button>
+                </div>
+
+                <div class="loading-spinner" id="loading-spinner"></div>
+
+                <div id="model-results" class="model-results">
+                    <div class="results-section">
+                        <h3 class="section-title">Информация о модели</h3>
+                        
+                        <div class="card-section">
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <div class="info-label">Эндогенные переменные</div>
+                                    <div class="info-value" id="model-endog">-</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Экзогенные переменные</div>
+                                    <div class="info-value" id="model-exog">-</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Количество лагов</div>
+                                    <div class="info-value" id="model-lags">-</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Размер обучающей выборки</div>
+                                    <div class="info-value" id="model-train-size">-</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Размер тестовой выборки</div>
+                                    <div class="info-value" id="model-test-size">-</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">AIC</div>
+                                    <div class="info-value" id="model-aic">-</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">BIC</div>
+                                    <div class="info-value" id="model-bic">-</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">HQIC</div>
+                                    <div class="info-value" id="model-hqic">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="results-section">
+                        <h3 class="section-title">Оптимальное количество лагов</h3>
+                        
+                        <div class="card-section">
+                            <p>На основе информационных критериев определено оптимальное количество лагов для модели:</p>
+                            
+                            <table class="lag-selection-table" id="lag-selection-table">
+                                <thead>
+                                    <tr>
+                                        <th>Лаги</th>
+                                        <th>AIC</th>
+                                        <th>BIC</th>
+                                        <th>HQIC</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lag-selection-body">
+                                    <!-- Данные будут загружены с помощью JavaScript -->
+                                </tbody>
+                            </table>
+                            
+                            <div class="lag-recommendation" id="lag-recommendation">
+                                Рекомендуемое количество лагов: <strong id="recommended-lags">1</strong>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="results-section">
+                        <h3 class="section-title">Результаты прогнозирования</h3>
+                        
+                        <div class="card-section">
+                            <h4>Метрики качества прогноза</h4>
+                            
+                            <table class="metrics-table" id="metrics-table">
+                                <thead>
+                                    <tr>
+                                        <th>Переменная</th>
+                                        <th>MSE</th>
+                                        <th>MAE</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="metrics-body">
+                                    <!-- Данные будут загружены с помощью JavaScript -->
+                                </tbody>
+                            </table>
+                            
+                            <div id="forecast-charts-container" class="forecast-charts-container">
+                                <!-- Графики будут добавлены динамически -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="download-section">
+                        <button id="download-report-btn" class="download-btn">
+                            <i class="fas fa-file-download"></i> Скачать отчет
+                        </button>
+                    </div>
                 </div>
             </div>
         </main>
@@ -117,101 +651,634 @@
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Обработка мобильного меню
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            const sidebar = document.getElementById('sidebar');
-            const sidebarOverlay = document.getElementById('sidebarOverlay');
-            
-            sidebarToggle.addEventListener('click', function() {
-                sidebar.classList.toggle('active');
-                sidebarOverlay.classList.toggle('active');
-                document.body.classList.toggle('sidebar-open');ф
-            });
-            
-            sidebarOverlay.addEventListener('click', function() {
+    document.addEventListener('DOMContentLoaded', function() {
+        // Обработка мобильного меню
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+            document.body.classList.toggle('sidebar-open');
+        });
+        
+        sidebarOverlay.addEventListener('click', function() {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            document.body.classList.remove('sidebar-open');
+        });
+
+        // Адаптивность при изменении размера окна
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 992) {
                 sidebar.classList.remove('active');
                 sidebarOverlay.classList.remove('active');
                 document.body.classList.remove('sidebar-open');
+            }
+        });
+        
+        // URL вашего API
+        const API_URL = 'http://37.252.23.30:8000';
+        
+        // Массив для хранения экземпляров графиков
+        const chartInstances = [];
+        
+        // Получаем элементы DOM
+        const endogenousContainer = document.getElementById('endogenous-container');
+        const endogenousToggle = document.getElementById('endogenous-toggle');
+        const endogenousSelected = document.getElementById('endogenous-selected');
+        const endogenousDropdown = document.getElementById('endogenous-dropdown');
+        const endogenousItems = document.getElementById('endogenous-items');
+        const endogenousSearch = document.getElementById('endogenous-search');
+        
+        const exogenousContainer = document.getElementById('exogenous-container');
+        const exogenousToggle = document.getElementById('exogenous-toggle');
+        const exogenousSelected = document.getElementById('exogenous-selected');
+        const exogenousDropdown = document.getElementById('exogenous-dropdown');
+        const exogenousItems = document.getElementById('exogenous-items');
+        const exogenousSearch = document.getElementById('exogenous-search');
+        
+        const lagsInput = document.getElementById('lags-input');
+        const trainSizeSlider = document.getElementById('train-size');
+        const trainSizeValue = document.getElementById('train-size-value');
+        const buildModelBtn = document.getElementById('build-model-btn');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const modelResults = document.getElementById('model-results');
+        const errorContainer = document.getElementById('error-container');
+        
+        // Элементы для отображения результатов
+        const modelEndog = document.getElementById('model-endog');
+        const modelExog = document.getElementById('model-exog');
+        const modelLags = document.getElementById('model-lags');
+        const modelTrainSize = document.getElementById('model-train-size');
+        const modelTestSize = document.getElementById('model-test-size');
+        const modelAic = document.getElementById('model-aic');
+        const modelBic = document.getElementById('model-bic');
+        const modelHqic = document.getElementById('model-hqic');
+        
+        const lagSelectionBody = document.getElementById('lag-selection-body');
+        const recommendedLags = document.getElementById('recommended-lags');
+        
+        const metricsBody = document.getElementById('metrics-body');
+        const forecastChartsContainer = document.getElementById('forecast-charts-container');
+        const downloadReportBtn = document.getElementById('download-report-btn');
+        
+        // Получаем данные о колонках и файле из localStorage
+        const fileColumnsData = JSON.parse(localStorage.getItem('fileColumnsData') || '{}');
+        const fileName = localStorage.getItem('fileName') || 'Не выбран';
+        const fileId = localStorage.getItem('fileId');
+        
+        console.log("Данные из localStorage:", { fileColumnsData, fileName, fileId });
+        
+        // Проверяем наличие необходимых данных
+        if (!fileId) {
+            errorContainer.textContent = 'Файл не был загружен. Пожалуйста, вернитесь на страницу данных и загрузите файл.';
+            errorContainer.style.display = 'block';
+            return;
+        }
+        
+        // Инициализация мультиселекта для эндогенных переменных
+        let selectedEndogenous = [];
+        let selectedExogenous = [];
+        
+        // Заполняем выпадающие списки с колонками для анализа
+        if (fileColumnsData.numeric_columns && fileColumnsData.numeric_columns.length > 0) {
+            console.log("Заполняем списки колонок:", fileColumnsData.numeric_columns);
+            
+            // Заполняем список эндогенных переменных
+            fileColumnsData.numeric_columns.forEach(column => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.dataset.value = column;
+                item.textContent = column;
+                item.addEventListener('click', function() {
+                    toggleEndogenousSelection(column);
+                });
+                endogenousItems.appendChild(item);
             });
-
-            // Адаптивность при изменении размера окна
-            window.addEventListener('resize', function() {
-                if (window.innerWidth >= 992) {
-                    sidebar.classList.remove('active');
-                    sidebarOverlay.classList.remove('active');
-                    document.body.classList.remove('sidebar-open');
+            
+            // Заполняем список экзогенных переменных
+            fileColumnsData.numeric_columns.forEach(column => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.dataset.value = column;
+                item.textContent = column;
+                item.addEventListener('click', function() {
+                    toggleExogenousSelection(column);
+                });
+                exogenousItems.appendChild(item);
+            });
+            
+        } else {
+            console.error('Не удалось найти список колонок или данные о колонках отсутствуют');
+            errorContainer.style.display = 'block';
+        }
+        
+        // Функции для работы с мультиселектом эндогенных переменных
+        endogenousToggle.addEventListener('click', function() {
+            toggleDropdown(endogenousDropdown);
+        });
+        
+        endogenousSearch.addEventListener('input', function() {
+            filterDropdownItems(endogenousItems, endogenousSearch.value);
+        });
+        
+        function toggleEndogenousSelection(value) {
+            const index = selectedEndogenous.indexOf(value);
+            
+            if (index === -1) {
+                // Если переменная не выбрана, добавляем её
+                selectedEndogenous.push(value);
+            } else {
+                // Если переменная уже выбрана, удаляем её
+                selectedEndogenous.splice(index, 1);
+            }
+            
+            updateEndogenousDisplay();
+            
+            // Если переменная добавлена в эндогенные, убираем её из экзогенных
+            if (index === -1) {
+                const exoIndex = selectedExogenous.indexOf(value);
+                if (exoIndex !== -1) {
+                    selectedExogenous.splice(exoIndex, 1);
+                    updateExogenousDisplay();
+                }
+            }
+        }
+        
+        function updateEndogenousDisplay() {
+            // Очищаем текущий список
+            endogenousSelected.innerHTML = '';
+            
+            // Обновляем текст кнопки
+            if (selectedEndogenous.length === 0) {
+                endogenousToggle.querySelector('span').textContent = 'Выберите переменные...';
+            } else {
+                endogenousToggle.querySelector('span').textContent = `Выбрано: ${selectedEndogenous.length}`;
+            }
+            
+            // Добавляем выбранные элементы
+            selectedEndogenous.forEach(value => {
+                const item = document.createElement('div');
+                item.className = 'selected-item';
+                item.textContent = value;
+                
+                const removeBtn = document.createElement('span');
+                removeBtn.className = 'remove-item';
+                removeBtn.innerHTML = '&times;';
+                removeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleEndogenousSelection(value);
+                });
+                
+                item.appendChild(removeBtn);
+                endogenousSelected.appendChild(item);
+            });
+            
+            // Обновляем стили элементов в выпадающем списке
+            const items = endogenousItems.querySelectorAll('.dropdown-item');
+            items.forEach(item => {
+                if (selectedEndogenous.includes(item.dataset.value)) {
+                    item.classList.add('selected');
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+        }
+        
+        // Функции для работы с мультиселектом экзогенных переменных
+        exogenousToggle.addEventListener('click', function() {
+            toggleDropdown(exogenousDropdown);
+        });
+        
+        exogenousSearch.addEventListener('input', function() {
+            filterDropdownItems(exogenousItems, exogenousSearch.value);
+        });
+        
+        function toggleExogenousSelection(value) {
+            const index = selectedExogenous.indexOf(value);
+            
+            if (index === -1) {
+                // Если переменная не выбрана, добавляем её
+                selectedExogenous.push(value);
+            } else {
+                // Если переменная уже выбрана, удаляем её
+                selectedExogenous.splice(index, 1);
+            }
+            
+            updateExogenousDisplay();
+            
+            // Если переменная добавлена в экзогенные, убираем её из эндогенных
+            if (index === -1) {
+                const endoIndex = selectedEndogenous.indexOf(value);
+                if (endoIndex !== -1) {
+                    selectedEndogenous.splice(endoIndex, 1);
+                    updateEndogenousDisplay();
+                }
+            }
+        }
+        
+        function updateExogenousDisplay() {
+            // Очищаем текущий список
+            exogenousSelected.innerHTML = '';
+            
+            // Обновляем текст кнопки
+            if (selectedExogenous.length === 0) {
+                exogenousToggle.querySelector('span').textContent = 'Выберите переменные...';
+            } else {
+                exogenousToggle.querySelector('span').textContent = `Выбрано: ${selectedExogenous.length}`;
+            }
+            
+            // Добавляем выбранные элементы
+            selectedExogenous.forEach(value => {
+                const item = document.createElement('div');
+                item.className = 'selected-item';
+                item.textContent = value;
+                
+                const removeBtn = document.createElement('span');
+                removeBtn.className = 'remove-item';
+                removeBtn.innerHTML = '&times;';
+                removeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleExogenousSelection(value);
+                });
+                
+                item.appendChild(removeBtn);
+                exogenousSelected.appendChild(item);
+            });
+            
+            // Обновляем стили элементов в выпадающем списке
+            const items = exogenousItems.querySelectorAll('.dropdown-item');
+            items.forEach(item => {
+                if (selectedExogenous.includes(item.dataset.value)) {
+                    item.classList.add('selected');
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+        }
+        
+        // Общие функции для работы с выпадающими списками
+        function toggleDropdown(dropdown) {
+            if (dropdown.style.display === 'block') {
+                dropdown.style.display = 'none';
+            } else {
+                // Закрываем все открытые выпадающие списки
+                const allDropdowns = document.querySelectorAll('.dropdown-container');
+                allDropdowns.forEach(d => {
+                    d.style.display = 'none';
+                });
+                
+                dropdown.style.display = 'block';
+            }
+        }
+        
+        function filterDropdownItems(container, searchText) {
+            const items = container.querySelectorAll('.dropdown-item');
+            const searchLower = searchText.toLowerCase();
+            
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(searchLower)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        // Закрываем выпадающие списки при клике вне них
+        document.addEventListener('click', function(event) {
+            if (!endogenousContainer.contains(event.target)) {
+                endogenousDropdown.style.display = 'none';
+            }
+            
+            if (!exogenousContainer.contains(event.target)) {
+                exogenousDropdown.style.display = 'none';
+            }
+        });
+        
+        // Обработка изменения значения слайдера доли обучающей выборки
+        trainSizeSlider.addEventListener('input', function() {
+            const value = parseInt(this.value * 100);
+            trainSizeValue.textContent = `${value}%`;
+        });
+        
+        // Функция очистки графиков
+        function clearCharts() {
+            // Уничтожаем предыдущие экземпляры графиков
+            chartInstances.forEach(chart => {
+                if (chart) {
+                    chart.destroy();
                 }
             });
             
-            // URL вашего прокси-сервера
-            const proxyUrl = 'http://37.252.23.30:8000/api/news';
+            // Очищаем массив графиков
+            chartInstances.length = 0;
             
-            // Параметры запроса
-            const queryParams = new URLSearchParams({
-                q: 'Банки ЦБ',  // Поисковый запрос
-                limit: 5     // Максимальное количество новостей
+            // Очищаем контейнер графиков
+            forecastChartsContainer.innerHTML = '';
+        }
+        
+        // Обработка нажатия кнопки "Построить модель"
+        buildModelBtn.addEventListener('click', function() {
+            // Проверяем наличие выбранных эндогенных переменных
+            if (selectedEndogenous.length === 0) {
+                errorContainer.textContent = 'Выберите хотя бы одну эндогенную переменную для построения модели';
+                errorContainer.style.display = 'block';
+                return;
+            }
+            
+            // Скрываем ошибки
+            errorContainer.style.display = 'none';
+            
+            // Показываем индикатор загрузки
+            loadingSpinner.style.display = 'block';
+            
+            // Скрываем результаты, если они были отображены ранее
+            modelResults.style.display = 'none';
+            
+            // Очищаем предыдущие графики
+            clearCharts();
+            
+            // Получаем значения параметров
+            const lags = parseInt(lagsInput.value);
+            const trainSize = parseFloat(trainSizeSlider.value);
+            
+            // Формируем данные для отправки
+            const formData = new FormData();
+            formData.append('file_id', fileId);
+            formData.append('date_column', 'Дата');
+            formData.append('endogenous_vars', JSON.stringify(selectedEndogenous));
+            
+            if (selectedExogenous.length > 0) {
+                formData.append('exogenous_vars', JSON.stringify(selectedExogenous));
+            }
+            
+            formData.append('lags', lags);
+            formData.append('train_size', trainSize);
+            
+            // Отправляем запрос на построение модели
+            fetch(`${API_URL}/build-varx-model`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(results => {
+                console.log("Результаты построения модели:", results);
+                
+                // Проверяем успешность построения модели
+                if (!results.success) {
+                    throw new Error(results.error || 'Не удалось построить модель');
+                }
+                
+                // Отображаем результаты
+                displayModelResults(results);
+            })
+            .catch(error => {
+                console.error('Ошибка при построении модели:', error);
+                errorContainer.textContent = `Ошибка при построении модели: ${error.message}`;
+                errorContainer.style.display = 'block';
+            })
+            .finally(() => {
+                // Скрываем индикатор загрузки
+                loadingSpinner.style.display = 'none';
+            });
+        });
+        
+        // Функция для отображения результатов построения модели
+        function displayModelResults(results) {
+            const modelInfo = results.model_info;
+            
+            // Заполняем информацию о модели
+            modelEndog.textContent = modelInfo.endogenous_vars.join(', ');
+            modelExog.textContent = modelInfo.exogenous_vars.length > 0 ? modelInfo.exogenous_vars.join(', ') : 'Не используются';
+            modelLags.textContent = modelInfo.lags;
+            modelTrainSize.textContent = `${modelInfo.train_size} наблюдений`;
+            modelTestSize.textContent = `${modelInfo.test_size} наблюдений`;
+            
+            if (modelInfo.aic !== undefined) modelAic.textContent = modelInfo.aic.toFixed(2);
+            if (modelInfo.bic !== undefined) modelBic.textContent = modelInfo.bic.toFixed(2);
+            if (modelInfo.hqic !== undefined) modelHqic.textContent = modelInfo.hqic.toFixed(2);
+            
+            // Заполняем таблицу выбора лагов
+            if (results.diagnostics && results.diagnostics.lag_selection) {
+                const lagResults = results.diagnostics.lag_selection;
+                
+                // Очищаем существующие строки
+                lagSelectionBody.innerHTML = '';
+                
+                // Находим оптимальные лаги по каждому критерию
+                let minAicLag = 1;
+                let minBicLag = 1;
+                let minHqicLag = 1;
+                
+                let minAic = Infinity;
+                let minBic = Infinity;
+                let minHqic = Infinity;
+                
+                lagResults.forEach(result => {
+                    if (!isNaN(result.aic) && result.aic < minAic) {
+                        minAic = result.aic;
+                        minAicLag = result.lags;
+                    }
+                    
+                    if (!isNaN(result.bic) && result.bic < minBic) {
+                        minBic = result.bic;
+                        minBicLag = result.lags;
+                    }
+                    
+                    if (!isNaN(result.hqic) && result.hqic < minHqic) {
+                        minHqic = result.hqic;
+                        minHqicLag = result.lags;
+                    }
+                });
+                
+                // Заполняем таблицу
+                lagResults.forEach(result => {
+                    const row = document.createElement('tr');
+                    
+                    const lagCell = document.createElement('td');
+                    lagCell.textContent = result.lags;
+                    row.appendChild(lagCell);
+                    
+                    const aicCell = document.createElement('td');
+                    aicCell.textContent = isNaN(result.aic) ? '-' : result.aic.toFixed(2);
+                    if (result.lags === minAicLag) aicCell.classList.add('optimal-value');
+                    row.appendChild(aicCell);
+                    
+                    const bicCell = document.createElement('td');
+                    bicCell.textContent = isNaN(result.bic) ? '-' : result.bic.toFixed(2);
+                    if (result.lags === minBicLag) bicCell.classList.add('optimal-value');
+                    row.appendChild(bicCell);
+                    
+                    const hqicCell = document.createElement('td');
+                    hqicCell.textContent = isNaN(result.hqic) ? '-' : result.hqic.toFixed(2);
+                    if (result.lags === minHqicLag) hqicCell.classList.add('optimal-value');
+                    row.appendChild(hqicCell);
+                    
+                    lagSelectionBody.appendChild(row);
+                });
+                
+                // Определяем рекомендуемое количество лагов (берем за основу BIC)
+                recommendedLags.textContent = minBicLag;
+            }
+            
+            // Заполняем метрики прогнозирования
+            if (results.forecasts && results.forecasts.metrics) {
+                const metrics = results.forecasts.metrics;
+                
+                // Очищаем существующие строки
+                metricsBody.innerHTML = '';
+                
+                // Заполняем таблицу
+                Object.keys(metrics.mse).forEach(variable => {
+                    const row = document.createElement('tr');
+                    
+                    const varCell = document.createElement('td');
+                    varCell.textContent = variable;
+                    row.appendChild(varCell);
+                    
+                    const mseCell = document.createElement('td');
+                    mseCell.textContent = metrics.mse[variable].toFixed(4);
+                    row.appendChild(mseCell);
+                    
+                    const maeCell = document.createElement('td');
+                    maeCell.textContent = metrics.mae[variable].toFixed(4);
+                    row.appendChild(maeCell);
+                    
+                    metricsBody.appendChild(row);
+                });
+                
+                // Создаем графики прогнозов
+                if (results.forecasts.comparison) {
+                    const comparison = results.forecasts.comparison;
+                    
+                    Object.keys(comparison).forEach((variable, index) => {
+                        const data = comparison[variable];
+                        
+                        // Создаем контейнер для графика
+                        const chartContainer = document.createElement('div');
+                        chartContainer.className = 'forecast-chart';
+                        
+                        const chartTitle = document.createElement('h4');
+                        chartTitle.textContent = `Прогноз для "${variable}"`;
+                        chartContainer.appendChild(chartTitle);
+                        
+                        const canvas = document.createElement('canvas');
+                        canvas.id = `forecast-chart-${index}`;
+                        chartContainer.appendChild(canvas);
+                        
+                        forecastChartsContainer.appendChild(chartContainer);
+                        
+                        // Создаем график
+                        const ctx = canvas.getContext('2d');
+                        const chart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: data.dates,
+                                datasets: [
+                                    {
+                                        label: 'Фактические значения',
+                                        data: data.actual,
+                                        borderColor: '#3b82f6',
+                                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                        borderWidth: 2,
+                                        pointRadius: 3
+                                    },
+                                    {
+                                        label: 'Прогноз',
+                                        data: data.predicted,
+                                        borderColor: '#ef4444',
+                                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                        borderWidth: 2,
+                                        borderDash: [5, 5],
+                                        pointRadius: 3
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    title: {
+                                        display: false
+                                    },
+                                    tooltip: {
+                                        mode: 'index',
+                                        intersect: false
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        ticks: {
+                                            maxRotation: 45,
+                                            minRotation: 45
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        
+                        // Добавляем экземпляр графика в массив
+                        chartInstances.push(chart);
+                    });
+                }
+            } else if (results.plots && results.plots.forecast_plots) {
+                // Если есть готовые графики в формате base64
+                const plots = results.plots.forecast_plots;
+                
+                plots.forEach((plot, index) => {
+                    // Создаем контейнер для графика
+                    const chartContainer = document.createElement('div');
+                    chartContainer.className = 'forecast-chart';
+                    
+                    // Создаем изображение
+                    const img = document.createElement('img');
+                    img.src = `data:image/png;base64,${plot}`;
+                    img.alt = `Прогноз ${index + 1}`;
+                    img.style.width = '100%';
+                    img.style.height = 'auto';
+                    img.style.maxHeight = '300px';
+                    img.style.display = 'block';
+                    img.style.margin = '0 auto';
+                    
+                    chartContainer.appendChild(img);
+                    forecastChartsContainer.appendChild(chartContainer);
+                });
+            }
+            
+            // Обработка кнопки скачивания отчета
+            downloadReportBtn.addEventListener('click', function() {
+                // Создаем URL для скачивания отчета
+                const reportUrl = `${API_URL}/download-varx-report/${fileId}?endogenous=${encodeURIComponent(JSON.stringify(modelInfo.endogenous_vars))}&exogenous=${encodeURIComponent(JSON.stringify(modelInfo.exogenous_vars))}&lags=${modelInfo.lags}`;
+                
+                // Открываем URL в новой вкладке или скачиваем файл
+                window.open(reportUrl, '_blank');
             });
             
-            // Полный URL с параметрами
-            const fullUrl = `${proxyUrl}?${queryParams}`;
-            
-            // Элемент для отображения новостей
-            const newsList = document.getElementById('news-list');
-            newsList.innerHTML = '<div class="loading-indicator">Загрузка новостей...</div>';
-            
-            // Выполняем запрос к прокси-серверу
-            fetch(fullUrl)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(newsData => {
-                    // Очищаем контейнер новостей
-                    newsList.innerHTML = '';
-                    
-                    if (newsData && newsData.length > 0) {
-                        // Отображаем каждую новость
-                        newsData.forEach(news => {
-                            // Форматируем дату публикации
-                            const publishDate = new Date(news.publishedAt);
-                            const formattedDate = `${publishDate.getDate().toString().padStart(2, '0')}.${(publishDate.getMonth() + 1).toString().padStart(2, '0')}.${publishDate.getFullYear()}`;
-                            
-                            // Создаем элемент новости
-                            const newsItem = document.createElement('div');
-                            newsItem.className = 'news-item';
-                            
-                            newsItem.innerHTML = `
-                                <div class="news-date">
-                                    <span class="date-badge">${formattedDate}</span>
-                                </div>
-                                <h3>${news.title}</h3>
-                                <p>${news.description || 'Описание отсутствует'}</p>
-                                <div class="news-footer">
-                                    <a href="${news.url}" class="more-link" target="_blank">Подробнее →</a>
-                                    <span class="source">Источник: ${news.source}</span>
-                                </div>
-                            `;
-                            
-                            newsList.appendChild(newsItem);
-                        });
-                    } else {
-                        // Если новостей нет
-                        newsList.innerHTML = '<div class="no-news">Нет доступных новостей. Пожалуйста, попробуйте позже.</div>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Ошибка при загрузке новостей:', error);
-                    newsList.innerHTML = `
-                        <div class="error-message">
-                            Не удалось загрузить новости: ${error.message}
-                        </div>
-                    `;
-                });
+            // Показываем результаты
+            modelResults.style.display = 'block';
+        }
+        
+        // Обработка изменения размеров окна для корректного отображения графиков
+        window.addEventListener('resize', function() {
+            // Перерисовка всех графиков при изменении размера окна
+            chartInstances.forEach(chart => {
+                if (chart) {
+                    chart.resize();
+                }
+            });
         });
+    });
     </script>
 </body>
 </html>
