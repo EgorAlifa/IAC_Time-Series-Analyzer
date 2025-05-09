@@ -621,7 +621,7 @@ def cleanup_old_messages():
 cleanup_thread = threading.Thread(target=cleanup_old_messages, daemon=True)
 cleanup_thread.start()
 
-def transform_to_stationary(series):
+def transform_to_stationary(series, method='simple'):
     """
     Преобразование ряда к стационарному виду (I(0)) с использованием 
     последовательных разностей и тестов на стационарность
