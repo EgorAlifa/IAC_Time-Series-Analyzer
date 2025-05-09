@@ -266,6 +266,28 @@
         .btn-disabled:hover {
             background-color: #e2e8f0;
         }
+
+        /* Уведомление о генерации */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #dcfce7;
+            color: #166534;
+            padding: 15px 20px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: none;
+            animation: fadeInOut 5s ease-in-out;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            15% { opacity: 1; }
+            85% { opacity: 1; }
+            100% { opacity: 0; }
+        }
         
         @media (max-width: 767.98px) {
             .format-row {
@@ -380,20 +402,23 @@
                 </p>
             </div>
 
+            <div class="notification" id="notification">
+                Отчет успешно сгенерирован! Начинается скачивание...
+            </div>
+
             <div class="reports-container">
                 <h3 class="section-title">Создание отчета</h3>
                 
                 <div class="report-options">
                     <div class="option-block">
-                        <div class="development-badge">В разработке</div>
                         <div class="option-header">
-                            <div class="option-icon" style="color: #94a3b8; background-color: #f1f5f9;">
+                            <div class="option-icon">
                                 <i class="fas fa-file-export"></i>
                             </div>
-                            <h4 class="option-title" style="color: #94a3b8;">Экспорт результатов</h4>
+                            <h4 class="option-title">Экспорт результатов</h4>
                         </div>
                         
-                        <p class="option-description" style="color: #94a3b8;">
+                        <p class="option-description">
                             Выберите необходимые тесты и модели для включения в отчет. Для каждого выбранного элемента можно настроить параметры.
                             Выберите формат отчета и нажмите "Сформировать отчет" для создания документа.
                         </p>
@@ -401,10 +426,10 @@
                         <div class="format-row">
                             <div class="format-option">
                                 <div class="format-icon">
-                                    <i class="fas fa-file-word" style="color: #94a3b8;"></i>
+                                    <i class="fas fa-file-word"></i>
                                 </div>
-                                <label class="format-label" style="color: #94a3b8;">
-                                    <input type="radio" name="format" value="docx" checked disabled>
+                                <label class="format-label">
+                                    <input type="radio" name="format" value="docx" checked>
                                     DOCX
                                 </label>
                             </div>
@@ -421,28 +446,28 @@
                         
                         <!-- Секция с тестами -->
                         <div class="test-section">
-                            <h5 class="section-subtitle" style="color: #94a3b8;">
-                                <i class="fas fa-vial" style="color: #94a3b8;"></i> Тесты для включения в отчет
+                            <h5 class="section-subtitle">
+                                <i class="fas fa-vial"></i> Тесты для включения в отчет
                             </h5>
                             
                             <!-- Тест на стационарность -->
                             <div class="test-item">
                                 <div class="test-header">
-                                    <input type="checkbox" id="test-stationary" class="test-checkbox" disabled>
-                                    <label for="test-stationary" class="test-title" style="color: #94a3b8;">Тесты на стационарность (ADF, KPSS, Phillips-Perron)</label>
+                                    <input type="checkbox" id="test-stationary" class="test-checkbox">
+                                    <label for="test-stationary" class="test-title">Тесты на стационарность (ADF, KPSS, Phillips-Perron)</label>
                                 </div>
                             </div>
                             
                             <!-- Тест на коинтеграцию -->
                             <div class="test-item">
                                 <div class="test-header">
-                                    <input type="checkbox" id="test-cointegration" class="test-checkbox" disabled>
-                                    <label for="test-cointegration" class="test-title" style="color: #94a3b8;">Тест на коинтеграцию</label>
+                                    <input type="checkbox" id="test-cointegration" class="test-checkbox">
+                                    <label for="test-cointegration" class="test-title">Тест на коинтеграцию</label>
                                 </div>
                                 <div class="test-params">
                                     <div class="param-row">
-                                        <label class="param-label" style="color: #94a3b8;">Порядок детерминистической компоненты:</label>
-                                        <select class="param-select" disabled>
+                                        <label class="param-label">Порядок детерминистической компоненты:</label>
+                                        <select class="param-select" id="coint-det-order">
                                             <option value="0">0</option>
                                             <option value="1" selected>1</option>
                                             <option value="2">2</option>
@@ -450,8 +475,8 @@
                                         </select>
                                     </div>
                                     <div class="param-row">
-                                        <label class="param-label" style="color: #94a3b8;">Количество лагов:</label>
-                                        <input type="number" class="param-input" value="2" min="1" max="5" disabled>
+                                        <label class="param-label">Количество лагов:</label>
+                                        <input type="number" class="param-input" id="coint-lags" value="2" min="1" max="5">
                                     </div>
                                 </div>
                             </div>
@@ -462,30 +487,25 @@
                                     <input type="checkbox" id="test-granger" class="test-checkbox" disabled>
                                     <label for="test-granger" class="test-title" style="color: #94a3b8;">Тест причинности по Грейнджеру</label>
                                 </div>
-                                <div class="test-params">
-                                    <div class="param-row">
-                                        <label class="param-label" style="color: #94a3b8;">Максимальное число лагов:</label>
-                                        <input type="number" class="param-input" value="4" min="1" max="12" disabled>
-                                    </div>
-                                </div>
+                                <div class="development-badge">В разработке</div>
                             </div>
                         </div>
                         
                         <!-- Секция с моделями -->
                         <div class="model-section">
-                            <h5 class="section-subtitle" style="color: #94a3b8;">
-                                <i class="fas fa-chart-line" style="color: #94a3b8;"></i> Модели для включения в отчет
+                            <h5 class="section-subtitle">
+                                <i class="fas fa-chart-line"></i> Модели для включения в отчет
                             </h5>
                             <!-- Модель VARX -->
                             <div class="model-item">
                                 <div class="model-header">
-                                    <input type="checkbox" id="model-varx" class="model-checkbox" disabled>
-                                    <label for="model-varx" class="model-title" style="color: #94a3b8;">Модель VARX</label>
+                                    <input type="checkbox" id="model-varx" class="model-checkbox">
+                                    <label for="model-varx" class="model-title">Модель VARX</label>
                                 </div>
                                 <div class="model-params">
                                     <div class="param-row">
-                                        <label class="param-label" style="color: #94a3b8;">Количество лагов:</label>
-                                        <input type="number" class="param-input" value="2" min="1" max="8" disabled>
+                                        <label class="param-label">Количество лагов:</label>
+                                        <input type="number" class="param-input" id="varx-lags" value="2" min="1" max="8">
                                     </div>
                                 </div>
                             </div>
@@ -495,12 +515,7 @@
                                     <input type="checkbox" id="model-var" class="model-checkbox" disabled>
                                     <label for="model-var" class="model-title" style="color: #94a3b8;">Модель VAR</label>
                                 </div>
-                                <div class="model-params">
-                                    <div class="param-row">
-                                        <label class="param-label" style="color: #94a3b8;">Количество лагов:</label>
-                                        <input type="number" class="param-input" value="2" min="1" max="8" disabled>
-                                    </div>
-                                </div>
+                                <div class="development-badge">В разработке</div>
                             </div>
                             <!-- Модель ARDL -->
                             <div class="model-item">
@@ -508,24 +523,7 @@
                                     <input type="checkbox" id="model-ardl" class="model-checkbox" disabled>
                                     <label for="model-ardl" class="model-title" style="color: #94a3b8;">Модель ARDL</label>
                                 </div>
-                                <div class="model-params">
-                                    <div class="param-row">
-                                        <label class="param-label" style="color: #94a3b8;">Максимальное число лагов p:</label>
-                                        <input type="number" class="param-input" value="4" min="1" max="12" disabled>
-                                    </div>
-                                    <div class="param-row">
-                                        <label class="param-label" style="color: #94a3b8;">Максимальное число лагов q:</label>
-                                        <input type="number" class="param-input" value="4" min="1" max="12" disabled>
-                                    </div>
-                                    <div class="param-row">
-                                        <label class="param-label" style="color: #94a3b8;">Информационный критерий:</label>
-                                        <select class="param-select" disabled>
-                                            <option value="aic" selected>AIC</option>
-                                            <option value="bic">BIC</option>
-                                            <option value="hqic">HQIC</option>
-                                        </select>
-                                    </div>
-                                </div>
+                                <div class="development-badge">В разработке</div>
                             </div>
                             <!-- Модель VECM -->
                             <div class="model-item">
@@ -533,16 +531,7 @@
                                     <input type="checkbox" id="model-vecm" class="model-checkbox" disabled>
                                     <label for="model-vecm" class="model-title" style="color: #94a3b8;">Модель VECM</label>
                                 </div>
-                                <div class="model-params">
-                                    <div class="param-row">
-                                        <label class="param-label" style="color: #94a3b8;">Количество лагов:</label>
-                                        <input type="number" class="param-input" value="2" min="1" max="8" disabled>
-                                    </div>
-                                    <div class="param-row">
-                                        <label class="param-label" style="color: #94a3b8;">Ранг коинтеграции:</label>
-                                        <input type="number" class="param-input" value="1" min="1" max="5" disabled>
-                                    </div>
-                                </div>
+                                <div class="development-badge">В разработке</div>
                             </div>
                             
                             <!-- Модель VECMX -->
@@ -551,16 +540,7 @@
                                     <input type="checkbox" id="model-vecmx" class="model-checkbox" disabled>
                                     <label for="model-vecmx" class="model-title" style="color: #94a3b8;">Модель VECMX</label>
                                 </div>
-                                <div class="model-params">
-                                    <div class="param-row">
-                                        <label class="param-label" style="color: #94a3b8;">Количество лагов:</label>
-                                        <input type="number" class="param-input" value="2" min="1" max="8" disabled>
-                                    </div>
-                                    <div class="param-row">
-                                        <label class="param-label" style="color: #94a3b8;">Ранг коинтеграции:</label>
-                                        <input type="number" class="param-input" value="1" min="1" max="5" disabled>
-                                    </div>
-                                </div>
+                                <div class="development-badge">В разработке</div>
                             </div>
                             
                             <!-- Модель NARDL -->
@@ -569,20 +549,11 @@
                                     <input type="checkbox" id="model-nardl" class="model-checkbox" disabled>
                                     <label for="model-nardl" class="model-title" style="color: #94a3b8;">Модель NARDL</label>
                                 </div>
-                                <div class="model-params">
-                                    <div class="param-row">
-                                        <label class="param-label" style="color: #94a3b8;">Максимальное число лагов p:</label>
-                                        <input type="number" class="param-input" value="4" min="1" max="12" disabled>
-                                    </div>
-                                    <div class="param-row">
-                                        <label class="param-label" style="color: #94a3b8;">Максимальное число лагов q:</label>
-                                        <input type="number" class="param-input" value="4" min="1" max="12" disabled>
-                                    </div>
-                                </div>
+                                <div class="development-badge">В разработке</div>
                             </div>
                         </div>
                         
-                        <button class="btn-generate btn-disabled">
+                        <button id="generate-report-btn" class="btn-generate">
                             <i class="fas fa-file-export me-2"></i> Сформировать отчет
                         </button>
                     </div>
@@ -622,19 +593,127 @@
                 }
             });
             
-            // Для демонстрации - в рабочей версии эти обработчики будут активны
-            /*
+            // URL API
+            const API_URL = 'http://37.252.23.30:8000';
+            
+            // Получение данных из localStorage
+            const fileId = localStorage.getItem('fileId');
+            
+            // Проверка наличия загруженного файла
+            if (!fileId) {
+                alert('Файл не был загружен. Пожалуйста, загрузите файл на странице "Данные".');
+                // Можно отключить кнопку формирования отчета
+                document.getElementById('generate-report-btn').classList.add('btn-disabled');
+                document.getElementById('generate-report-btn').disabled = true;
+            }
+            
             // Обработка отображения параметров при выборе теста/модели
             const checkboxes = document.querySelectorAll('.test-checkbox, .model-checkbox');
             checkboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    const params = this.closest('.test-item, .model-item').querySelector('.test-params, .model-params');
-                    if (params) {
-                        params.style.display = this.checked ? 'block' : 'none';
+                if (!checkbox.disabled) {
+                    checkbox.addEventListener('change', function() {
+                        const params = this.closest('.test-item, .model-item').querySelector('.test-params, .model-params');
+                        if (params) {
+                            params.style.display = this.checked ? 'block' : 'none';
+                        }
+                    });
+                }
+            });
+            
+            // Функция для показа уведомления
+            function showNotification(message) {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.style.display = 'block';
+                
+                // Скрытие уведомления через 5 секунд
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 5000);
+            }
+            
+            // Обработчик для кнопки формирования отчета
+            const generateReportBtn = document.getElementById('generate-report-btn');
+            generateReportBtn.addEventListener('click', function() {
+                // Проверка, что хотя бы один тест или модель выбраны
+                const selectedTests = document.querySelectorAll('.test-checkbox:checked:not([disabled])');
+                const selectedModels = document.querySelectorAll('.model-checkbox:checked:not([disabled])');
+                
+                if (selectedTests.length === 0 && selectedModels.length === 0) {
+                    alert('Пожалуйста, выберите хотя бы один тест или модель для включения в отчет.');
+                    return;
+                }
+                
+                // Получаем выбранный формат отчета
+                const reportFormat = document.querySelector('input[name="format"]:checked').value;
+                
+                // Собираем параметры для отчета
+                const reportParams = {
+                    file_id: fileId,
+                    format: reportFormat,
+                    tests: {},
+                    models: {}
+                };
+                
+                // Добавляем выбранные тесты и их параметры
+                if (document.getElementById('test-stationary').checked) {
+                    reportParams.tests.stationary = true;
+                }
+                
+                if (document.getElementById('test-cointegration').checked) {
+                    reportParams.tests.cointegration = {
+                        det_order: parseInt(document.getElementById('coint-det-order').value),
+                        k_ar_diff: parseInt(document.getElementById('coint-lags').value)
+                    };
+                }
+                
+                // Добавляем выбранные модели и их параметры
+                if (document.getElementById('model-varx').checked) {
+                    reportParams.models.varx = {
+                        lags: parseInt(document.getElementById('varx-lags').value)
+                    };
+                }
+                
+                // Отправляем запрос на формирование отчета
+                generateReportBtn.disabled = true;
+                generateReportBtn.textContent = 'Формирование отчета...';
+                
+                fetch(`${API_URL}/generate-report`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(reportParams)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Ошибка при формировании отчета');
                     }
+                    return response.blob();
+                })
+                .then(blob => {
+                    // Создаем ссылку для скачивания файла
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `Аналитический_отчет.${reportFormat}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    
+                    // Показываем уведомление об успешном формировании отчета
+                    showNotification('Отчет успешно сгенерирован! Начинается скачивание...');
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                    alert(`Произошла ошибка при формировании отчета: ${error.message}`);
+                })
+                .finally(() => {
+                    generateReportBtn.disabled = false;
+                    generateReportBtn.innerHTML = '<i class="fas fa-file-export me-2"></i> Сформировать отчет';
                 });
             });
-            */
         });
     </script>
 </body>
