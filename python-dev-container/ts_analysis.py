@@ -1016,7 +1016,6 @@ def build_varx_model(df, endogenous_vars, exogenous_vars=None, lags=1, train_siz
         results["traceback"] = traceback.format_exc()
     
     return results
-# Добавьте следующие функции в ts_analysis.py
 
 def create_comprehensive_report(df, params):
     """
@@ -1103,12 +1102,17 @@ def create_comprehensive_report(df, params):
     
     # Если выбран тест на стационарность
     if tests.get('stationary', False):
-        doc.add_heading('1. Анализ стационарности временных рядов', level=1, style='Heading1Custom')
+        # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
+        heading = doc.add_heading('1. Анализ стационарности временных рядов', level=1)
+        # Применяем стиль к параграфу заголовка после его создания
+        heading.style = heading1_style
         
         doc.add_paragraph('В этом разделе представлены результаты тестов на стационарность для всех числовых переменных в наборе данных. Используются три различных теста: расширенный тест Дики-Фуллера (ADF), тест Квятковски-Филлипса-Шмидта-Шина (KPSS) и тест Филлипса-Перрона.', style='NormalCustom')
         
         # Таблица с результатами
-        doc.add_heading('1.1. Сводная таблица результатов', level=2, style='Heading2Custom')
+        # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
+        heading = doc.add_heading('1.1. Сводная таблица результатов', level=2)
+        heading.style = heading2_style
         
         # Создаем таблицу для результатов
         table = doc.add_table(rows=1, cols=4)
@@ -1151,13 +1155,17 @@ def create_comprehensive_report(df, params):
                 row_cells[3].text = 'Требуется дополнительный анализ'
             
             # Добавляем детальные результаты тестов
-            doc.add_heading(f'1.2. Результаты тестов для переменной "{column}"', level=2, style='Heading2Custom')
+            # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
+            heading = doc.add_heading(f'1.2. Результаты тестов для переменной "{column}"', level=2)
+            heading.style = heading2_style
             
             for line in test_outputs:
                 doc.add_paragraph(line, style='NormalCustom')
             
             # Визуализация ряда и его разностей
-            doc.add_heading(f'1.3. Визуализация ряда и его разностей для "{column}"', level=2, style='Heading2Custom')
+            # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
+            heading = doc.add_heading(f'1.3. Визуализация ряда и его разностей для "{column}"', level=2)
+            heading.style = heading2_style
             
             # Создаем диаграмму
             plt.figure(figsize=(10, 6))
@@ -1221,7 +1229,9 @@ def create_comprehensive_report(df, params):
     
     # Если выбран тест на коинтеграцию
     if tests.get('cointegration', False):
-        doc.add_heading('2. Коинтеграционный анализ', level=1, style='Heading1Custom')
+        # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
+        heading = doc.add_heading('2. Коинтеграционный анализ', level=1)
+        heading.style = heading1_style
         
         doc.add_paragraph('В этом разделе представлены результаты тестов на коинтеграцию. Наличие коинтеграции позволяет строить модели, учитывающие долгосрочное равновесие между переменными.', style='NormalCustom')
         
@@ -1234,7 +1244,9 @@ def create_comprehensive_report(df, params):
         k_ar_diff = coint_params.get('k_ar_diff', 1)
         
         # Исследуем все пары переменных с тестом Энгла-Грейнджера
-        doc.add_heading('2.1. Тест Энгла-Грейнджера', level=2, style='Heading2Custom')
+        # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
+        heading = doc.add_heading('2.1. Тест Энгла-Грейнджера', level=2)
+        heading.style = heading2_style
         
         doc.add_paragraph('Тест Энгла-Грейнджера проверяет наличие коинтеграции между парами переменных. Если p-значение меньше 0.05, отвергается нулевая гипотеза об отсутствии коинтеграции.', style='NormalCustom')
         
@@ -1284,7 +1296,9 @@ def create_comprehensive_report(df, params):
                     cointegrated_pairs.append((var1, var2))
         
         # Тест Йохансена на коинтеграцию (для всех переменных сразу)
-        doc.add_heading('2.2. Тест Йохансена', level=2, style='Heading2Custom')
+        # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
+        heading = doc.add_heading('2.2. Тест Йохансена', level=2)
+        heading.style = heading2_style
         
         doc.add_paragraph('Тест Йохансена позволяет определить количество коинтеграционных соотношений между несколькими переменными одновременно.', style='NormalCustom')
         
@@ -1306,7 +1320,9 @@ def create_comprehensive_report(df, params):
         
         # Визуализация отношения между коинтегрированными переменными
         if cointegrated_pairs:
-            doc.add_heading('2.3. Визуализация коинтегрированных пар', level=2, style='Heading2Custom')
+            # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
+            heading = doc.add_heading('2.3. Визуализация коинтегрированных пар', level=2)
+            heading.style = heading2_style
             
             for var1, var2 in cointegrated_pairs[:3]:  # Ограничиваем до 3 пар для наглядности
                 # Создаем диаграмму
@@ -1332,7 +1348,9 @@ def create_comprehensive_report(df, params):
         any_eg_cointegrated = len(cointegrated_pairs) > 0
         is_cointegrated = any_eg_cointegrated or is_cointegrated_johansen
         
-        doc.add_heading('2.4. Общее заключение по коинтеграции', level=2, style='Heading2Custom')
+        # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
+        heading = doc.add_heading('2.4. Общее заключение по коинтеграции', level=2)
+        heading.style = heading2_style
         
         if is_cointegrated:
             conclusion = "Обнаружена коинтеграция между переменными. Рекомендуется использовать модель VECM для учета долгосрочных зависимостей."
@@ -1346,7 +1364,9 @@ def create_comprehensive_report(df, params):
     
     # Если выбрана модель VARX
     if models.get('varx', False):
-        doc.add_heading('3. Модель векторной авторегрессии с экзогенными переменными (VARX)', level=1, style='Heading1Custom')
+        # ИСПРАВЛЕНО: добавляем заголовок без указания стиля
+        heading = doc.add_heading('3. Модель векторной авторегрессии с экзогенными переменными (VARX)', level=1)
+        heading.style = heading1_style
         
         doc.add_paragraph('Модель VARX представляет собой расширение модели VAR, которая включает также экзогенные переменные. Она позволяет моделировать взаимозависимость между несколькими временными рядами с учетом внешних факторов.', style='NormalCustom')
         
