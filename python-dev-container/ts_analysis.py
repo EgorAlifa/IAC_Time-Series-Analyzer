@@ -1629,3 +1629,232 @@ def create_comprehensive_report(df, params):
         doc.save(temp_path)
     
     return temp_path
+def extreme_transform_to_stationary(series, method='auto', title='', debug=False):
+    """
+    Применяет экстремальное преобразование к временному ряду для достижения стационарности
+    и улучшения статистических свойств.
+    
+    Parameters:
+    -----------
+    series : pandas.Series
+        Исходный временной ряд
+    method : str, default='auto'
+        Метод преобразования:
+        - 'auto': Автоматический выбор метода на основе характеристик ряда
+        - 'rank': Ранговая нормализация (метод Блома)
+        - 'boxcox': Преобразование Бокса-Кокса
+        - 'yeojohnson': Преобразование Йео-Джонсона
+        - 'simple': Простое дифференцирование
+        - 'log': Логарифмическое дифференцирование
+        - 'percentage': Процентное изменение
+    title : str, default=''
+        Название ряда для вывода информации
+    debug : bool, default=False
+        Вывод отладочной информации о процессе преобразования
+    
+    Returns:
+    --------
+    pandas.Series
+        Преобразованный стационарный ряд
+    dict
+        Информация о преобразовании
+    """
+    if debug:
+        print(f"\nЭкстремальное преобразование ряда '{title}' методом '{method}'")
+
+    # Копируем исходный ряд и удаляем пропуски
+    original_series = series.copy().dropna()
+    
+    # Проверяем стационарность исходного ряда
+    original_status, original_output = check_stationarity(original_series, f"{title} (исходный)")
+    
+    # Если ряд уже стационарен, возвращаем его без изменений
+    if original_status == "Стационарен":
+        if debug:
+            print("Ряд уже стационарен, преобразование не требуется")
+        
+        return original_series, {
+            'transform_method': 'none',
+            'double_differencing': False,
+            'winsorization': False,
+            'd_value': 0,
+            'original_status': original_status,
+            'final_status': original_status
+        }
+    
+    # Статистические характеристики исходного ряда
+    skewness = original_series.skew()
+    kurtosis = original_series.kurtosis()
+    
+    # Автоматический выбор метода преобразования, если указан 'auto'
+    if method == 'auto':
+        # Проверяем наличие слов 'задолженность' или 'долг' в названии
+        is_debt = 'задолженност' in title.lower() or 'долг' in title.lower()
+        
+        # Для рядов с высокой асимметрией или эксцессом использовать ранговую нормализацию
+        if is_debt or abs(skewness) > 3 or abs(kurtosis) > 10:
+            selected_method = 'rank'
+        # Для положительных рядов используем Box-Cox
+        elif original_series.min() > 0:
+            selected_method = 'boxcox'
+        # Для остальных используем Yeo-Johnson
+        else:
+            selected_method = 'yeojohnson'
+            
+        if debug:
+            print(f"Автоматически выбран метод: {selected_method}")
+    else:
+        selected_method = method
+    
+    # Применяем выбранный метод преобразования
+    try:
+        if selected_method == 'rank':
+            # Ранговое преобразование к нормальному распределению по методу Блома
+            n = len(original_series)
+            ranks = original_series.rank()
+            norm_quantiles = stats.norm.ppf((ranks - 0.375) / (n + 0.25))
+            normalized_series = pd.Series(norm_quantiles, index=original_series.index)
+            transform_info = "Ранговая нормализация (метод Блома)"
+            
+        elif selected_method == 'boxcox':
+            # Если есть отрицательные или нулевые значения, сдвигаем ряд
+            if original_series.min() <= 0:
+                min_val = original_series.min()
+                offset = abs(min_val) + 1  # Сдвиг, чтобы все значения были > 0
+                adjusted_series = original_series + offset
+                transformed_values, lambda_param = stats.boxcox(adjusted_series.values)
+            else:
+                transformed_values, lambda_param = stats.boxcox(original_series.values)
+                
+            normalized_series = pd.Series(transformed_values, index=original_series.index)
+            transform_info = f"Box-Cox (лямбда = {lambda_param:.4f})"
+            
+        elif selected_method == 'yeojohnson':
+            # Преобразование Yeo-Johnson (работает с любыми значениями)
+            transformed_values, lambda_param = stats.yeojohnson(original_series.values)
+            normalized_series = pd.Series(transformed_values, index=original_series.index)
+            transform_info = f"Yeo-Johnson (лямбда = {lambda_param:.4f})"
+            
+        elif selected_method == 'simple':
+            # Простое дифференцирование
+            normalized_series = original_series
+            transform_info = "Простое дифференцирование"
+            
+        elif selected_method == 'log':
+            # Логарифмическое преобразование
+            if original_series.min() <= 0:
+                min_val = original_series.min()
+                offset = abs(min_val) + 1  # Сдвиг, чтобы все значения были > 0
+                adjusted_series = original_series + offset
+                normalized_series = np.log(adjusted_series)
+            else:
+                normalized_series = np.log(original_series)
+            transform_info = "Логарифмическое преобразование"
+            
+        elif selected_method == 'percentage':
+            # Процентное изменение
+            normalized_series = original_series
+            transform_info = "Процентное изменение"
+        else:
+            # По умолчанию применяем ранговую нормализацию
+            n = len(original_series)
+            ranks = original_series.rank()
+            norm_quantiles = stats.norm.ppf((ranks - 0.375) / (n + 0.25))
+            normalized_series = pd.Series(norm_quantiles, index=original_series.index)
+            transform_info = "Ранговая нормализация (метод Блома) - по умолчанию"
+            
+    except Exception as e:
+        if debug:
+            print(f"Ошибка при применении метода {selected_method}: {str(e)}")
+            print("Использую ранговую нормализацию как запасной вариант")
+            
+        # Ранговая нормализация как запасной вариант
+        n = len(original_series)
+        ranks = original_series.rank()
+        norm_quantiles = stats.norm.ppf((ranks - 0.375) / (n + 0.25))
+        normalized_series = pd.Series(norm_quantiles, index=original_series.index)
+        transform_info = "Ранговая нормализация (метод Блома) - запасной метод"
+    
+    # Проверяем стационарность после нормализации
+    norm_status, _ = check_stationarity(normalized_series, f"{title} (после нормализации)")
+    
+    # Если ряд уже стационарен после нормализации, возвращаем его
+    if norm_status == "Стационарен":
+        if debug:
+            print("Ряд стал стационарным после начального преобразования")
+        
+        return normalized_series, {
+            'transform_method': transform_info,
+            'double_differencing': False,
+            'winsorization': False,
+            'd_value': 0,  # Нет дифференцирования
+            'original_status': original_status,
+            'final_status': norm_status
+        }
+    
+    # Применяем дифференцирование для достижения стационарности
+    diff1_series = normalized_series.diff().dropna()
+    
+    # Проверяем стационарность после первого дифференцирования
+    diff1_status, _ = check_stationarity(diff1_series, f"{title} (первые разности)")
+    
+    # Если ряд стационарен после первого дифференцирования, возвращаем его
+    if diff1_status == "Стационарен":
+        if debug:
+            print("Ряд стал стационарным после первого дифференцирования")
+        
+        # Применяем винсоризацию для убирания оставшихся выбросов
+        q05 = diff1_series.quantile(0.05)
+        q95 = diff1_series.quantile(0.95)
+        iqr = q95 - q05
+        
+        lower_bound = q05 - 1.5 * iqr
+        upper_bound = q95 + 1.5 * iqr
+        
+        winsorized_series = diff1_series.clip(lower=lower_bound, upper=upper_bound)
+        
+        return winsorized_series, {
+            'transform_method': transform_info,
+            'double_differencing': False,
+            'winsorization': True,
+            'd_value': 1,  # Первый порядок дифференцирования
+            'original_status': original_status,
+            'final_status': "Стационарен"
+        }
+    
+    # Применяем второе дифференцирование
+    diff2_series = diff1_series.diff().dropna()
+    
+    # Проверяем стационарность после второго дифференцирования
+    diff2_status, _ = check_stationarity(diff2_series, f"{title} (вторые разности)")
+    
+    # Интенсивная винсоризация для убирания оставшихся выбросов
+    q05 = diff2_series.quantile(0.05)
+    q95 = diff2_series.quantile(0.95)
+    iqr = q95 - q05
+    
+    lower_bound = q05 - 0.5 * iqr  # Более агрессивная винсоризация
+    upper_bound = q95 + 0.5 * iqr
+    
+    final_series = diff2_series.clip(lower=lower_bound, upper=upper_bound)
+    
+    # Финальная проверка стационарности
+    final_status, _ = check_stationarity(final_series, f"{title} (после винсоризации)")
+    
+    if debug:
+        if diff2_status == "Стационарен":
+            print("Ряд стал стационарным после второго дифференцирования")
+        
+        if final_status == "Стационарен":
+            print("Ряд стал стационарным после всех преобразований")
+        else:
+            print("Ряд не удалось сделать стационарным даже после всех преобразований")
+    
+    return final_series, {
+        'transform_method': transform_info,
+        'double_differencing': True,
+        'winsorization': True,
+        'd_value': 2,  # Второй порядок дифференцирования
+        'original_status': original_status,
+        'final_status': final_status
+    }
