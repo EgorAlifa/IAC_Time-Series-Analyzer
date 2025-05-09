@@ -868,6 +868,115 @@ async def transform_integration_order(
         import traceback
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Ошибка при преобразовании данных: {str(e)}")
+
+@app.post("/build-varx-model")
+async def build_varx_model_endpoint(
+    file_id: str = Form(...),
+    date_column: str = Form("Дата"),
+    endogenous_vars: Optional[Union[List[str], str]] = Form(None),
+    exogenous_vars: Optional[Union[List[str], str]] = Form(None),
+    lags: int = Form(1),
+    train_size: float = Form(0.8)
+):
+    """
+    Построение VARX модели на основе загруженных данных
+    
+    - **file_id**: Идентификатор файла, полученный при загрузке
+    - **date_column**: Имя столбца с датами (по умолчанию "Дата")
+    - **endogenous_vars**: Список имен эндогенных переменных для модели
+    - **exogenous_vars**: Список имен экзогенных переменных для модели
+    - **lags**: Количество лагов для модели (по умолчанию 1)
+    - **train_size**: Доля данных для обучения модели (по умолчанию 0.8)
+    """
+    # Распаковываем переменные из возможных форматов
+    unpacked_endog = unpack_variables(endogenous_vars)
+    unpacked_exog = unpack_variables(exogenous_vars)
+    
+    print(f"VARX model - file_id: {file_id}")
+    print(f"VARX model - date_column: {date_column}")
+    print(f"VARX model - endogenous_vars: {unpacked_endog}")
+    print(f"VARX model - exogenous_vars: {unpacked_exog}")
+    print(f"VARX model - lags: {lags}")
+    print(f"VARX model - train_size: {train_size}")
+    
+    # Проверяем наличие хотя бы одной эндогенной переменной
+    if not unpacked_endog:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Необходимо указать хотя бы одну эндогенную переменную"}
+        )
+    
+    file_path = TEMP_FILES_DIR / file_id
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Файл не найден или срок его хранения истек")
+    
+    try:
+        # Определяем тип файла по расширению
+        file_extension = os.path.splitext(str(file_path))[1].lower()
+        
+        # Чтение данных из файла
+        if file_extension == '.csv':
+            df = pd.read_csv(file_path)
+        elif file_extension in ['.xlsx', '.xls']:
+            df = pd.read_excel(file_path)
+        else:
+            # Пытаемся определить тип файла автоматически
+            try:
+                df = pd.read_excel(file_path)
+            except:
+                try:
+                    df = pd.read_csv(file_path)
+                except:
+                    raise HTTPException(status_code=400, detail="Неподдерживаемый формат файла")
+        
+        # Проверка наличия столбца с датами
+        if date_column not in df.columns:
+            return JSONResponse(
+                status_code=400,
+                content={"error": f"Столбец {date_column} не найден в файле", "columns": df.columns.tolist()}
+            )
+            
+        # Преобразование столбца даты
+        try:
+            df[date_column] = pd.to_datetime(df[date_column])
+            df.set_index(date_column, inplace=True)
+        except Exception as e:
+            return JSONResponse(
+                status_code=400,
+                content={"error": f"Ошибка при преобразовании столбца даты: {str(e)}"}
+            )
+        
+        # Проверяем, что все указанные переменные есть в данных
+        all_vars = unpacked_endog + unpacked_exog if unpacked_exog else unpacked_endog
+        missing_vars = [var for var in all_vars if var not in df.columns]
+        if missing_vars:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": f"Следующие переменные не найдены в данных: {', '.join(missing_vars)}",
+                    "available_columns": df.columns.tolist()
+                }
+            )
+        
+        # Строим VARX модель
+        from ts_analysis import build_varx_model
+        
+        model_results = build_varx_model(
+            df, 
+            unpacked_endog, 
+            unpacked_exog, 
+            lags=lags,
+            train_size=train_size
+        )
+        
+        return model_results
+        
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Ошибка при построении VARX модели: {str(e)}")
+
 # Установка URL API для формирования URL скачивания
 API_URL = "http://37.252.23.30:8000" 
 if __name__ == "__main__":
