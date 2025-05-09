@@ -833,7 +833,7 @@
                     </div>
                 </div>
 
-                <!-- Блок с настройками преобразования -->
+                <!-- Добавить внутри блока с настройками преобразования -->
                 <div class="transformation-card">
                     <div class="transformation-header">
                         <h3><i class="fas fa-magic"></i> Настройки преобразования</h3>
@@ -842,6 +842,39 @@
                         <p>Выберите переменные для преобразования и установите тип и метод трансформации для каждой из них. <span class="text-muted">Преобразованные данные будут добавлены в новых столбцах, исходные данные сохранятся.</span></p>
                         
                         <!-- Опция "Выбрать все переменные" -->
+                        <div class="select-all-variables">
+                            <input type="checkbox" id="selectAllCheckbox" class="transform-checkbox">
+                            <label for="selectAllCheckbox">Выбрать все переменные</label>
+                        </div>
+                        
+                        <!-- Список переменных -->
+                        <div id="variablesList">
+                            <!-- Сюда будут добавлены строки с переменными -->
+                        </div>
+                        
+                        <!-- Панель действий -->
+                        <div class="actions-panel">
+                            <div>
+                                <button id="previewBtn" class="btn btn-secondary" disabled>
+                                    <i class="fas fa-eye"></i> Предпросмотр
+                                </button>
+                            </div>
+                            <div>
+                                <button id="transformBtn" class="btn btn-primary" disabled>
+                                    <i class="fas fa-magic"></i> Выполнить преобразование
+                                </button>
+                                <button id="downloadBtn" class="btn btn-secondary" disabled>
+                                    <i class="fas fa-download"></i> Скачать результат
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Контейнер для предпросмотра графика -->
+                <div id="previewChartContainer" class="chart-container" style="display: none;">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Предпросмотр преобразования</h3>
                         <div class="chart-controls">
                             <button id="closePreviewBtn" class="btn btn-sm btn-outline-secondary">
                                 <i class="fas fa-times me-1"></i> Закрыть
@@ -887,6 +920,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script>
+// Функция для проверки и установки значения по умолчанию если элемент не найден
+function getElementOrNull(id) {
+    const element = document.getElementById(id);
+    return element;
+}
 document.addEventListener('DOMContentLoaded', function() {
     // API URL
     const API_URL = 'http://37.252.23.30:8000';
