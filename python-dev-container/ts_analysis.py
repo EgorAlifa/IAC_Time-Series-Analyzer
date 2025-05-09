@@ -739,21 +739,21 @@ def format_time_series_for_preview(dates, values):
             })
     
     return result
-# Функция для обучения и тестирования VARX модели
 def build_varx_model(df, endogenous_vars, exogenous_vars=None, lags=1, train_size=0.8):
     """
-    Обучение VARX модели на данных и оценка её качества
+    Обучение VARX модели на данных и оценка её качества.
+    Если указана одна эндогенная переменная, строится ARX модель.
     
     Parameters:
     -----------
     df : pandas.DataFrame
         Датафрейм с временными рядами
     endogenous_vars : list
-        Список имен эндогенных переменных для VARX модели
+        Список имен эндогенных переменных для VARX/ARX модели
     exogenous_vars : list, optional
-        Список имен экзогенных переменных для VARX модели
+        Список имен экзогенных переменных для VARX/ARX модели
     lags : int, default=1
-        Количество лагов для VARX модели
+        Количество лагов для VARX/ARX модели
     train_size : float, default=0.8
         Доля данных для обучения модели (0-1)
         
@@ -768,6 +768,7 @@ def build_varx_model(df, endogenous_vars, exogenous_vars=None, lags=1, train_siz
     import io
     import base64
     from matplotlib import pyplot as plt
+    from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
     
     # Убираем пропуски из данных
     df_clean = df.dropna()
@@ -777,11 +778,11 @@ def build_varx_model(df, endogenous_vars, exogenous_vars=None, lags=1, train_siz
     exog = df_clean[exogenous_vars] if exogenous_vars else None
     
     # Разделение на обучающую и тестовую выборки
-    train_size = int(len(df_clean) * train_size)
-    train_endog = endog.iloc[:train_size]
-    train_exog = exog.iloc[:train_size] if exog is not None else None
-    test_endog = endog.iloc[train_size:]
-    test_exog = exog.iloc[train_size:] if exog is not None else None
+    train_size_idx = int(len(df_clean) * train_size)
+    train_endog = endog.iloc[:train_size_idx]
+    train_exog = exog.iloc[:train_size_idx] if exog is not None else None
+    test_endog = endog.iloc[train_size_idx:]
+    test_exog = exog.iloc[train_size_idx:] if exog is not None else None
     
     results = {
         "success": True,
@@ -792,20 +793,92 @@ def build_varx_model(df, endogenous_vars, exogenous_vars=None, lags=1, train_siz
     }
     
     try:
+        # Определение оптимального числа лагов с помощью ACF и PACF
+        acf_pacf_plots = []
+        optimal_lags = {}
+        
+        for var in endogenous_vars:
+            series = train_endog[var]
+            
+            # ACF и PACF анализ
+            fig, axes = plt.subplots(2, 1, figsize=(10, 8))
+            
+            # ACF
+            plot_acf(series, lags=20, ax=axes[0], title=f'ACF для {var}')
+            
+            # PACF
+            plot_pacf(series, lags=20, ax=axes[1], title=f'PACF для {var}')
+            
+            plt.tight_layout()
+            
+            # Сохраняем график в base64
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png')
+            buf.seek(0)
+            img_str = base64.b64encode(buf.read()).decode('utf-8')
+            acf_pacf_plots.append(img_str)
+            plt.close()
+            
+            # Определяем оптимальное число лагов по PACF
+            # Значения выше 95% доверительного интервала считаются значимыми
+            from statsmodels.tsa.stattools import pacf
+            pacf_values, conf_intervals = pacf(series, nlags=20, alpha=0.05, method='ywm')
+            
+            # Находим последний значимый лаг
+            significant_lags = []
+            for i in range(1, len(pacf_values)):
+                if abs(pacf_values[i]) > abs(conf_intervals[i, 1]):  # Верхняя граница 95% интервала
+                    significant_lags.append(i)
+            
+            # Если нет значимых лагов или только первый лаг значим, берем 1
+            # В противном случае берем последний значимый лаг (до максимума 10)
+            if not significant_lags:
+                optimal_lag = 1
+            else:
+                optimal_lag = min(max(significant_lags), 10)
+            
+            optimal_lags[var] = optimal_lag
+        
+        # Определяем итоговое количество лагов (максимальное из оптимальных)
+        optimal_lag_final = max(optimal_lags.values()) if optimal_lags else lags
+        
+        # Используем переданное значение лагов, но сохраняем оптимальное для информации
+        model_lags = lags
+        
+        # Обрезаем данные в соответствии с выбранным числом лагов
+        train_endog_adj = train_endog.iloc[model_lags:]
+        train_exog_adj = train_exog.iloc[model_lags:] if train_exog is not None else None
+        
         # Обучаем модель
-        model = sm.tsa.VARMAX(train_endog, order=(lags, 0), trend='c', exog=train_exog)
-        fitted_model = model.fit(maxiter=1000, disp=False)
+        if len(endogenous_vars) == 1:
+            # ARX модель для одной эндогенной переменной
+            endog_var = endogenous_vars[0]
+            model = sm.tsa.SARIMAX(
+                train_endog_adj[endog_var], 
+                exog=train_exog_adj,
+                order=(model_lags, 0, 0),  # (p, d, q) - используем только AR часть
+                trend='c'
+            )
+            fitted_model = model.fit(disp=False)
+        else:
+            # VARX модель для нескольких эндогенных переменных
+            model = sm.tsa.VARMAX(train_endog_adj, order=(model_lags, 0), trend='c', exog=train_exog_adj)
+            fitted_model = model.fit(maxiter=1000, disp=False)
         
         # Сохраняем информацию о модели
+        model_type = "ARX" if len(endogenous_vars) == 1 else "VARX"
         results["model_info"] = {
+            "model_type": model_type,
             "aic": fitted_model.aic,
             "bic": fitted_model.bic,
-            "hqic": fitted_model.hqic,
-            "parameters": fitted_model.params.to_dict(),
-            "lags": lags,
+            "hqic": fitted_model.hqic if hasattr(fitted_model, 'hqic') else None,
+            "parameters": fitted_model.params.to_dict() if hasattr(fitted_model.params, 'to_dict') else dict(zip(fitted_model.params.index.tolist(), fitted_model.params.values.tolist())),
+            "lags": model_lags,
+            "optimal_lags": optimal_lags,
+            "optimal_lag_final": optimal_lag_final,
             "endogenous_vars": endogenous_vars,
             "exogenous_vars": exogenous_vars or [],
-            "train_size": train_size,
+            "train_size": train_size_idx,
             "test_size": len(test_endog)
         }
         
@@ -813,15 +886,28 @@ def build_varx_model(df, endogenous_vars, exogenous_vars=None, lags=1, train_siz
         if len(test_endog) > 0:
             try:
                 # Создаем прогнозы
-                forecast = fitted_model.forecast(steps=len(test_endog), exog=test_exog)
+                if len(endogenous_vars) == 1:
+                    # Для ARX модели
+                    endog_var = endogenous_vars[0]
+                    forecast = fitted_model.forecast(steps=len(test_endog), exog=test_exog)
+                    # Преобразуем в DataFrame для совместимости с VARX моделью
+                    forecast_df = pd.DataFrame({endog_var: forecast}, index=test_endog.index)
+                else:
+                    # Для VARX модели
+                    forecast_df = fitted_model.forecast(steps=len(test_endog), exog=test_exog)
                 
                 # Оценка качества прогнозов
                 mse = {}
                 mae = {}
+                rmse = {}
+                mape = {}
                 
                 for i, var in enumerate(endogenous_vars):
                     actual = test_endog[var].values
-                    predicted = forecast.iloc[:, i].values
+                    if len(endogenous_vars) == 1:
+                        predicted = forecast_df[var].values
+                    else:
+                        predicted = forecast_df.iloc[:, i].values
                     
                     # Убираем NaN перед расчетом метрик
                     valid_indices = ~(np.isnan(actual) | np.isnan(predicted))
@@ -832,16 +918,30 @@ def build_varx_model(df, endogenous_vars, exogenous_vars=None, lags=1, train_siz
                         
                         var_mse = np.mean((actual_valid - predicted_valid) ** 2)
                         var_mae = np.mean(np.abs(actual_valid - predicted_valid))
+                        var_rmse = np.sqrt(var_mse)
+                        
+                        # MAPE может вызвать деление на ноль, поэтому используем try/except
+                        try:
+                            var_mape = np.mean(np.abs((actual_valid - predicted_valid) / actual_valid)) * 100
+                        except:
+                            var_mape = np.nan
                         
                         mse[var] = var_mse
                         mae[var] = var_mae
+                        rmse[var] = var_rmse
+                        mape[var] = var_mape
                 
                 # Создаем DataFrame для сравнения
                 comparison = {}
                 for i, var in enumerate(endogenous_vars):
+                    if len(endogenous_vars) == 1:
+                        pred_values = forecast_df[var].tolist()
+                    else:
+                        pred_values = forecast_df.iloc[:, i].tolist()
+                    
                     comparison[var] = {
                         "actual": test_endog[var].tolist(),
-                        "predicted": forecast.iloc[:, i].tolist(),
+                        "predicted": pred_values,
                         "dates": test_endog.index.strftime("%Y-%m-%d").tolist()
                     }
                 
@@ -849,57 +949,53 @@ def build_varx_model(df, endogenous_vars, exogenous_vars=None, lags=1, train_siz
                     "comparison": comparison,
                     "metrics": {
                         "mse": mse,
-                        "mae": mae
+                        "mae": mae,
+                        "rmse": rmse,
+                        "mape": mape
                     }
                 }
                 
                 # Создаем графики прогнозов
-                plots = []
+                forecast_plots = []
                 for i, var in enumerate(endogenous_vars):
                     plt.figure(figsize=(10, 6))
                     plt.plot(test_endog.index, test_endog[var], 'b-', label='Фактические значения')
-                    plt.plot(test_endog.index, forecast.iloc[:, i], 'r--', label='Прогноз')
+                    
+                    if len(endogenous_vars) == 1:
+                        pred_values = forecast_df[var]
+                    else:
+                        pred_values = forecast_df.iloc[:, i]
+                    
+                    plt.plot(test_endog.index, pred_values, 'r--', label='Прогноз')
                     plt.title(f'Прогноз vs. Факт: {var}')
                     plt.legend()
                     plt.grid(True)
+                    
+                    # Форматирование дат на оси X
+                    plt.gcf().autofmt_xdate()
                     
                     # Сохраняем график в base64
                     buf = io.BytesIO()
                     plt.savefig(buf, format='png')
                     buf.seek(0)
                     img_str = base64.b64encode(buf.read()).decode('utf-8')
-                    plots.append(img_str)
+                    forecast_plots.append(img_str)
                     plt.close()
                 
-                results["plots"]["forecast_plots"] = plots
+                results["plots"]["forecast_plots"] = forecast_plots
                 
             except Exception as e:
                 results["forecasts"] = {"error": str(e)}
         
-        # Определение оптимального количества лагов по информационным критериям
-        max_lags = min(10, len(train_endog) // 2)  # Не более 10 лагов или половины длины ряда
-        lag_results = []
+        # Сохраняем графики ACF и PACF
+        results["plots"]["acf_pacf_plots"] = acf_pacf_plots
         
-        for lag in range(1, max_lags + 1):
-            try:
-                temp_model = sm.tsa.VARMAX(train_endog, order=(lag, 0), trend='c', exog=train_exog)
-                temp_fitted = temp_model.fit(maxiter=1000, disp=False)
-                
-                lag_results.append({
-                    "lags": lag,
-                    "aic": temp_fitted.aic,
-                    "bic": temp_fitted.bic,
-                    "hqic": temp_fitted.hqic
-                })
-            except:
-                lag_results.append({
-                    "lags": lag,
-                    "aic": np.nan,
-                    "bic": np.nan,
-                    "hqic": np.nan
-                })
-        
-        results["diagnostics"]["lag_selection"] = lag_results
+        # Добавляем информацию об оптимальных лагах
+        results["diagnostics"]["lag_analysis"] = {
+            "optimal_lags": optimal_lags,
+            "optimal_lag_final": optimal_lag_final,
+            "chosen_lag": model_lags
+        }
         
         # Сериализуем модель в base64 для возможного сохранения
         model_bytes = io.BytesIO()
