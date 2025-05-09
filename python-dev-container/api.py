@@ -891,7 +891,7 @@ async def transform_integration_order(
         
         # Сохраняем преобразованные данные в новый файл с правильным расширением
         new_file_id = str(uuid.uuid4())
-        new_file_path = TEMP_FILES_DIR / f"{new_file_id}{file_extension}"
+        new_file_path = TEMP_FILES_DIR / f"{new_file_id}.xlsx"
         
         # Сохраняем файл в том же формате, что и исходный
         if file_extension == '.csv':
