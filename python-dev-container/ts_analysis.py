@@ -655,9 +655,22 @@ def transform_to_stationary(series):
     padded_series = pd.Series([None, None] + diff2.tolist(), index=series.index)
     return padded_series
 
-def transform_to_first_order(series):
+def transform_to_first_order(series, method='simple'):
     """
     Преобразование ряда к первому порядку интеграции (I(1))
+    
+    Parameters:
+    -----------
+    series : pandas.Series
+        Исходный временной ряд
+    method : str, default='simple'
+        Метод преобразования (не используется в данной функции, 
+        но добавлен для совместимости с другими функциями преобразования)
+    
+    Returns:
+    --------
+    pandas.Series
+        Преобразованный временной ряд первого порядка интеграции
     """
     # Проверяем исходный ряд
     is_stationary, _ = check_stationarity(series, "")
@@ -689,9 +702,22 @@ def transform_to_first_order(series):
     # Если не определено, возвращаем исходный ряд
     return series
 
-def transform_to_second_order(series):
+def transform_to_second_order(series, method='simple'):
     """
     Преобразование ряда ко второму порядку интеграции (I(2))
+    
+    Parameters:
+    -----------
+    series : pandas.Series
+        Исходный временной ряд
+    method : str, default='simple'
+        Метод преобразования (не используется в данной функции, 
+        но добавлен для совместимости с другими функциями преобразования)
+    
+    Returns:
+    --------
+    pandas.Series
+        Преобразованный временной ряд второго порядка интеграции
     """
     # Проверяем исходный ряд
     is_stationary, _ = check_stationarity(series, "")
