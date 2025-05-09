@@ -976,7 +976,187 @@ async def build_varx_model_endpoint(
         import traceback
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Ошибка при построении VARX модели: {str(e)}")
-
+@app.get("/download-varx-report/{file_id}")
+async def download_varx_report(
+    file_id: str,
+    endogenous: str,
+    exogenous: str = "",
+    lags: int = 1
+):
+    """
+    Скачивание отчета по VARX модели
+    
+    - **file_id**: Идентификатор файла с данными
+    - **endogenous**: JSON-строка с именами эндогенных переменных
+    - **exogenous**: JSON-строка с именами экзогенных переменных
+    - **lags**: Количество лагов модели
+    """
+    try:
+        # Распаковываем переменные
+        endogenous_vars = json.loads(endogenous)
+        exogenous_vars = json.loads(exogenous) if exogenous else []
+        
+        file_path = TEMP_FILES_DIR / file_id
+        
+        if not file_path.exists():
+            raise HTTPException(status_code=404, detail="Файл не найден или срок его хранения истек")
+        
+        # Загружаем данные
+        if os.path.splitext(str(file_path))[1].lower() == '.csv':
+            df = pd.read_csv(file_path)
+        else:
+            df = pd.read_excel(file_path)
+        
+        # Преобразуем столбец даты
+        if 'Дата' in df.columns:
+            df['Дата'] = pd.to_datetime(df['Дата'])
+            df.set_index('Дата', inplace=True)
+        
+        # Строим модель
+        from ts_analysis import build_varx_model
+        model_results = build_varx_model(
+            df, 
+            endogenous_vars, 
+            exogenous_vars, 
+            lags=lags
+        )
+        
+        # Создаем отчет в Word
+        from docx import Document
+        from docx.shared import Inches
+        import matplotlib.pyplot as plt
+        import base64
+        import io
+        
+        doc = Document()
+        
+        # Добавляем заголовок
+        doc.add_heading('Отчет по VARX модели', 0)
+        
+        # Добавляем текущую дату
+        current_date = datetime.now().strftime("%d.%m.%Y")
+        doc.add_paragraph(f'Дата создания отчета: {current_date}')
+        
+        # Информация о модели
+        doc.add_heading('Информация о модели', 1)
+        
+        # Таблица с основными параметрами модели
+        table = doc.add_table(rows=1, cols=2)
+        table.style = 'Table Grid'
+        
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = 'Параметр'
+        hdr_cells[1].text = 'Значение'
+        
+        # Заполняем таблицу
+        params = [
+            ('Эндогенные переменные', ', '.join(endogenous_vars)),
+            ('Экзогенные переменные', ', '.join(exogenous_vars) if exogenous_vars else 'Не используются'),
+            ('Количество лагов', str(lags)),
+            ('AIC', f"{model_results['model_info']['aic']:.4f}" if 'aic' in model_results['model_info'] else '-'),
+            ('BIC', f"{model_results['model_info']['bic']:.4f}" if 'bic' in model_results['model_info'] else '-'),
+            ('HQIC', f"{model_results['model_info']['hqic']:.4f}" if 'hqic' in model_results['model_info'] else '-'),
+            ('Размер обучающей выборки', str(model_results['model_info']['train_size']) + ' наблюдений'),
+            ('Размер тестовой выборки', str(model_results['model_info']['test_size']) + ' наблюдений')
+        ]
+        
+        for param, value in params:
+            row_cells = table.add_row().cells
+            row_cells[0].text = param
+            row_cells[1].text = value
+        
+        # Добавляем метрики прогнозирования, если они есть
+        if 'forecasts' in model_results and 'metrics' in model_results['forecasts']:
+            doc.add_heading('Метрики качества прогноза', 1)
+            
+            metrics_table = doc.add_table(rows=1, cols=3)
+            metrics_table.style = 'Table Grid'
+            
+            hdr_cells = metrics_table.rows[0].cells
+            hdr_cells[0].text = 'Переменная'
+            hdr_cells[1].text = 'MSE'
+            hdr_cells[2].text = 'MAE'
+            
+            metrics = model_results['forecasts']['metrics']
+            
+            for variable in endogenous_vars:
+                if variable in metrics['mse'] and variable in metrics['mae']:
+                    row_cells = metrics_table.add_row().cells
+                    row_cells[0].text = variable
+                    row_cells[1].text = f"{metrics['mse'][variable]:.4f}"
+                    row_cells[2].text = f"{metrics['mae'][variable]:.4f}"
+        
+        # Добавляем графики прогнозов, если они есть
+        if 'plots' in model_results and 'forecast_plots' in model_results['plots']:
+            doc.add_heading('Графики прогнозов', 1)
+            
+            plots = model_results['plots']['forecast_plots']
+            
+            for i, plot_base64 in enumerate(plots):
+                # Преобразуем base64 в изображение
+                image_data = base64.b64decode(plot_base64)
+                image_stream = io.BytesIO(image_data)
+                
+                # Добавляем изображение в документ
+                try:
+                    doc.add_picture(image_stream, width=Inches(6))
+                    if i < len(endogenous_vars):
+                        doc.add_paragraph(f'Прогноз для переменной "{endogenous_vars[i]}"')
+                    else:
+                        doc.add_paragraph(f'Прогноз {i+1}')
+                except:
+                    doc.add_paragraph('Не удалось добавить изображение графика')
+        
+        # Добавляем рекомендации по выбору лагов, если есть данные
+        if 'diagnostics' in model_results and 'lag_selection' in model_results['diagnostics']:
+            doc.add_heading('Рекомендации по выбору количества лагов', 1)
+            
+            lag_results = model_results['diagnostics']['lag_selection']
+            
+            # Находим оптимальные лаги по каждому критерию
+            min_aic_lag = 1
+            min_bic_lag = 1
+            min_hqic_lag = 1
+            
+            min_aic = float('inf')
+            min_bic = float('inf')
+            min_hqic = float('inf')
+            
+            for result in lag_results:
+                if 'aic' in result and not np.isnan(result['aic']) and result['aic'] < min_aic:
+                    min_aic = result['aic']
+                    min_aic_lag = result['lags']
+                
+                if 'bic' in result and not np.isnan(result['bic']) and result['bic'] < min_bic:
+                    min_bic = result['bic']
+                    min_bic_lag = result['lags']
+                
+                if 'hqic' in result and not np.isnan(result['hqic']) and result['hqic'] < min_hqic:
+                    min_hqic = result['hqic']
+                    min_hqic_lag = result['lags']
+            
+            doc.add_paragraph(f'По критерию AIC оптимальное количество лагов: {min_aic_lag}')
+            doc.add_paragraph(f'По критерию BIC оптимальное количество лагов: {min_bic_lag}')
+            doc.add_paragraph(f'По критерию HQIC оптимальное количество лагов: {min_hqic_lag}')
+            
+            doc.add_paragraph('Примечание: Рекомендуется выбирать количество лагов по критерию BIC, так как он лучше учитывает сложность модели и размер выборки.')
+        
+        # Сохраняем документ во временный файл
+        with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_file:
+            temp_path = temp_file.name
+            doc.save(temp_path)
+        
+        # Возвращаем файл для скачивания
+        return FileResponse(
+            path=temp_path,
+            filename=f"VARX_model_report_{current_date.replace('.', '-')}.docx",
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+        
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Ошибка при создании отчета: {str(e)}")
 # Установка URL API для формирования URL скачивания
 API_URL = "http://37.252.23.30:8000" 
 if __name__ == "__main__":
