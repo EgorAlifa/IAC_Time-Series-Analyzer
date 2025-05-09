@@ -879,7 +879,7 @@ async def build_varx_model_endpoint(
     train_size: float = Form(0.8)
 ):
     """
-    Построение VARX модели на основе загруженных данных
+    Построение VARX/ARX модели на основе загруженных данных
     
     - **file_id**: Идентификатор файла, полученный при загрузке
     - **date_column**: Имя столбца с датами (по умолчанию "Дата")
@@ -959,7 +959,7 @@ async def build_varx_model_endpoint(
                 }
             )
         
-        # Строим VARX модель
+        # Строим VARX/ARX модель
         from ts_analysis import build_varx_model
         
         model_results = build_varx_model(
@@ -975,7 +975,7 @@ async def build_varx_model_endpoint(
     except Exception as e:
         import traceback
         print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"Ошибка при построении VARX модели: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ошибка при построении модели: {str(e)}")
 @app.get("/download-varx-report/{file_id}")
 async def download_varx_report(
     file_id: str,
@@ -984,7 +984,7 @@ async def download_varx_report(
     lags: int = 1
 ):
     """
-    Скачивание отчета по VARX модели
+    Скачивание отчета по VARX/ARX модели
     
     - **file_id**: Идентификатор файла с данными
     - **endogenous**: JSON-строка с именами эндогенных переменных
@@ -1030,8 +1030,11 @@ async def download_varx_report(
         
         doc = Document()
         
+        # Определяем тип модели
+        model_type = "ARX" if len(endogenous_vars) == 1 else "VARX"
+        
         # Добавляем заголовок
-        doc.add_heading('Отчет по VARX модели', 0)
+        doc.add_heading(f'Отчет по {model_type} модели', 0)
         
         # Добавляем текущую дату
         current_date = datetime.now().strftime("%d.%m.%Y")
@@ -1050,41 +1053,113 @@ async def download_varx_report(
         
         # Заполняем таблицу
         params = [
+            ('Тип модели', model_type),
             ('Эндогенные переменные', ', '.join(endogenous_vars)),
             ('Экзогенные переменные', ', '.join(exogenous_vars) if exogenous_vars else 'Не используются'),
-            ('Количество лагов', str(lags)),
-            ('AIC', f"{model_results['model_info']['aic']:.4f}" if 'aic' in model_results['model_info'] else '-'),
-            ('BIC', f"{model_results['model_info']['bic']:.4f}" if 'bic' in model_results['model_info'] else '-'),
-            ('HQIC', f"{model_results['model_info']['hqic']:.4f}" if 'hqic' in model_results['model_info'] else '-'),
-            ('Размер обучающей выборки', str(model_results['model_info']['train_size']) + ' наблюдений'),
-            ('Размер тестовой выборки', str(model_results['model_info']['test_size']) + ' наблюдений')
+            ('Количество лагов', str(lags))
         ]
+        
+        # Добавляем параметры, если они есть в результатах
+        if 'model_info' in model_results:
+            model_info = model_results['model_info']
+            
+            if 'aic' in model_info and model_info['aic'] is not None:
+                params.append(('AIC', f"{model_info['aic']:.4f}"))
+            
+            if 'bic' in model_info and model_info['bic'] is not None:
+                params.append(('BIC', f"{model_info['bic']:.4f}"))
+            
+            if 'hqic' in model_info and model_info['hqic'] is not None:
+                params.append(('HQIC', f"{model_info['hqic']:.4f}"))
+            
+            if 'train_size' in model_info:
+                params.append(('Размер обучающей выборки', f"{model_info['train_size']} наблюдений"))
+            
+            if 'test_size' in model_info:
+                params.append(('Размер тестовой выборки', f"{model_info['test_size']} наблюдений"))
         
         for param, value in params:
             row_cells = table.add_row().cells
             row_cells[0].text = param
             row_cells[1].text = value
         
+        # Добавляем раздел о выборе оптимального числа лагов, если есть
+        if 'diagnostics' in model_results and 'lag_analysis' in model_results['diagnostics']:
+            doc.add_heading('Анализ оптимального числа лагов', 1)
+            
+            lag_analysis = model_results['diagnostics']['lag_analysis']
+            
+            # Создаем таблицу с оптимальными лагами
+            lag_table = doc.add_table(rows=1, cols=2)
+            lag_table.style = 'Table Grid'
+            
+            hdr_cells = lag_table.rows[0].cells
+            hdr_cells[0].text = 'Переменная'
+            hdr_cells[1].text = 'Оптимальное число лагов'
+            
+            # Заполняем таблицу для каждой переменной
+            for var, lag in lag_analysis['optimal_lags'].items():
+                row_cells = lag_table.add_row().cells
+                row_cells[0].text = var
+                row_cells[1].text = str(lag)
+            
+            # Добавляем рекомендации
+            doc.add_paragraph(f"Рекомендуемое количество лагов (максимальное из оптимальных): {lag_analysis['optimal_lag_final']}")
+            doc.add_paragraph(f"В модели использовано: {lag_analysis['chosen_lag']} лагов")
+        
+        # Добавляем графики ACF и PACF, если они есть
+        if 'plots' in model_results and 'acf_pacf_plots' in model_results['plots']:
+            doc.add_heading('Графики автокорреляционных функций', 1)
+            
+            for i, plot_base64 in enumerate(model_results['plots']['acf_pacf_plots']):
+                # Преобразуем base64 в изображение
+                image_data = base64.b64decode(plot_base64)
+                image_stream = io.BytesIO(image_data)
+                
+                # Добавляем изображение в документ
+                try:
+                    doc.add_picture(image_stream, width=Inches(6))
+                    if i < len(endogenous_vars):
+                        doc.add_paragraph(f'ACF и PACF для переменной "{endogenous_vars[i]}"')
+                    else:
+                        doc.add_paragraph(f'ACF и PACF график {i+1}')
+                except Exception as e:
+                    doc.add_paragraph(f'Не удалось добавить изображение графика: {str(e)}')
+        
         # Добавляем метрики прогнозирования, если они есть
         if 'forecasts' in model_results and 'metrics' in model_results['forecasts']:
             doc.add_heading('Метрики качества прогноза', 1)
             
-            metrics_table = doc.add_table(rows=1, cols=3)
+            metrics_table = doc.add_table(rows=1, cols=5)  # Добавляем RMSE и MAPE
             metrics_table.style = 'Table Grid'
             
             hdr_cells = metrics_table.rows[0].cells
             hdr_cells[0].text = 'Переменная'
             hdr_cells[1].text = 'MSE'
             hdr_cells[2].text = 'MAE'
+            hdr_cells[3].text = 'RMSE'  # Новая метрика
+            hdr_cells[4].text = 'MAPE'  # Новая метрика
             
             metrics = model_results['forecasts']['metrics']
             
             for variable in endogenous_vars:
-                if variable in metrics['mse'] and variable in metrics['mae']:
+                if variable in metrics['mse']:
                     row_cells = metrics_table.add_row().cells
                     row_cells[0].text = variable
                     row_cells[1].text = f"{metrics['mse'][variable]:.4f}"
                     row_cells[2].text = f"{metrics['mae'][variable]:.4f}"
+                    
+                    # Добавляем RMSE, если есть
+                    if 'rmse' in metrics and variable in metrics['rmse']:
+                        row_cells[3].text = f"{metrics['rmse'][variable]:.4f}"
+                    else:
+                        row_cells[3].text = 'N/A'
+                    
+                    # Добавляем MAPE, если есть
+                    if 'mape' in metrics and variable in metrics['mape'] and not np.isnan(metrics['mape'][variable]):
+                        row_cells[4].text = f"{metrics['mape'][variable]:.2f}%"
+                    else:
+                        row_cells[4].text = 'N/A'
         
         # Добавляем графики прогнозов, если они есть
         if 'plots' in model_results and 'forecast_plots' in model_results['plots']:
@@ -1104,42 +1179,8 @@ async def download_varx_report(
                         doc.add_paragraph(f'Прогноз для переменной "{endogenous_vars[i]}"')
                     else:
                         doc.add_paragraph(f'Прогноз {i+1}')
-                except:
-                    doc.add_paragraph('Не удалось добавить изображение графика')
-        
-        # Добавляем рекомендации по выбору лагов, если есть данные
-        if 'diagnostics' in model_results and 'lag_selection' in model_results['diagnostics']:
-            doc.add_heading('Рекомендации по выбору количества лагов', 1)
-            
-            lag_results = model_results['diagnostics']['lag_selection']
-            
-            # Находим оптимальные лаги по каждому критерию
-            min_aic_lag = 1
-            min_bic_lag = 1
-            min_hqic_lag = 1
-            
-            min_aic = float('inf')
-            min_bic = float('inf')
-            min_hqic = float('inf')
-            
-            for result in lag_results:
-                if 'aic' in result and not np.isnan(result['aic']) and result['aic'] < min_aic:
-                    min_aic = result['aic']
-                    min_aic_lag = result['lags']
-                
-                if 'bic' in result and not np.isnan(result['bic']) and result['bic'] < min_bic:
-                    min_bic = result['bic']
-                    min_bic_lag = result['lags']
-                
-                if 'hqic' in result and not np.isnan(result['hqic']) and result['hqic'] < min_hqic:
-                    min_hqic = result['hqic']
-                    min_hqic_lag = result['lags']
-            
-            doc.add_paragraph(f'По критерию AIC оптимальное количество лагов: {min_aic_lag}')
-            doc.add_paragraph(f'По критерию BIC оптимальное количество лагов: {min_bic_lag}')
-            doc.add_paragraph(f'По критерию HQIC оптимальное количество лагов: {min_hqic_lag}')
-            
-            doc.add_paragraph('Примечание: Рекомендуется выбирать количество лагов по критерию BIC, так как он лучше учитывает сложность модели и размер выборки.')
+                except Exception as e:
+                    doc.add_paragraph(f'Не удалось добавить изображение графика: {str(e)}')
         
         # Сохраняем документ во временный файл
         with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_file:
@@ -1149,7 +1190,7 @@ async def download_varx_report(
         # Возвращаем файл для скачивания
         return FileResponse(
             path=temp_path,
-            filename=f"VARX_model_report_{current_date.replace('.', '-')}.docx",
+            filename=f"{model_type}_model_report_{current_date.replace('.', '-')}.docx",
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
         
