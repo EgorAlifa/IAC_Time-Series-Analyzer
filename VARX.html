@@ -461,6 +461,64 @@
                 max-width: 100%;
             }
         }
+        /* Стили для адаптивности графиков ACF/PACF */
+        @media (max-width: 767.98px) {
+            .acf-pacf-item {
+                width: 100% !important;
+                overflow-x: auto;
+                white-space: nowrap;
+                padding: 10px !important;
+            }
+            
+            .acf-pacf-item img {
+                max-width: none;
+                width: 100%;
+                height: auto;
+                max-height: 400px;
+                object-fit: contain;
+            }
+            
+            .acf-pacf-grid {
+                display: block !important;
+                margin-bottom: 20px;
+            }
+            
+            /* Индикатор прокрутки для пользователя */
+            .acf-pacf-item::after {
+                content: '\f07e  Прокрутите для просмотра';
+                font-family: 'Font Awesome 6 Free';
+                font-weight: 900;
+                display: block;
+                text-align: center;
+                font-size: 12px;
+                color: #64748b;
+                margin-top: 8px;
+                white-space: normal;
+            }
+        }
+        
+        /* Для планшетов - графики в две колонки */
+        @media (min-width: 768px) and (max-width: 991.98px) {
+            .acf-pacf-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+            
+            .acf-pacf-item img {
+                width: 100%;
+                height: auto;
+            }
+        }
+        
+        /* Для больших экранов */
+        @media (min-width: 992px) {
+            .acf-pacf-item {
+                transition: transform 0.2s;
+            }
+            
+            .acf-pacf-item:hover {
+                transform: scale(1.02);
+            }
+        }
     </style>
 </head>
 <body>
