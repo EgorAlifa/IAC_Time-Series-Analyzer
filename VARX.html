@@ -673,8 +673,11 @@
                 <div id="model-results" class="model-results">
                     <div class="results-section">
                         <h3 class="section-title">Информация о модели</h3>
-                        
-                        <div class="card-section">
+                        <div class="info-item">
+                                <div class="info-label">Тип модели</div>
+                                <div class="info-value" id="model-type">-</div>
+                            </div>
+                            <div class="card-section">
                             <div class="info-grid">
                                 <div class="info-item">
                                     <div class="info-label">Эндогенные переменные</div>
@@ -1201,7 +1204,7 @@ function displayModelResults(results) {
     const modelTypeBadge = document.createElement('span');
     modelTypeBadge.className = 'model-type-badge';
     modelTypeBadge.textContent = modelInfo.model_type || 'VARX';
-    modelTypeBadge.style.backgroundColor = modelInfo.model_type === 'VARX' ? '#10b981' : '#3b82f6';
+    modelTypeBadge.style.backgroundColor = modelInfo.model_type === 'ARX' ? '#10b981' : '#3b82f6';
     modelTypeBadge.style.color = 'white';
     modelTypeBadge.style.padding = '3px 8px';
     modelTypeBadge.style.borderRadius = '4px';
