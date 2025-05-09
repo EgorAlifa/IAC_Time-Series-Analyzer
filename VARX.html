@@ -587,25 +587,31 @@
                         </div>
                     </div>
                     
+                    <div class="info-item">
+                        <div class="info-label">Тип модели</div>
+                        <div class="info-value" id="model-type">-</div>
+                    </div>
+                    
                     <div class="results-section">
-                        <h3 class="section-title">Оптимальное количество лагов</h3>
+                        <h3 class="section-title">Анализ оптимального числа лагов</h3>
                         
-                        <div class="card-section">
-                            <p>На основе информационных критериев определено оптимальное количество лагов для модели:</p>
+                         <div class="card-section" id="lag-analysis-container">
+                            <p>На основе анализа определено оптимальное количество лагов для модели:</p>
                             
-                            <table class="lag-selection-table" id="lag-selection-table">
-                                <thead>
-                                    <tr>
-                                        <th>Лаги</th>
-                                        <th>AIC</th>
-                                        <th>BIC</th>
-                                        <th>HQIC</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="lag-selection-body">
-                                    <!-- Данные будут загружены с помощью JavaScript -->
-                                </tbody>
-                            </table>
+                        <table class="metrics-table" id="metrics-table">
+                            <thead>
+                                <tr>
+                                    <th>Переменная</th>
+                                    <th>MSE</th>
+                                    <th>MAE</th>
+                                    <th>RMSE</th>
+                                    <th>MAPE</th>
+                                </tr>
+                            </thead>
+                            <tbody id="metrics-body">
+                                <!-- Данные будут загружены с помощью JavaScript -->
+                            </tbody>
+                        </table>
                             
                             <div class="lag-recommendation" id="lag-recommendation">
                                 Рекомендуемое количество лагов: <strong id="recommended-lags">1</strong>
@@ -1054,220 +1060,305 @@
             });
         });
         
-        // Функция для отображения результатов построения модели
-        function displayModelResults(results) {
-            const modelInfo = results.model_info;
+// Функция для отображения результатов построения модели
+function displayModelResults(results) {
+    const modelInfo = results.model_info;
+    
+    // Заполняем информацию о модели
+    modelEndog.textContent = modelInfo.endogenous_vars.join(', ');
+    modelExog.textContent = modelInfo.exogenous_vars.length > 0 ? modelInfo.exogenous_vars.join(', ') : 'Не используются';
+    modelLags.textContent = modelInfo.lags;
+    modelTrainSize.textContent = `${modelInfo.train_size} наблюдений`;
+    modelTestSize.textContent = `${modelInfo.test_size} наблюдений`;
+    
+    // Добавляем тип модели
+    const modelTypeBadge = document.createElement('span');
+    modelTypeBadge.className = 'model-type-badge';
+    modelTypeBadge.textContent = modelInfo.model_type || 'VARX';
+    modelTypeBadge.style.backgroundColor = modelInfo.model_type === 'ARX' ? '#10b981' : '#3b82f6';
+    modelTypeBadge.style.color = 'white';
+    modelTypeBadge.style.padding = '3px 8px';
+    modelTypeBadge.style.borderRadius = '4px';
+    modelTypeBadge.style.fontSize = '12px';
+    modelTypeBadge.style.marginLeft = '10px';
+    
+    const modelTypeElement = document.getElementById('model-type');
+    modelTypeElement.textContent = modelInfo.model_type || 'VARX';
+    modelTypeElement.appendChild(modelTypeBadge);
+    
+    if (modelInfo.aic !== undefined) modelAic.textContent = modelInfo.aic.toFixed(2);
+    if (modelInfo.bic !== undefined) modelBic.textContent = modelInfo.bic.toFixed(2);
+    if (modelInfo.hqic !== undefined && modelInfo.hqic !== null) modelHqic.textContent = modelInfo.hqic.toFixed(2);
+    
+    // Отображаем информацию об оптимальных лагах из ACF/PACF
+    if (results.diagnostics && results.diagnostics.lag_analysis) {
+        const lagAnalysis = results.diagnostics.lag_analysis;
+        
+        // Очищаем контейнер
+        lagAnalysisContainer.innerHTML = '';
+        
+        // Создаем заголовок
+        const heading = document.createElement('h4');
+        heading.textContent = 'Анализ автокорреляций';
+        lagAnalysisContainer.appendChild(heading);
+        
+        // Создаем таблицу с оптимальными лагами
+        const table = document.createElement('table');
+        table.className = 'lag-analysis-table';
+        
+        // Создаем заголовок таблицы
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        
+        const headerCell1 = document.createElement('th');
+        headerCell1.textContent = 'Переменная';
+        headerRow.appendChild(headerCell1);
+        
+        const headerCell2 = document.createElement('th');
+        headerCell2.textContent = 'Оптимальное число лагов';
+        headerRow.appendChild(headerCell2);
+        
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+        
+        // Создаем тело таблицы
+        const tbody = document.createElement('tbody');
+        
+        // Добавляем информацию по каждой переменной
+        Object.entries(lagAnalysis.optimal_lags).forEach(([variable, optimalLag]) => {
+            const row = document.createElement('tr');
             
-            // Заполняем информацию о модели
-            modelEndog.textContent = modelInfo.endogenous_vars.join(', ');
-            modelExog.textContent = modelInfo.exogenous_vars.length > 0 ? modelInfo.exogenous_vars.join(', ') : 'Не используются';
-            modelLags.textContent = modelInfo.lags;
-            modelTrainSize.textContent = `${modelInfo.train_size} наблюдений`;
-            modelTestSize.textContent = `${modelInfo.test_size} наблюдений`;
+            const cell1 = document.createElement('td');
+            cell1.textContent = variable;
+            row.appendChild(cell1);
             
-            if (modelInfo.aic !== undefined) modelAic.textContent = modelInfo.aic.toFixed(2);
-            if (modelInfo.bic !== undefined) modelBic.textContent = modelInfo.bic.toFixed(2);
-            if (modelInfo.hqic !== undefined) modelHqic.textContent = modelInfo.hqic.toFixed(2);
+            const cell2 = document.createElement('td');
+            cell2.textContent = optimalLag;
+            row.appendChild(cell2);
             
-            // Заполняем таблицу выбора лагов
-            if (results.diagnostics && results.diagnostics.lag_selection) {
-                const lagResults = results.diagnostics.lag_selection;
-                
-                // Очищаем существующие строки
-                lagSelectionBody.innerHTML = '';
-                
-                // Находим оптимальные лаги по каждому критерию
-                let minAicLag = 1;
-                let minBicLag = 1;
-                let minHqicLag = 1;
-                
-                let minAic = Infinity;
-                let minBic = Infinity;
-                let minHqic = Infinity;
-                
-                lagResults.forEach(result => {
-                    if (!isNaN(result.aic) && result.aic < minAic) {
-                        minAic = result.aic;
-                        minAicLag = result.lags;
-                    }
-                    
-                    if (!isNaN(result.bic) && result.bic < minBic) {
-                        minBic = result.bic;
-                        minBicLag = result.lags;
-                    }
-                    
-                    if (!isNaN(result.hqic) && result.hqic < minHqic) {
-                        minHqic = result.hqic;
-                        minHqicLag = result.lags;
-                    }
-                });
-                
-                // Заполняем таблицу
-                lagResults.forEach(result => {
-                    const row = document.createElement('tr');
-                    
-                    const lagCell = document.createElement('td');
-                    lagCell.textContent = result.lags;
-                    row.appendChild(lagCell);
-                    
-                    const aicCell = document.createElement('td');
-                    aicCell.textContent = isNaN(result.aic) ? '-' : result.aic.toFixed(2);
-                    if (result.lags === minAicLag) aicCell.classList.add('optimal-value');
-                    row.appendChild(aicCell);
-                    
-                    const bicCell = document.createElement('td');
-                    bicCell.textContent = isNaN(result.bic) ? '-' : result.bic.toFixed(2);
-                    if (result.lags === minBicLag) bicCell.classList.add('optimal-value');
-                    row.appendChild(bicCell);
-                    
-                    const hqicCell = document.createElement('td');
-                    hqicCell.textContent = isNaN(result.hqic) ? '-' : result.hqic.toFixed(2);
-                    if (result.lags === minHqicLag) hqicCell.classList.add('optimal-value');
-                    row.appendChild(hqicCell);
-                    
-                    lagSelectionBody.appendChild(row);
-                });
-                
-                // Определяем рекомендуемое количество лагов (берем за основу BIC)
-                recommendedLags.textContent = minBicLag;
-            }
+            tbody.appendChild(row);
+        });
+        
+        table.appendChild(tbody);
+        lagAnalysisContainer.appendChild(table);
+        
+        // Добавляем рекомендацию
+        const recommendationText = document.createElement('div');
+        recommendationText.className = 'lag-recommendation';
+        recommendationText.innerHTML = `Рекомендуемое количество лагов (максимальное из оптимальных): <strong>${lagAnalysis.optimal_lag_final}</strong>`;
+        lagAnalysisContainer.appendChild(recommendationText);
+        
+        // Отображаем графики ACF и PACF, если они есть
+        if (results.plots && results.plots.acf_pacf_plots) {
+            const acfPacfPlots = results.plots.acf_pacf_plots;
             
-            // Заполняем метрики прогнозирования
-            if (results.forecasts && results.forecasts.metrics) {
-                const metrics = results.forecasts.metrics;
-                
-                // Очищаем существующие строки
-                metricsBody.innerHTML = '';
-                
-                // Заполняем таблицу
-                Object.keys(metrics.mse).forEach(variable => {
-                    const row = document.createElement('tr');
-                    
-                    const varCell = document.createElement('td');
-                    varCell.textContent = variable;
-                    row.appendChild(varCell);
-                    
-                    const mseCell = document.createElement('td');
-                    mseCell.textContent = metrics.mse[variable].toFixed(4);
-                    row.appendChild(mseCell);
-                    
-                    const maeCell = document.createElement('td');
-                    maeCell.textContent = metrics.mae[variable].toFixed(4);
-                    row.appendChild(maeCell);
-                    
-                    metricsBody.appendChild(row);
-                });
-                
-                // Создаем графики прогнозов
-                if (results.forecasts.comparison) {
-                    const comparison = results.forecasts.comparison;
-                    
-                    Object.keys(comparison).forEach((variable, index) => {
-                        const data = comparison[variable];
-                        
-                        // Создаем контейнер для графика
-                        const chartContainer = document.createElement('div');
-                        chartContainer.className = 'forecast-chart';
-                        
-                        const chartTitle = document.createElement('h4');
-                        chartTitle.textContent = `Прогноз для "${variable}"`;
-                        chartContainer.appendChild(chartTitle);
-                        
-                        const canvas = document.createElement('canvas');
-                        canvas.id = `forecast-chart-${index}`;
-                        chartContainer.appendChild(canvas);
-                        
-                        forecastChartsContainer.appendChild(chartContainer);
-                        
-                        // Создаем график
-                        const ctx = canvas.getContext('2d');
-                        const chart = new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: data.dates,
-                                datasets: [
-                                    {
-                                        label: 'Фактические значения',
-                                        data: data.actual,
-                                        borderColor: '#3b82f6',
-                                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                        borderWidth: 2,
-                                        pointRadius: 3
-                                    },
-                                    {
-                                        label: 'Прогноз',
-                                        data: data.predicted,
-                                        borderColor: '#ef4444',
-                                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                        borderWidth: 2,
-                                        borderDash: [5, 5],
-                                        pointRadius: 3
-                                    }
-                                ]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    title: {
-                                        display: false
-                                    },
-                                    tooltip: {
-                                        mode: 'index',
-                                        intersect: false
-                                    }
-                                },
-                                scales: {
-                                    x: {
-                                        ticks: {
-                                            maxRotation: 45,
-                                            minRotation: 45
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                        
-                        // Добавляем экземпляр графика в массив
-                        chartInstances.push(chart);
-                    });
-                }
-            } else if (results.plots && results.plots.forecast_plots) {
-                // Если есть готовые графики в формате base64
-                const plots = results.plots.forecast_plots;
-                
-                plots.forEach((plot, index) => {
-                    // Создаем контейнер для графика
-                    const chartContainer = document.createElement('div');
-                    chartContainer.className = 'forecast-chart';
-                    
-                    // Создаем изображение
-                    const img = document.createElement('img');
-                    img.src = `data:image/png;base64,${plot}`;
-                    img.alt = `Прогноз ${index + 1}`;
-                    img.style.width = '100%';
-                    img.style.height = 'auto';
-                    img.style.maxHeight = '300px';
-                    img.style.display = 'block';
-                    img.style.margin = '0 auto';
-                    
-                    chartContainer.appendChild(img);
-                    forecastChartsContainer.appendChild(chartContainer);
-                });
-            }
+            // Создаем контейнер для графиков
+            const plotsContainer = document.createElement('div');
+            plotsContainer.className = 'acf-pacf-plots';
+            plotsContainer.style.marginTop = '20px';
             
-            // Обработка кнопки скачивания отчета
-            downloadReportBtn.addEventListener('click', function() {
-                // Создаем URL для скачивания отчета
-                const reportUrl = `${API_URL}/download-varx-report/${fileId}?endogenous=${encodeURIComponent(JSON.stringify(modelInfo.endogenous_vars))}&exogenous=${encodeURIComponent(JSON.stringify(modelInfo.exogenous_vars))}&lags=${modelInfo.lags}`;
+            // Добавляем заголовок
+            const plotsHeading = document.createElement('h4');
+            plotsHeading.textContent = 'Графики ACF и PACF';
+            plotsContainer.appendChild(plotsHeading);
+            
+            // Создаем контейнер для графиков
+            const plotsGrid = document.createElement('div');
+            plotsGrid.className = 'acf-pacf-grid';
+            plotsGrid.style.display = 'grid';
+            plotsGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(400px, 1fr))';
+            plotsGrid.style.gap = '20px';
+            plotsGrid.style.marginTop = '15px';
+            
+            // Добавляем каждый график
+            acfPacfPlots.forEach((plot, index) => {
+                const plotItem = document.createElement('div');
+                plotItem.className = 'acf-pacf-item';
+                plotItem.style.backgroundColor = 'white';
+                plotItem.style.padding = '15px';
+                plotItem.style.borderRadius = '8px';
+                plotItem.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)';
                 
-                // Открываем URL в новой вкладке или скачиваем файл
-                window.open(reportUrl, '_blank');
+                const img = document.createElement('img');
+                img.src = `data:image/png;base64,${plot}`;
+                img.alt = `ACF/PACF График ${index + 1}`;
+                img.style.width = '100%';
+                img.style.height = 'auto';
+                
+                plotItem.appendChild(img);
+                plotsGrid.appendChild(plotItem);
             });
             
-            // Показываем результаты
-            modelResults.style.display = 'block';
+            plotsContainer.appendChild(plotsGrid);
+            lagAnalysisContainer.appendChild(plotsContainer);
         }
+    }
+    
+    // Заполняем метрики прогнозирования
+    if (results.forecasts && results.forecasts.metrics) {
+        const metrics = results.forecasts.metrics;
+        
+        // Очищаем существующие строки
+        metricsBody.innerHTML = '';
+        
+        // Заполняем таблицу
+        Object.keys(metrics.mse).forEach(variable => {
+            const row = document.createElement('tr');
+            
+            const varCell = document.createElement('td');
+            varCell.textContent = variable;
+            row.appendChild(varCell);
+            
+            const mseCell = document.createElement('td');
+            mseCell.textContent = metrics.mse[variable].toFixed(4);
+            row.appendChild(mseCell);
+            
+            const maeCell = document.createElement('td');
+            maeCell.textContent = metrics.mae[variable].toFixed(4);
+            row.appendChild(maeCell);
+            
+            // Добавляем RMSE, если есть
+            if (metrics.rmse && metrics.rmse[variable] !== undefined) {
+                const rmseCell = document.createElement('td');
+                rmseCell.textContent = metrics.rmse[variable].toFixed(4);
+                row.appendChild(rmseCell);
+            }
+            
+            // Добавляем MAPE, если есть
+            if (metrics.mape && metrics.mape[variable] !== undefined) {
+                const mapeCell = document.createElement('td');
+                mapeCell.textContent = !isNaN(metrics.mape[variable]) ? 
+                    metrics.mape[variable].toFixed(2) + '%' : 'N/A';
+                row.appendChild(mapeCell);
+            }
+            
+            metricsBody.appendChild(row);
+        });
+        
+        // Создаем графики прогнозов, если есть
+        if (results.forecasts.comparison) {
+            // Очищаем контейнер графиков
+            forecastChartsContainer.innerHTML = '';
+            
+            const comparison = results.forecasts.comparison;
+            
+            Object.keys(comparison).forEach((variable, index) => {
+                const data = comparison[variable];
+                
+                // Создаем контейнер для графика
+                const chartContainer = document.createElement('div');
+                chartContainer.className = 'forecast-chart';
+                
+                const chartTitle = document.createElement('h4');
+                chartTitle.textContent = `Прогноз для "${variable}"`;
+                chartContainer.appendChild(chartTitle);
+                
+                const canvas = document.createElement('canvas');
+                canvas.id = `forecast-chart-${index}`;
+                chartContainer.appendChild(canvas);
+                
+                forecastChartsContainer.appendChild(chartContainer);
+                
+                // Создаем график
+                const ctx = canvas.getContext('2d');
+                const chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.dates,
+                        datasets: [
+                            {
+                                label: 'Фактические значения',
+                                data: data.actual,
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                borderWidth: 2,
+                                pointRadius: 3
+                            },
+                            {
+                                label: 'Прогноз',
+                                data: data.predicted,
+                                borderColor: '#ef4444',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                pointRadius: 3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: false
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Добавляем экземпляр графика в массив
+                chartInstances.push(chart);
+            });
+        } else if (results.plots && results.plots.forecast_plots) {
+            // Если есть готовые графики в формате base64
+            forecastChartsContainer.innerHTML = '';
+            
+            const plots = results.plots.forecast_plots;
+            
+            plots.forEach((plot, index) => {
+                // Создаем контейнер для графика
+                const chartContainer = document.createElement('div');
+                chartContainer.className = 'forecast-chart';
+                
+                // Добавляем заголовок с именем переменной
+                const chartTitle = document.createElement('h4');
+                if (index < modelInfo.endogenous_vars.length) {
+                    chartTitle.textContent = `Прогноз для "${modelInfo.endogenous_vars[index]}"`;
+                } else {
+                    chartTitle.textContent = `Прогноз ${index + 1}`;
+                }
+                chartContainer.appendChild(chartTitle);
+                
+                // Создаем изображение
+                const img = document.createElement('img');
+                img.src = `data:image/png;base64,${plot}`;
+                img.alt = `Прогноз ${index + 1}`;
+                img.style.width = '100%';
+                img.style.height = 'auto';
+                img.style.maxHeight = '300px';
+                img.style.display = 'block';
+                img.style.margin = '0 auto';
+                
+                chartContainer.appendChild(img);
+                forecastChartsContainer.appendChild(chartContainer);
+            });
+        }
+    }
+    
+    // Обработка кнопки скачивания отчета
+    downloadReportBtn.addEventListener('click', function() {
+        // Создаем URL для скачивания отчета
+        const reportUrl = `${API_URL}/download-varx-report/${fileId}?endogenous=${encodeURIComponent(JSON.stringify(modelInfo.endogenous_vars))}&exogenous=${encodeURIComponent(JSON.stringify(modelInfo.exogenous_vars))}&lags=${modelInfo.lags}`;
+        
+        // Открываем URL в новой вкладке или скачиваем файл
+        window.open(reportUrl, '_blank');
+    });
+    
+    // Показываем результаты
+    modelResults.style.display = 'block';
+}
         
         // Обработка изменения размеров окна для корректного отображения графиков
         window.addEventListener('resize', function() {
