@@ -1249,7 +1249,7 @@ async def generate_report(request: Request):
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Ошибка при чтении файла: {str(e)}")
         
-        # Подготовка данных для теста
+        # Подготовка данных для анализа
         try:
             date_column = "Дата"  # По умолчанию используем Дата
             
@@ -1268,9 +1268,33 @@ async def generate_report(request: Request):
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Ошибка при подготовке данных: {str(e)}")
         
+        # Проверка и обработка выбранных моделей
+        if 'varx' in models:
+            varx_params = models['varx']
+            
+            # Если параметры VARX указаны как булево значение, преобразуем в словарь
+            if isinstance(varx_params, bool):
+                varx_params = {}
+                models['varx'] = varx_params
+            
+            # Если не указаны эндогенные и экзогенные переменные, добавляем их в параметры
+            if 'endogenous_vars' not in varx_params or not varx_params['endogenous_vars']:
+                # Получаем числовые колонки
+                numeric_columns = [col for col in df.columns if pd.api.types.is_numeric_dtype(df[col])]
+                
+                # Берем первые две колонки как эндогенные (или одну, если только одна доступна)
+                if len(numeric_columns) > 0:
+                    varx_params['endogenous_vars'] = numeric_columns[:min(2, len(numeric_columns))]
+                else:
+                    raise HTTPException(status_code=400, detail="Не найдены числовые колонки для эндогенных переменных")
+            
+            # Если экзогенные переменные не указаны, оставляем пустой список
+            if 'exogenous_vars' not in varx_params:
+                varx_params['exogenous_vars'] = []
+        
         # Создание отчета в зависимости от выбранных тестов и моделей
         if report_format == 'docx':
-            # Используем существующую функцию create_comprehensive_report из ts_analysis
+            # Используем функцию create_comprehensive_report из ts_analysis
             from ts_analysis import create_comprehensive_report
             
             # Подготовка параметров для отчета
