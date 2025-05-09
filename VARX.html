@@ -1220,164 +1220,87 @@ function displayModelResults(results) {
         if (results.plots && results.plots.acf_pacf_plots) {
             const acfPacfPlots = results.plots.acf_pacf_plots;
             
-        // Создаем контейнер для графиков
-        const plotsContainer = document.createElement('div');
-        plotsContainer.className = 'acf-pacf-container';
-        plotsContainer.style.marginTop = '20px';
-        
-        // Добавляем заголовок
-        const plotsHeading = document.createElement('h4');
-        plotsHeading.textContent = 'Графики ACF и PACF';
-        plotsContainer.appendChild(plotsHeading);
-        
-        // Добавляем каждый график
-        acfPacfPlots.forEach((plot, index) => {
-            // Создаем контейнер для графика
-            const plotWrapper = document.createElement('div');
-            plotWrapper.className = 'acf-pacf-wrapper';
-            plotWrapper.style.marginBottom = '25px';
-            plotWrapper.style.backgroundColor = 'white';
-            plotWrapper.style.padding = '15px';
-            plotWrapper.style.borderRadius = '8px';
-            plotWrapper.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)';
+            // Создаем контейнер для графиков
+            const plotsContainer = document.createElement('div');
+            plotsContainer.className = 'acf-pacf-plots';
+            plotsContainer.style.marginTop = '20px';
             
-            // Добавляем заголовок с именем переменной
-            if (index < modelInfo.endogenous_vars.length) {
-                const title = document.createElement('h5');
-                title.textContent = `ACF и PACF для "${modelInfo.endogenous_vars[index]}"`;
-                title.style.marginBottom = '10px';
-                title.style.textAlign = 'center';
-                title.style.fontSize = '14px';
-                title.style.fontWeight = '500';
-                plotWrapper.appendChild(title);
-            }
+            // Добавляем заголовок
+            const plotsHeading = document.createElement('h4');
+            plotsHeading.textContent = 'Графики ACF и PACF';
+            plotsContainer.appendChild(plotsHeading);
             
-            // Создаем контейнер с горизонтальной прокруткой для мобильных устройств
-            const scrollContainer = document.createElement('div');
-            scrollContainer.className = 'scroll-container';
-            scrollContainer.style.overflowX = 'auto';
-            scrollContainer.style.whiteSpace = 'nowrap';
-            scrollContainer.style.webkitOverflowScrolling = 'touch'; // Для плавной прокрутки на iOS
-            scrollContainer.style.scrollbarWidth = 'thin'; // Тонкий скроллбар в Firefox
+            // Создаем контейнер для графиков
+            const plotsGrid = document.createElement('div');
+            plotsGrid.className = 'acf-pacf-grid';
+            plotsGrid.style.display = 'grid';
+            plotsGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(400px, 1fr))';
+            plotsGrid.style.gap = '20px';
+            plotsGrid.style.marginTop = '15px';
             
-            // Создаем подсказку для мобильных устройств
-            const mobileHint = document.createElement('div');
-            mobileHint.className = 'mobile-scroll-hint';
-            mobileHint.innerHTML = '<i class="fas fa-arrows-alt-h"></i> Проведите для прокрутки';
-            mobileHint.style.fontSize = '12px';
-            mobileHint.style.color = '#64748b';
-            mobileHint.style.textAlign = 'center';
-            mobileHint.style.padding = '5px';
-            mobileHint.style.display = 'none'; // По умолчанию скрыта
-            
-            // Показываем подсказку только на мобильных устройствах
-            if (window.innerWidth < 768) {
-                mobileHint.style.display = 'block';
-            }
-            
-            // Создаем контейнер фиксированной ширины для изображения
-            const imgContainer = document.createElement('div');
-            imgContainer.style.minWidth = '500px'; // Минимальная ширина для десктопа
-            imgContainer.style.margin = '0 auto';  // Центрирование 
-            
-            // Создаем изображение
-            const img = document.createElement('img');
-            img.src = `data:image/png;base64,${plot}`;
-            img.alt = `ACF/PACF График ${index + 1}`;
-            img.style.width = '100%';
-            img.style.height = 'auto';
-            img.style.display = 'block';
-            
-            // Добавляем обработчик клика для увеличения изображения
-            img.addEventListener('click', function() {
-                openImageModal(plot, index, modelInfo.endogenous_vars);
-            });
-            
-            // Собираем структуру
-            imgContainer.appendChild(img);
-            scrollContainer.appendChild(imgContainer);
-            plotWrapper.appendChild(mobileHint);
-            plotWrapper.appendChild(scrollContainer);
-            plotsContainer.appendChild(plotWrapper);
-        });
-        
-        // Добавляем все в основной контейнер
-        lagAnalysisContainer.appendChild(plotsContainer);
-        
-        // Функция для открытия модального окна с увеличенным изображением
-        function openImageModal(imageBase64, index, variables) {
-            // Создаем модальное окно
-            const modal = document.createElement('div');
-            modal.className = 'image-modal';
-            modal.style.position = 'fixed';
-            modal.style.top = '0';
-            modal.style.left = '0';
-            modal.style.width = '100%';
-            modal.style.height = '100%';
-            modal.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
-            modal.style.zIndex = '1050';
-            modal.style.display = 'flex';
-            modal.style.alignItems = 'center';
-            modal.style.justifyContent = 'center';
-            
-            // Создаем контейнер для изображения (с учетом ориентации экрана)
-            const imgContainer = document.createElement('div');
-            imgContainer.style.width = (window.innerWidth > window.innerHeight) ? '80%' : '95%';
-            imgContainer.style.height = '90%';
-            imgContainer.style.display = 'flex';
-            imgContainer.style.flexDirection = 'column';
-            imgContainer.style.alignItems = 'center';
-            imgContainer.style.justifyContent = 'center';
-            
-            // Создаем заголовок с именем переменной
-            if (index < variables.length) {
-                const title = document.createElement('h4');
-                title.textContent = `ACF и PACF для "${variables[index]}"`;
-                title.style.color = 'white';
-                title.style.marginBottom = '20px';
-                title.style.textAlign = 'center';
-                imgContainer.appendChild(title);
-            }
-            
-            // Создаем увеличенное изображение
-            const img = document.createElement('img');
-            img.src = `data:image/png;base64,${imageBase64}`;
-            img.alt = `Увеличенный ACF/PACF График`;
-            img.style.maxWidth = '100%';
-            img.style.maxHeight = '80%';
-            img.style.objectFit = 'contain';
-            
-            // Создаем кнопку закрытия
-            const closeButton = document.createElement('button');
-            closeButton.innerHTML = '&times;';
-            closeButton.style.position = 'absolute';
-            closeButton.style.top = '15px';
-            closeButton.style.right = '20px';
-            closeButton.style.background = 'transparent';
-            closeButton.style.border = 'none';
-            closeButton.style.fontSize = '30px';
-            closeButton.style.color = 'white';
-            closeButton.style.cursor = 'pointer';
-            
-            // Добавляем обработчик для закрытия
-            closeButton.addEventListener('click', function() {
-                document.body.removeChild(modal);
-            });
-            
-            // Закрытие по клику на заднем фоне
-            modal.addEventListener('click', function(event) {
-                if (event.target === modal) {
-                    document.body.removeChild(modal);
-                }
-            });
-            
-            // Добавляем элементы в контейнер
-            imgContainer.appendChild(img);
-            modal.appendChild(imgContainer);
-            modal.appendChild(closeButton);
-            
-            // Добавляем модальное окно в body
-            document.body.appendChild(modal);
+            // Добавляем каждый график с возможностью увеличения при клике
+            acfPacfPlots.forEach((plot, index) => {
+                const plotItem = document.createElement('div');
+                plotItem.className = 'acf-pacf-item';
+                
+                const img = document.createElement('img');
+                img.src = `data:image/png;base64,${plot}`;
+                img.alt = `ACF/PACF График ${index + 1}`;
+                img.style.height = 'auto';
+                img.style.maxHeight = '600px';
+                img.style.cursor = 'pointer'; // Указываем, что на изображение можно кликнуть
+                
+                // Добавляем обработчик клика для увеличения изображения
+                img.addEventListener('click', function() {
+                    // Создаем модальное окно
+                    const modal = document.createElement('div');
+                    modal.style.position = 'fixed';
+                    modal.style.top = '0';
+                    modal.style.left = '0';
+                    modal.style.width = '100%';
+                    modal.style.height = '100%';
+                    modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
+                    modal.style.display = 'flex';
+                    modal.style.alignItems = 'center';
+                    modal.style.justifyContent = 'center';
+                    modal.style.zIndex = '1000';
+                    
+                    // Создаем увеличенное изображение
+                    const modalImg = document.createElement('img');
+                    modalImg.src = img.src;
+                    modalImg.style.maxWidth = '90%';
+                    modalImg.style.maxHeight = '90%';
+                    modalImg.style.objectFit = 'contain';
+                    
+                    // Добавляем кнопку закрытия
+                    const closeBtn = document.createElement('span');
+                    closeBtn.textContent = '×';
+                    closeBtn.style.position = 'absolute';
+                    closeBtn.style.top = '20px';
+                    closeBtn.style.right = '30px';
+                    closeBtn.style.color = 'white';
+                    closeBtn.style.fontSize = '40px';
+                    closeBtn.style.fontWeight = 'bold';
+                    closeBtn.style.cursor = 'pointer';
+                    
+                    // Обработчик закрытия модального окна
+                    closeBtn.addEventListener('click', function() {
+                        document.body.removeChild(modal);
+                    });
+                    
+                    // Закрытие модального окна при клике вне изображения
+                    modal.addEventListener('click', function(event) {
+                        if (event.target === modal) {
+                            document.body.removeChild(modal);
+                        }
+                    });
+                    
+                    // Добавляем элементы в модальное окно
+                    modal.appendChild(modalImg);
+                    modal.appendChild(closeBtn);
+                    
+                    // Добавляем модальное окно в body
+                    document.body.appendChild(modal);
                 });
                 
                 // Добавляем подпись с именем переменной
