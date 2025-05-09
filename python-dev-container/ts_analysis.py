@@ -739,3 +739,178 @@ def format_time_series_for_preview(dates, values):
             })
     
     return result
+# Функция для обучения и тестирования VARX модели
+def build_varx_model(df, endogenous_vars, exogenous_vars=None, lags=1, train_size=0.8):
+    """
+    Обучение VARX модели на данных и оценка её качества
+    
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        Датафрейм с временными рядами
+    endogenous_vars : list
+        Список имен эндогенных переменных для VARX модели
+    exogenous_vars : list, optional
+        Список имен экзогенных переменных для VARX модели
+    lags : int, default=1
+        Количество лагов для VARX модели
+    train_size : float, default=0.8
+        Доля данных для обучения модели (0-1)
+        
+    Returns:
+    --------
+    dict
+        Результаты обучения и оценки модели
+    """
+    import statsmodels.api as sm
+    import pickle
+    import numpy as np
+    import io
+    import base64
+    from matplotlib import pyplot as plt
+    
+    # Убираем пропуски из данных
+    df_clean = df.dropna()
+    
+    # Подготовка данных
+    endog = df_clean[endogenous_vars]
+    exog = df_clean[exogenous_vars] if exogenous_vars else None
+    
+    # Разделение на обучающую и тестовую выборки
+    train_size = int(len(df_clean) * train_size)
+    train_endog = endog.iloc[:train_size]
+    train_exog = exog.iloc[:train_size] if exog is not None else None
+    test_endog = endog.iloc[train_size:]
+    test_exog = exog.iloc[train_size:] if exog is not None else None
+    
+    results = {
+        "success": True,
+        "model_info": {},
+        "forecasts": {},
+        "diagnostics": {},
+        "plots": {}
+    }
+    
+    try:
+        # Обучаем модель
+        model = sm.tsa.VARMAX(train_endog, order=(lags, 0), trend='c', exog=train_exog)
+        fitted_model = model.fit(maxiter=1000, disp=False)
+        
+        # Сохраняем информацию о модели
+        results["model_info"] = {
+            "aic": fitted_model.aic,
+            "bic": fitted_model.bic,
+            "hqic": fitted_model.hqic,
+            "parameters": fitted_model.params.to_dict(),
+            "lags": lags,
+            "endogenous_vars": endogenous_vars,
+            "exogenous_vars": exogenous_vars or [],
+            "train_size": train_size,
+            "test_size": len(test_endog)
+        }
+        
+        # Прогнозы на тестовом наборе, если он не пустой
+        if len(test_endog) > 0:
+            try:
+                # Создаем прогнозы
+                forecast = fitted_model.forecast(steps=len(test_endog), exog=test_exog)
+                
+                # Оценка качества прогнозов
+                mse = {}
+                mae = {}
+                
+                for i, var in enumerate(endogenous_vars):
+                    actual = test_endog[var].values
+                    predicted = forecast.iloc[:, i].values
+                    
+                    # Убираем NaN перед расчетом метрик
+                    valid_indices = ~(np.isnan(actual) | np.isnan(predicted))
+                    
+                    if np.any(valid_indices):
+                        actual_valid = actual[valid_indices]
+                        predicted_valid = predicted[valid_indices]
+                        
+                        var_mse = np.mean((actual_valid - predicted_valid) ** 2)
+                        var_mae = np.mean(np.abs(actual_valid - predicted_valid))
+                        
+                        mse[var] = var_mse
+                        mae[var] = var_mae
+                
+                # Создаем DataFrame для сравнения
+                comparison = {}
+                for i, var in enumerate(endogenous_vars):
+                    comparison[var] = {
+                        "actual": test_endog[var].tolist(),
+                        "predicted": forecast.iloc[:, i].tolist(),
+                        "dates": test_endog.index.strftime("%Y-%m-%d").tolist()
+                    }
+                
+                results["forecasts"] = {
+                    "comparison": comparison,
+                    "metrics": {
+                        "mse": mse,
+                        "mae": mae
+                    }
+                }
+                
+                # Создаем графики прогнозов
+                plots = []
+                for i, var in enumerate(endogenous_vars):
+                    plt.figure(figsize=(10, 6))
+                    plt.plot(test_endog.index, test_endog[var], 'b-', label='Фактические значения')
+                    plt.plot(test_endog.index, forecast.iloc[:, i], 'r--', label='Прогноз')
+                    plt.title(f'Прогноз vs. Факт: {var}')
+                    plt.legend()
+                    plt.grid(True)
+                    
+                    # Сохраняем график в base64
+                    buf = io.BytesIO()
+                    plt.savefig(buf, format='png')
+                    buf.seek(0)
+                    img_str = base64.b64encode(buf.read()).decode('utf-8')
+                    plots.append(img_str)
+                    plt.close()
+                
+                results["plots"]["forecast_plots"] = plots
+                
+            except Exception as e:
+                results["forecasts"] = {"error": str(e)}
+        
+        # Определение оптимального количества лагов по информационным критериям
+        max_lags = min(10, len(train_endog) // 2)  # Не более 10 лагов или половины длины ряда
+        lag_results = []
+        
+        for lag in range(1, max_lags + 1):
+            try:
+                temp_model = sm.tsa.VARMAX(train_endog, order=(lag, 0), trend='c', exog=train_exog)
+                temp_fitted = temp_model.fit(maxiter=1000, disp=False)
+                
+                lag_results.append({
+                    "lags": lag,
+                    "aic": temp_fitted.aic,
+                    "bic": temp_fitted.bic,
+                    "hqic": temp_fitted.hqic
+                })
+            except:
+                lag_results.append({
+                    "lags": lag,
+                    "aic": np.nan,
+                    "bic": np.nan,
+                    "hqic": np.nan
+                })
+        
+        results["diagnostics"]["lag_selection"] = lag_results
+        
+        # Сериализуем модель в base64 для возможного сохранения
+        model_bytes = io.BytesIO()
+        pickle.dump(fitted_model, model_bytes)
+        model_bytes.seek(0)
+        results["model_base64"] = base64.b64encode(model_bytes.read()).decode('utf-8')
+        
+    except Exception as e:
+        results["success"] = False
+        results["error"] = str(e)
+        import traceback
+        results["traceback"] = traceback.format_exc()
+    
+    return results
