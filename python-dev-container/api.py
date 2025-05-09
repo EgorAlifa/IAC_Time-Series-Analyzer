@@ -698,21 +698,33 @@ async def transform_integration_order(
     file_id: str = Form(...),
     date_column: str = Form("Дата"),
     transformation_settings: str = Form(...),
-    preview: str = Form("false")
+    preview: str = Form("false"),
+    display_mode: str = Form("all")
 ):
     """
-    Преобразование временных рядов к заданному порядку интеграции
+    Преобразование временных рядов к заданному порядку интеграции с использованием различных методов
     
     - **file_id**: Идентификатор загруженного файла
     - **date_column**: Имя столбца с датами
-    - **transformation_settings**: JSON со структурой {переменная: порядок_интеграции}
+    - **transformation_settings**: JSON со структурой {переменная: {transformTo: порядок_интеграции, diffMethod: метод_преобразования}}
     - **preview**: Если "true", то возвращает только данные для предпросмотра без сохранения
+    - **display_mode**: Режим отображения - "all", "transformed" или "original"
     
     Возможные значения порядка интеграции:
     - "none": Оставить как есть
     - "I(0)": Привести к стационарному виду (дифференцирование до стационарности)
     - "I(1)": Привести к первому порядку интеграции
     - "I(2)": Привести к второму порядку интеграции
+    
+    Возможные методы преобразования:
+    - "simple": Обычное дифференцирование (разности)
+    - "percentage": Процентное изменение
+    - "log": Логарифмическое изменение
+    - "boxcox": Преобразование Бокса-Кокса
+    - "yeojohnson": Преобразование Йео-Джонсона
+    - "rank": Ранговая нормализация
+    - "auto": Автоматический выбор метода
+    - "extreme": Экстремальное преобразование для достижения стационарности
     """
     # Проверяем наличие файла
     file_path = TEMP_FILES_DIR / file_id
@@ -761,8 +773,22 @@ async def transform_integration_order(
         # Создаем новый DataFrame для измененных данных
         transformed_df = df.copy()
         
+        # Импортируем функции для преобразования
+        from extreme_transformation import extreme_transform_to_stationary
+        from ts_analysis import transform_to_stationary, transform_to_first_order, transform_to_second_order
+        
         # Преобразуем каждую переменную согласно настройкам
-        for variable, transform_to in settings.items():
+        for variable, transform_settings in settings.items():
+            # Получаем настройки трансформации
+            if isinstance(transform_settings, str):
+                # Совместимость со старым форматом
+                transform_to = transform_settings
+                transform_method = 'simple'
+            else:
+                # Новый формат с методом преобразования
+                transform_to = transform_settings.get('transformTo', 'none')
+                transform_method = transform_settings.get('diffMethod', 'simple')
+            
             # Пропускаем, если оставляем как есть
             if transform_to == "none":
                 continue
@@ -776,52 +802,89 @@ async def transform_integration_order(
             
             # Преобразуем согласно выбранному порядку интеграции
             if transform_to == "I(0)":  # Привести к стационарному виду
-                # Применяем первые разности
-                transformed_series = series.diff()
-                column_name = f"{variable}_I0"
+                # Используем стандартные методы или экстремальное преобразование
+                if transform_method == 'extreme':
+                    transformed_series, transform_info = extreme_transform_to_stationary(
+                        series, 
+                        method='auto', 
+                        title=variable
+                    )
+                    # Используем информацию о трансформации
+                    method_suffix = transform_info['transform_method'].split(' ')[0].lower()
+                    column_name = f"{variable}_I0_{method_suffix}"
+                else:
+                    transformed_series = transform_to_stationary(series, method=transform_method)
+                    column_name = f"{variable}_I0"
                 
             elif transform_to == "I(1)":  # Привести к первому порядку интеграции
-                if variable.endswith("_I0"):  # Если это уже I(0)
-                    # Интегрируем один раз
-                    transformed_series = series.cumsum()
-                    # Замена NaN начальным значением
-                    transformed_series.iloc[0] = series.iloc[0]
+                transformed_series = transform_to_first_order(series, method=transform_method)
+                
+                # Определяем подходящее имя для нового столбца
+                if variable.endswith("_I0"):
+                    # Если преобразуем от I(0) к I(1), меняем суффикс
                     column_name = variable.replace("_I0", "_I1")
                 else:
-                    # Оставляем как есть или применяем первые разности, если нужно
-                    transformed_series = series
+                    # Иначе просто добавляем суффикс
                     column_name = f"{variable}_I1"
                 
             elif transform_to == "I(2)":  # Привести к второму порядку интеграции
-                if variable.endswith("_I0"):  # Если это I(0)
-                    # Интегрируем дважды
-                    temp_series = series.cumsum()
-                    transformed_series = temp_series.cumsum()
-                    # Замена NaN начальными значениями
-                    transformed_series.iloc[0] = series.iloc[0]
-                    transformed_series.iloc[1] = temp_series.iloc[1]
+                transformed_series = transform_to_second_order(series, method=transform_method)
+                
+                # Определяем подходящее имя для нового столбца
+                if variable.endswith("_I0"):
                     column_name = variable.replace("_I0", "_I2")
-                elif variable.endswith("_I1"):  # Если это I(1)
-                    # Интегрируем один раз
-                    transformed_series = series.cumsum()
-                    # Замена NaN начальным значением
-                    transformed_series.iloc[0] = series.iloc[0]
+                elif variable.endswith("_I1"):
                     column_name = variable.replace("_I1", "_I2")
                 else:
-                    # Оставляем как есть
-                    transformed_series = series
                     column_name = f"{variable}_I2"
             
-            # Добавляем преобразованный ряд в DataFrame
-            transformed_df[column_name] = transformed_series
+            else:
+                # Неизвестный тип преобразования, пропускаем
+                continue
+            
+            # Добавляем преобразованный ряд в DataFrame, только если режим отображения позволяет
+            if display_mode in ['all', 'transformed']:
+                transformed_df[column_name] = transformed_series
+                
+                # В режиме "только преобразованные" удаляем исходный ряд, если он не нужен
+                if display_mode == 'transformed' and column_name != variable:
+                    if variable in transformed_df.columns:
+                        transformed_df = transformed_df.drop(columns=[variable])
             
             # Добавляем данные для предпросмотра
             if is_preview:
-                preview_data["transformed_data"][variable] = [
-                    {"date": date.strftime("%Y-%m-%d"), "value": float(value) if pd.notna(value) else None}
-                    for date, value in zip(transformed_df[date_column], transformed_series)
-                    if pd.notna(value)
-                ]
+                # Используем функцию форматирования с учетом режима отображения
+                preview_data["transformed_data"][variable] = format_time_series_for_preview(
+                    series, 
+                    transformed_series, 
+                    display_mode=display_mode
+                )
+        
+            # Добавляем преобразованный ряд в DataFrame, только если режим отображения позволяет
+            if display_mode in ['all', 'transformed']:
+                transformed_df[column_name] = transformed_series
+                
+                # В режиме "только преобразованные" удаляем исходный ряд, если он не нужен
+                if display_mode == 'transformed' and column_name != variable:
+                    if variable in transformed_df.columns:
+                        transformed_df = transformed_df.drop(columns=[variable])
+            
+            # Добавляем данные для предпросмотра
+            if is_preview:
+                # Используем функцию форматирования с учетом режима отображения
+                preview_data["transformed_data"][variable] = format_time_series_for_preview(
+                    series, 
+                    transformed_series, 
+                    display_mode=display_mode
+                )
+        
+        # Если режим "только оригинальные", удаляем все преобразованные ряды
+        if display_mode == 'original':
+            # Находим все столбцы, которые заканчиваются на _I0, _I1, _I2 или содержат суффиксы методов
+            transformed_columns = [col for col in transformed_df.columns if 
+                                  col.endswith(('_I0', '_I1', '_I2', '_rank', '_boxcox', '_yeojohnson', '_log', '_simple', '_percentage'))]
+            if transformed_columns:
+                transformed_df = transformed_df.drop(columns=transformed_columns)
         
         # Если это предпросмотр, возвращаем только данные для визуализации
         if is_preview:
@@ -830,7 +893,6 @@ async def transform_integration_order(
         # Сохраняем преобразованные данные в новый файл с правильным расширением
         new_file_id = str(uuid.uuid4())
         new_file_path = TEMP_FILES_DIR / f"{new_file_id}{file_extension}"
-
         
         # Сохраняем файл в том же формате, что и исходный
         if file_extension == '.csv':
@@ -861,14 +923,15 @@ async def transform_integration_order(
             "message": "Преобразование успешно выполнено",
             "updated_file_id": new_file_id,
             "updated_columns_data": updated_columns_data,
-            "download_url": download_url
+            "download_url": download_url,
+            "display_mode": display_mode
         }
             
     except Exception as e:
         import traceback
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Ошибка при преобразовании данных: {str(e)}")
-
+        
 @app.post("/build-varx-model")
 async def build_varx_model_endpoint(
     file_id: str = Form(...),
