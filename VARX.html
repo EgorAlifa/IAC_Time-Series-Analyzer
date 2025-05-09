@@ -384,6 +384,54 @@
         .multi-select-toggle i {
             margin-left: 10px;
             color: #64748b;
+        }/* Стили для контейнера с графиками */
+        .acf-pacf-container {
+            margin-top: 20px;
+        }
+        
+        /* Медиа-запросы для адаптивности */
+        @media (max-width: 767.98px) {
+            .acf-pacf-wrapper {
+                padding: 10px !important;
+            }
+            
+            .scroll-container {
+                margin-bottom: 10px;
+                padding-bottom: 10px;
+                /* Визуальная подсказка о возможности прокрутки */
+                background-image: linear-gradient(to right, #f1f5f9, #ffffff00);
+                background-size: 20px 100%;
+                background-repeat: no-repeat;
+            }
+            
+            .mobile-scroll-hint {
+                display: block !important;
+                font-size: 12px;
+                margin-bottom: 5px;
+                color: #64748b;
+                text-align: center;
+            }
+            
+            /* Улучшение прокрутки на мобильных устройствах */
+            .scroll-container::-webkit-scrollbar {
+                height: 3px;
+            }
+            
+            .scroll-container::-webkit-scrollbar-track {
+                background: #f1f5f9;
+            }
+            
+            .scroll-container::-webkit-scrollbar-thumb {
+                background: #cbd5e1;
+                border-radius: 3px;
+            }
+        }
+        
+        /* Для планшетов */
+        @media (min-width: 768px) and (max-width: 991.98px) {
+            .scroll-container img {
+                max-width: 700px;
+            }
         }
 
         /* Медиа-запросы для адаптивности */
