@@ -65,8 +65,7 @@
             display: block;
         }
 
-        .input-group > .numeric-input{
-            width: 100%;
+        .numeric-input{
             max-width: 200px;
             padding: 8px 12px; /* Внутренние отступы (сверху/снизу 8px, слева/справа 12px) */
             margin: 0 10px;    /* Внешние отступы слева и справа по 15px */
@@ -1012,6 +1011,8 @@
                     updateEndogenousDisplay();
                 }
             }
+            // Закрываем выпадающий список после выбора
+            exogenousDropdown.style.display = 'none';
         }
         
         function updateExogenousDisplay() {
