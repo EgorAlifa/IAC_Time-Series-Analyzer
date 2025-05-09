@@ -801,13 +801,19 @@ def build_varx_model(df, endogenous_vars, exogenous_vars=None, lags=1, train_siz
             series = train_endog[var]
             
             # ACF и PACF анализ
-            fig, axes = plt.subplots(2, 1, figsize=(10, 8))
+            fig, axes = plt.subplots(2, 1, figsize=(12, 10))  # Увеличиваем размер с (10, 8) до (12, 10)
             
             # ACF
             plot_acf(series, lags=20, ax=axes[0], title=f'ACF для {var}')
             
             # PACF
             plot_pacf(series, lags=20, ax=axes[1], title=f'PACF для {var}')
+            
+            # Увеличиваем размер шрифта для лучшей читаемости
+            axes[0].tick_params(axis='both', which='major', labelsize=12)
+            axes[1].tick_params(axis='both', which='major', labelsize=12)
+            axes[0].title.set_size(14)
+            axes[1].title.set_size(14)
             
             plt.tight_layout()
             
