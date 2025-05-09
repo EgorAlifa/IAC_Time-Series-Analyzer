@@ -311,7 +311,6 @@
         }
         
         .acf-pacf-item img {
-            width: 100%;
             height: auto;
             max-height: 600px; /* Увеличиваем максимальную высоту для графиков */
             object-fit: contain;
@@ -1199,7 +1198,6 @@ function displayModelResults(results) {
                 const img = document.createElement('img');
                 img.src = `data:image/png;base64,${plot}`;
                 img.alt = `ACF/PACF График ${index + 1}`;
-                img.style.width = '100%';
                 img.style.height = 'auto';
                 img.style.maxHeight = '600px';
                 img.style.cursor = 'pointer'; // Указываем, что на изображение можно кликнуть
