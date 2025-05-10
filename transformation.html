@@ -1315,12 +1315,13 @@
             loadingDetails.textContent = 'Пожалуйста, подождите...';
             loadingModal.show();
             
-            // Автоматическое закрытие через 3 секунды
-            const autoCloseTimeout = setTimeout(() => {
-                loadingModal.hide();
-            }, 3000);
+            // Создаем промис для задержки
+            const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
             
             try {
+                // Минимальная задержка для показа окна загрузки
+                await delay(500);
+                
                 // Получаем исходный file_id из localStorage
                 const originalFileId = localStorage.getItem('originalFileId');
                 const originalColumnsData = localStorage.getItem('originalFileColumnsData');
@@ -1353,6 +1354,12 @@
                     clearTransformedBtn.style.display = 'none';
                     downloadBtn.disabled = true;
                     
+                    // Небольшая задержка перед закрытием окна
+                    await delay(1000);
+                    
+                    // Закрываем модальное окно
+                    loadingModal.hide();
+                    
                     // Показываем сообщение об успехе
                     transformMessage.textContent = 'Преобразованные переменные успешно удалены.';
                     transformAlert.className = 'alert alert-success alert-transformation';
@@ -1369,6 +1376,10 @@
                 
             } catch (error) {
                 console.error('Ошибка при удалении преобразованных переменных:', error);
+                
+                // Закрываем модальное окно
+                loadingModal.hide();
+                
                 transformMessage.textContent = `Ошибка при удалении преобразованных переменных: ${error.message}`;
                 transformAlert.className = 'alert alert-danger alert-transformation';
                 transformAlert.style.display = 'block';
@@ -1377,12 +1388,6 @@
                 setTimeout(() => {
                     transformAlert.style.display = 'none';
                 }, 5000);
-                
-            } finally {
-                // Очищаем таймаут, если окно еще не закрыто
-                clearTimeout(autoCloseTimeout);
-                // Закрываем модальное окно загрузки
-                loadingModal.hide();
             }
         }
        
