@@ -920,7 +920,7 @@ async def transform_integration_order(
         return {
             "success": True,
             "message": "Преобразование успешно выполнено",
-            "updated_file_id": new_file_id,
+            "updated_file_id": f"{new_file_id}",  # без расширения
             "updated_columns_data": updated_columns_data,
             "download_url": download_url,
             "display_mode": display_mode
