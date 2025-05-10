@@ -181,7 +181,7 @@
         
         .actions-panel {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
             align-items: center;
             margin-top: 24px;
             padding: 16px 24px;
@@ -193,6 +193,11 @@
         
         .actions-panel:hover {
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .actions-panel .left-actions {
+            display: flex;
+            gap: 12px;
         }
         
         .actions-panel .right-actions {
@@ -208,16 +213,6 @@
             font-weight: 500;
             transition: all 0.2s ease;
             border-radius: 6px;
-        }
-        
-        /* Добавляем плавную анимацию для скрытия/показа кнопки */
-        #downloadBtn {
-            transition: opacity 0.2s ease, transform 0.2s ease;
-        }
-        
-        #downloadBtn[style*="display: none"] {
-            opacity: 0;
-            transform: scale(0.9);
         }
         
         .actions-panel .btn-primary {
@@ -255,22 +250,31 @@
             box-shadow: none;
         }
         
-        /* Обновляем адаптивную версию */
-        @media (max-width: 767.98px) {
-            .actions-panel {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .actions-panel .right-actions {
-                flex-direction: column;
-                gap: 12px;
-            }
-            
-            .actions-panel .btn {
-                width: 100%;
-                justify-content: center;
-            }
+        .actions-panel .btn-danger {
+            background-color: #ef4444;
+            border-color: #ef4444;
+            color: white;
+        }
+        
+        .actions-panel .btn-danger:hover {
+            background-color: #dc2626;
+            border-color: #dc2626;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(220, 38, 38, 0.2);
+        }
+        
+        .actions-panel .btn-danger:active {
+            transform: translateY(1px);
+            box-shadow: none;
+        }
+        
+        #downloadBtn {
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        
+        #downloadBtn[style*="display: none"] {
+            opacity: 0;
+            transform: scale(0.9);
         }
         
         .alert-transformation {
@@ -583,6 +587,12 @@
                 gap: 12px;
             }
             
+            .actions-panel .left-actions,
+            .actions-panel .right-actions {
+                width: 100%;
+                flex-direction: column;
+            }
+            
             .actions-panel .btn {
                 width: 100%;
                 justify-content: center;
@@ -715,7 +725,7 @@
                     <h4>Доступные типы преобразований</h4>
                     <ul>
                         <li><span class="badge-stationarity">Приведение к стационарности</span> - преобразование ряда, чтобы он колебался вокруг среднего значения, без тренда, с постоянной дисперсией.</li>
-                        <li><span class="badge-integration">Интеграция</span> - изменение порядка интеграции временного ряда (I(0) - был оставлен исходный порядок интеграции, I(1) - интегрированный 1-го порядка, I(2) - интегрирован 2-го порялка).</li>
+                        <li><span class="badge-integration">Интеграция</span> - изменение порядка интеграции временного ряда (I(0), I(1), I(2)).</li>
                         <li><span class="badge-extreme">Экстремальная нормализация</span> - комплексное преобразование с использованием методов Box-Cox, Yeo-Johnson, ранговой нормализации для улучшения статистических свойств.</li>
                     </ul>
                 </div>
@@ -773,6 +783,11 @@
                         
                         <!-- Панель действий -->
                         <div class="actions-panel">
+                            <div class="left-actions">
+                                <button id="clearTransformedBtn" class="btn btn-danger" style="display: none;">
+                                    <i class="fas fa-trash"></i> Удалить преобразованные переменные
+                                </button>
+                            </div>
                             <div class="right-actions">
                                 <button id="transformBtn" class="btn btn-primary" disabled>
                                     <i class="fas fa-magic"></i> Выполнить преобразование
@@ -818,30 +833,30 @@
     <div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-body text-center p-4">
-                    <div class="mb-3">
-                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-                            <span class="visually-hidden">Загрузка...</span>
-                        </div>
-                    </div>
-                    <h5 id="loadingMessage">Обработка данных...</h5>
-                    <p id="loadingDetails" class="text-muted">Пожалуйста, подождите. Это может занять несколько секунд.</p>
-                </div>
-            </div>
-        </div>
-    </div>
+               <div class="modal-body text-center p-4">
+                   <div class="mb-3">
+                       <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                           <span class="visually-hidden">Загрузка...</span>
+                       </div>
+                   </div>
+                   <h5 id="loadingMessage">Обработка данных...</h5>
+                   <p id="loadingDetails" class="text-muted">Пожалуйста, подождите. Это может занять несколько секунд.</p>
+               </div>
+           </div>
+       </div>
+   </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // API URL
-        const API_URL = 'http://37.252.23.30:8000';
-        
-        // Обработка мобильного меню
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebar = document.getElementById('sidebar');
-const sidebarOverlay = document.getElementById('sidebarOverlay');
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+   <script>
+   document.addEventListener('DOMContentLoaded', function() {
+       // API URL
+       const API_URL = 'http://37.252.23.30:8000';
+       
+       // Обработка мобильного меню
+       const sidebarToggle = document.getElementById('sidebarToggle');
+       const sidebar = document.getElementById('sidebar');
+       const sidebarOverlay = document.getElementById('sidebarOverlay');
        
        sidebarToggle.addEventListener('click', function() {
            sidebar.classList.toggle('active');
@@ -885,7 +900,7 @@ const sidebarOverlay = document.getElementById('sidebarOverlay');
        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
        const transformBtn = document.getElementById('transformBtn');
        const downloadBtn = document.getElementById('downloadBtn');
-       const previewBtn = document.getElementById('previewBtn');
+       const clearTransformedBtn = document.getElementById('clearTransformedBtn');
        const transformAlert = document.getElementById('transformAlert');
        const transformMessage = document.getElementById('transformMessage');
        
@@ -898,39 +913,39 @@ const sidebarOverlay = document.getElementById('sidebarOverlay');
            '#ec4899', '#6366f1', '#14b8a6', '#f97316', '#a855f7'
        ];
        
-        // Обработчики переключения режима отображения
-        document.getElementById('displayModeAll').addEventListener('change', function() {
-            if(this.checked) {
-                displayMode = 'all';
-                filterVariablesList(displayMode);
-                updateDownloadButtonVisibility();
-            }
-        });
-        
-        document.getElementById('displayModeTransformed').addEventListener('change', function() {
-            if(this.checked) {
-                displayMode = 'transformed';
-                filterVariablesList(displayMode);
-                updateDownloadButtonVisibility();
-            }
-        });
-        
-        document.getElementById('displayModeOriginal').addEventListener('change', function() {
-            if(this.checked) {
-                displayMode = 'original';
-                filterVariablesList(displayMode);
-                updateDownloadButtonVisibility();
-            }
-        });
-        
-        // Функция для управления видимостью кнопки "Скачать результат"
-        function updateDownloadButtonVisibility() {
-            if (displayMode === 'original') {
-                downloadBtn.style.display = 'none';
-            } else {
-                downloadBtn.style.display = transformedData ? 'inline-flex' : 'inline-flex';
-            }
-        }
+       // Обработчики переключения режима отображения
+       document.getElementById('displayModeAll').addEventListener('change', function() {
+           if(this.checked) {
+               displayMode = 'all';
+               filterVariablesList(displayMode);
+               updateDownloadButtonVisibility();
+           }
+       });
+       
+       document.getElementById('displayModeTransformed').addEventListener('change', function() {
+           if(this.checked) {
+               displayMode = 'transformed';
+               filterVariablesList(displayMode);
+               updateDownloadButtonVisibility();
+           }
+       });
+       
+       document.getElementById('displayModeOriginal').addEventListener('change', function() {
+           if(this.checked) {
+               displayMode = 'original';
+               filterVariablesList(displayMode);
+               updateDownloadButtonVisibility();
+           }
+       });
+       
+       // Функция для управления видимостью кнопки "Скачать результат"
+       function updateDownloadButtonVisibility() {
+           if (displayMode === 'original') {
+               downloadBtn.style.display = 'none';
+           } else {
+               downloadBtn.style.display = transformedData ? 'inline-flex' : 'inline-flex';
+           }
+       }
        
        // Функция для фильтрации списка переменных в зависимости от режима отображения
        function filterVariablesList(mode) {
@@ -1012,14 +1027,15 @@ const sidebarOverlay = document.getElementById('sidebarOverlay');
        // Слушатель для кнопки скачивания
        downloadBtn.addEventListener('click', downloadTransformedData);
        
-       // Слушатель для кнопки предпросмотра
-       previewBtn.addEventListener('click', previewTransformation);
+       // Слушатель для кнопки удаления преобразованных переменных
+       clearTransformedBtn.addEventListener('click', clearTransformedVariables);
        
        // Функция проверки наличия загруженного файла
        function checkLoadedFile() {
            const storedFileId = localStorage.getItem('fileId');
            const storedFileName = localStorage.getItem('fileName');
            const storedColumnsData = localStorage.getItem('fileColumnsData');
+           const originalFileId = localStorage.getItem('originalFileId');
            
            if (storedFileId && storedFileName && storedColumnsData) {
                // Есть загруженный файл
@@ -1038,6 +1054,14 @@ const sidebarOverlay = document.getElementById('sidebarOverlay');
                    const rowsCount = fileData.rows_count || 0;
                    
                    fileDetails.textContent = `${numericColumns.length} числовых столбцов, ${rowsCount} наблюдений`;
+                   
+                   // Проверяем, есть ли преобразованные данные
+                   if (originalFileId && originalFileId !== storedFileId) {
+                       // Есть преобразованные данные, показываем кнопку удаления
+                       clearTransformedBtn.style.display = 'inline-flex';
+                       downloadBtn.disabled = false;
+                       transformedData = { download_url: `http://37.252.23.30:8000/temp-file/${storedFileId}` };
+                   }
                    
                    // Заполняем список переменных
                    populateVariablesList();
@@ -1242,7 +1266,6 @@ const sidebarOverlay = document.getElementById('sidebarOverlay');
            
            // Обновляем состояние кнопки преобразования
            transformBtn.disabled = selectedVariables.length === 0;
-           previewBtn.disabled = selectedVariables.length === 0;
            
            // Обновляем состояние чекбокса "Выбрать все"
            updateSelectAllCheckbox();
@@ -1281,225 +1304,63 @@ const sidebarOverlay = document.getElementById('sidebarOverlay');
            return settings;
        }
        
-       // Функция для предпросмотра трансформации
-       async function previewTransformation() {
-           if (selectedVariables.length === 0) {
-               alert('Пожалуйста, выберите хотя бы одну переменную для преобразования.');
+       // Функция для удаления преобразованных переменных
+       async function clearTransformedVariables() {
+           if (!confirm('Вы уверены, что хотите удалить все преобразованные переменные? Это действие нельзя отменить.')) {
                return;
            }
            
            // Показываем модальное окно загрузки
-           loadingMessage.textContent = 'Подготовка предпросмотра...';
-           loadingDetails.textContent = 'Вычисление преобразованных рядов...';
+           loadingMessage.textContent = 'Удаление преобразованных переменных...';
+           loadingDetails.textContent = 'Пожалуйста, подождите...';
            loadingModal.show();
            
            try {
-               // Получаем настройки преобразования
-               const transformationSettings = getTransformationSettings();
+               // Получаем исходный file_id из localStorage
+               const originalFileId = localStorage.getItem('originalFileId');
+               const originalColumnsData = localStorage.getItem('originalFileColumnsData');
                
-               // Используем актуальный fileId
-               const currentFileId = fileData.fileId || localStorage.getItem('fileId');
-               const dateColumn = fileData.date_column || 'Дата';
-               
-               // Запрос к API для преобразования
-               const formData = new FormData();
-               formData.append('file_id', currentFileId);
-               formData.append('date_column', dateColumn);
-               formData.append('transformation_settings', JSON.stringify(transformationSettings));
-               formData.append('preview', 'true');
-               formData.append('display_mode', displayMode);
-               
-               // Вызов API для трансформации данных
-               const response = await fetch(`${API_URL}/transform-integration-order`, {
-                   method: 'POST',
-                   body: formData
-               });
-               
-               if (!response.ok) {
-                   throw new Error('Ошибка при преобразовании данных');
+               if (originalFileId && originalColumnsData) {
+                   // Восстанавливаем исходные данные
+                   localStorage.setItem('fileId', originalFileId);
+                   localStorage.setItem('fileColumnsData', originalColumnsData);
+                   
+                   // Обновляем fileData
+                   fileData = JSON.parse(originalColumnsData);
+                   fileData.fileId = originalFileId;
+                   
+                   // Очищаем данные о преобразовании
+                   transformedData = null;
+                   
+                   // Обновляем информацию о файле
+                   const numericColumns = fileData.numeric_columns || [];
+                   const rowsCount = fileData.rows_count || 0;
+                   fileDetails.textContent = `${numericColumns.length} числовых столбцов, ${rowsCount} наблюдений`;
+                   
+                   // Перезагружаем список переменных
+                   populateVariablesList();
+                   
+                   // Скрываем кнопку удаления и скачивания
+                   clearTransformedBtn.style.display = 'none';
+                   downloadBtn.disabled = true;
+                   
+                   // Показываем сообщение об успехе
+                   transformMessage.textContent = 'Преобразованные переменные успешно удалены.';
+                   transformAlert.className = 'alert alert-success alert-transformation';
+                   transformAlert.style.display = 'block';
+               } else {
+                   throw new Error('Не найдены исходные данные файла');
                }
                
-               const previewData = await response.json();
-               console.log('Данные предпросмотра:', previewData);
-               
-               // Отображаем график предпросмотра
-               displayPreviewChart(previewData);
-               
-               // Показываем сообщение об успехе
-               transformMessage.textContent = 'Предпросмотр преобразования выполнен успешно.';
-               transformAlert.className = 'alert alert-success alert-transformation';
-               transformAlert.style.display = 'block';
-               
            } catch (error) {
-               console.error('Ошибка при предпросмотре:', error);
-               alert(`Ошибка при формировании предпросмотра: ${error.message}`);
+               console.error('Ошибка при удалении преобразованных переменных:', error);
+               transformMessage.textContent = `Ошибка при удалении преобразованных переменных: ${error.message}`;
+               transformAlert.className = 'alert alert-danger alert-transformation';
+               transformAlert.style.display = 'block';
            } finally {
                // Скрываем модальное окно загрузки
                loadingModal.hide();
            }
-       }
-       
-       // Функция для отображения графика предпросмотра
-       function displayPreviewChart(previewData) {
-           const chartContainer = document.getElementById('previewChartContainer');
-           const previewLegend = document.getElementById('previewLegend');
-           const canvas = document.getElementById('previewChart');
-           
-           // Очищаем существующую легенду
-           previewLegend.innerHTML = '';
-           
-           // Подготавливаем данные для графика
-           const datasets = [];
-           const chartLabels = [];
-           
-           // Преобразуем данные для графика
-           for (const variable in previewData.transformed_data) {
-               const originalData = [];
-               const transformedData = [];
-               
-               previewData.transformed_data[variable].forEach(point => {
-                   if (!chartLabels.includes(point.date)) {
-                       chartLabels.push(point.date);
-                   }
-                   
-                   if (point.original !== undefined) {
-                       originalData.push({
-                           x: point.date,
-                           y: point.original
-                       });
-                   }
-                   
-                   if (point.transformed !== undefined) {
-                       transformedData.push({
-                           x: point.date,
-                           y: point.transformed
-                       });
-                   }
-               });
-               
-               // Добавляем исходный ряд (с учетом режима отображения)
-               if (originalData.length > 0 && (displayMode === 'all' || displayMode === 'original')) {
-                   datasets.push({
-                       label: `${variable} (исходный)`,
-                       data: originalData,
-                       borderColor: chartColors[datasets.length % chartColors.length],
-                       backgroundColor: 'transparent',
-                       borderWidth: 2,
-                       tension: 0.1
-                   });
-                   
-                   // Добавляем в легенду
-                   const legendItem = document.createElement('div');
-                   legendItem.className = 'legend-item';
-                   
-                   const colorBox = document.createElement('div');
-                   colorBox.className = 'legend-color';
-                   colorBox.style.backgroundColor = chartColors[datasets.length - 1 % chartColors.length];
-                   
-                   const legendText = document.createElement('span');
-                   legendText.textContent = `${variable} (исходный)`;
-                   
-                   legendItem.appendChild(colorBox);
-                   legendItem.appendChild(legendText);
-                   previewLegend.appendChild(legendItem);
-               }
-               
-               // Добавляем преобразованный ряд (с учетом режима отображения)
-               if (transformedData.length > 0 && (displayMode === 'all' || displayMode === 'transformed')) {
-                   datasets.push({
-                       label: `${variable} (преобразованный)`,
-                       data: transformedData,
-                       borderColor: chartColors[(datasets.length) % chartColors.length],
-                       backgroundColor: 'transparent',
-                       borderWidth: 2,
-                       borderDash: [5, 5],
-                       tension: 0.1
-                   });
-                   
-                   // Добавляем в легенду
-                   const legendItem = document.createElement('div');
-                   legendItem.className = 'legend-item';
-                   
-                   const colorBox = document.createElement('div');
-                   colorBox.className = 'legend-color';
-                   colorBox.style.backgroundColor = chartColors[datasets.length - 1 % chartColors.length];
-                   
-                   const legendText = document.createElement('span');
-                   legendText.textContent = `${variable} (преобразованный)`;
-                   
-                   legendItem.appendChild(colorBox);
-                   legendItem.appendChild(legendText);
-                   previewLegend.appendChild(legendItem);
-               }
-           }
-           
-           // Создаем график
-           const ctx = canvas.getContext('2d');
-           
-           // Уничтожаем существующий график, если есть
-           if (window.previewChartInstance) {
-               window.previewChartInstance.destroy();
-           }
-           
-           // Создаем новый график
-           window.previewChartInstance = new Chart(ctx, {
-               type: 'line',
-               data: {
-                   labels: chartLabels,
-                   datasets: datasets
-               },
-               options: {
-                   responsive: true,
-                   maintainAspectRatio: false,
-                   interaction: {
-                       mode: 'index',
-                       intersect: false,
-                   },
-                   plugins: {
-                       legend: {
-                           display: false
-                       },
-                       tooltip: {
-                           enabled: true,
-                           mode: 'index',
-                           intersect: false
-                       }
-                   },
-                   scales: {
-                       x: {
-                           type: 'category',
-                           title: {
-                               display: true,
-                               text: 'Дата'
-                           },
-                           ticks: {
-                               maxRotation: 45,
-                               minRotation: 45
-                           }
-                       },
-                       y: {
-                           title: {
-                               display: true,
-                               text: 'Значение'
-                           },
-                           grid: {
-                               color: 'rgba(0, 0, 0, 0.05)'
-                           }
-                       }
-                   }
-               }
-           });
-           
-           // Показываем контейнер с графиком
-           chartContainer.style.display = 'block';
-           
-           // Кнопка закрытия графика
-           document.getElementById('closePreviewBtn').addEventListener('click', function() {
-               chartContainer.style.display = 'none';
-               if (window.previewChartInstance) {
-                   window.previewChartInstance.destroy();
-               }
-           });
        }
        
        // Функция для преобразования данных
@@ -1507,6 +1368,12 @@ const sidebarOverlay = document.getElementById('sidebarOverlay');
            if (selectedVariables.length === 0) {
                alert('Пожалуйста, выберите хотя бы одну переменную для преобразования.');
                return;
+           }
+           
+           // Сохраняем исходные данные перед преобразованием
+           if (!localStorage.getItem('originalFileId')) {
+               localStorage.setItem('originalFileId', fileData.fileId);
+               localStorage.setItem('originalFileColumnsData', JSON.stringify(fileData));
            }
            
            // Показываем модальное окно загрузки
@@ -1557,8 +1424,9 @@ const sidebarOverlay = document.getElementById('sidebarOverlay');
                    localStorage.setItem('fileColumnsData', JSON.stringify(result.updated_columns_data));
                }
                
-               // Активируем кнопку скачивания
+               // Активируем кнопку скачивания и показываем кнопку удаления
                downloadBtn.disabled = false;
+               clearTransformedBtn.style.display = 'inline-flex';
                
                // Показываем сообщение об успехе
                transformMessage.textContent = 'Преобразование успешно выполнено. Вы можете скачать новый файл или продолжить работу с преобразованными данными.';
@@ -1577,8 +1445,10 @@ const sidebarOverlay = document.getElementById('sidebarOverlay');
                    
                    // Перезагружаем список переменных
                    populateVariablesList();
-                   updateDownloadButtonVisibility();
                }
+               
+               // Обновляем видимость кнопки скачивания
+               updateDownloadButtonVisibility();
                
            } catch (error) {
                console.error('Ошибка при преобразовании данных:', error);
