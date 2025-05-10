@@ -210,6 +210,16 @@
             border-radius: 6px;
         }
         
+        /* Добавляем плавную анимацию для скрытия/показа кнопки */
+        #downloadBtn {
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        
+        #downloadBtn[style*="display: none"] {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        
         .actions-panel .btn-primary {
             background-color: #3b82f6;
             border-color: #3b82f6;
@@ -888,27 +898,39 @@ const sidebarOverlay = document.getElementById('sidebarOverlay');
            '#ec4899', '#6366f1', '#14b8a6', '#f97316', '#a855f7'
        ];
        
-       // Обработчики переключения режима отображения
-       document.getElementById('displayModeAll').addEventListener('change', function() {
-           if(this.checked) {
-               displayMode = 'all';
-               filterVariablesList(displayMode);
-           }
-       });
-       
-       document.getElementById('displayModeTransformed').addEventListener('change', function() {
-           if(this.checked) {
-               displayMode = 'transformed';
-               filterVariablesList(displayMode);
-           }
-       });
-       
-       document.getElementById('displayModeOriginal').addEventListener('change', function() {
-           if(this.checked) {
-               displayMode = 'original';
-               filterVariablesList(displayMode);
-           }
-       });
+        // Обработчики переключения режима отображения
+        document.getElementById('displayModeAll').addEventListener('change', function() {
+            if(this.checked) {
+                displayMode = 'all';
+                filterVariablesList(displayMode);
+                updateDownloadButtonVisibility();
+            }
+        });
+        
+        document.getElementById('displayModeTransformed').addEventListener('change', function() {
+            if(this.checked) {
+                displayMode = 'transformed';
+                filterVariablesList(displayMode);
+                updateDownloadButtonVisibility();
+            }
+        });
+        
+        document.getElementById('displayModeOriginal').addEventListener('change', function() {
+            if(this.checked) {
+                displayMode = 'original';
+                filterVariablesList(displayMode);
+                updateDownloadButtonVisibility();
+            }
+        });
+        
+        // Функция для управления видимостью кнопки "Скачать результат"
+        function updateDownloadButtonVisibility() {
+            if (displayMode === 'original') {
+                downloadBtn.style.display = 'none';
+            } else {
+                downloadBtn.style.display = transformedData ? 'inline-flex' : 'inline-flex';
+            }
+        }
        
        // Функция для фильтрации списка переменных в зависимости от режима отображения
        function filterVariablesList(mode) {
@@ -1555,6 +1577,7 @@ const sidebarOverlay = document.getElementById('sidebarOverlay');
                    
                    // Перезагружаем список переменных
                    populateVariablesList();
+                   updateDownloadButtonVisibility();
                }
                
            } catch (error) {
