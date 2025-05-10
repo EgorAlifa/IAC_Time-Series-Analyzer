@@ -1548,7 +1548,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Обновляем localStorage с новыми данными
             if (result.updated_file_id) {
-                localStorage.setItem('fileId', result.updated_file_id);
+                // Сохраняем file_id без расширения для дальнейшего использования
+                const cleanFileId = result.updated_file_id.replace('.xlsx', '');
+                localStorage.setItem('fileId', cleanFileId);
             }
             
             if (result.updated_columns_data) {
