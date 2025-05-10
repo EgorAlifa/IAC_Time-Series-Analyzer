@@ -181,7 +181,7 @@
         
         .actions-panel {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             align-items: center;
             margin-top: 24px;
             padding: 16px 24px;
@@ -193,6 +193,11 @@
         
         .actions-panel:hover {
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .actions-panel .right-actions {
+            display: flex;
+            gap: 12px;
         }
         
         .actions-panel .btn {
@@ -238,6 +243,24 @@
         .actions-panel .btn-secondary:active {
             transform: translateY(1px);
             box-shadow: none;
+        }
+        
+        /* Обновляем адаптивную версию */
+        @media (max-width: 767.98px) {
+            .actions-panel {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .actions-panel .right-actions {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .actions-panel .btn {
+                width: 100%;
+                justify-content: center;
+            }
         }
         
         .alert-transformation {
@@ -740,7 +763,7 @@
                         
                         <!-- Панель действий -->
                         <div class="actions-panel">
-                            <div>
+                            <div class="right-actions">
                                 <button id="transformBtn" class="btn btn-primary" disabled>
                                     <i class="fas fa-magic"></i> Выполнить преобразование
                                 </button>
