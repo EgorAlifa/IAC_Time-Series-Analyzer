@@ -1238,26 +1238,147 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Функция для обновления списка выбранных переменных
-    function updateSelectedVariables() {
-        selectedVariables = [];
-        const checkboxes = document.querySelectorAll('.transform-checkbox');
-        
-        checkboxes.forEach(checkbox => {
-            const variable = checkbox.dataset.variable;
-            if (variable && checkbox.id !== 'selectAllCheckbox') {
-                if (checkbox.checked) {
-                    selectedVariables.push(variable);
-                }
+        // Добавляем обработчики для переключателей режима отображения
+        document.getElementById('displayModeAll').addEventListener('change', function() {
+            if(this.checked) {
+                displayMode = 'all';
+                filterVariablesList(displayMode);
             }
         });
         
-        // Обновляем состояние кнопки преобразования
-        transformBtn.disabled = selectedVariables.length === 0;
-        previewBtn.disabled = selectedVariables.length === 0;
+        document.getElementById('displayModeTransformed').addEventListener('change', function() {
+            if(this.checked) {
+                displayMode = 'transformed';
+                filterVariablesList(displayMode);
+            }
+        });
         
-        console.log('Выбранные переменные:', selectedVariables);
-    }
+        document.getElementById('displayModeOriginal').addEventListener('change', function() {
+            if(this.checked) {
+                displayMode = 'original';
+                filterVariablesList(displayMode);
+            }
+        });
+        
+        // Функция для фильтрации списка переменных в зависимости от режима отображения
+        function filterVariablesList(mode) {
+            const variableRows = document.querySelectorAll('.variable-row');
+            
+            variableRows.forEach(row => {
+                const variableName = row.querySelector('.variable-name').textContent;
+                
+                // Определяем тип переменной по имени
+                let isTransformed = false;
+                let isOriginal = true;
+                
+                // Проверяем, является ли переменная преобразованной
+                if (variableName.includes('_I0') || variableName.includes('_I1') || variableName.includes('_I2') ||
+                    variableName.includes('_norm') || variableName.includes('_boxcox') || 
+                    variableName.includes('_yeojohnson') || variableName.includes('_rank')) {
+                    isTransformed = true;
+                    isOriginal = false;
+                }
+                
+                // Показываем/скрываем строку в зависимости от режима
+                switch(mode) {
+                    case 'all':
+                        row.style.display = 'flex';
+                        break;
+                    case 'transformed':
+                        row.style.display = isTransformed ? 'flex' : 'none';
+                        break;
+                    case 'original':
+                        row.style.display = isOriginal ? 'flex' : 'none';
+                        break;
+                    default:
+                        row.style.display = 'flex';
+                }
+            });
+            
+            // Обновляем чекбокс "Выбрать все"
+            updateSelectAllCheckbox();
+        }
+        
+        // Обновляем функцию populateVariablesList, чтобы применять фильтрацию после заполнения списка
+        function populateVariablesList() {
+            variablesList.innerHTML = ''; // Очищаем список
+            
+            const numericColumns = fileData.numeric_columns || [];
+            
+            // Для каждой колонки создаем строку в таблице
+            numericColumns.forEach(column => {
+                // Пропускаем колонку с датами
+                if (column === fileData.date_column) {
+                    return;
+                }
+                
+                // Создаем строку с переменной
+                const row = document.createElement('div');
+                row.className = 'variable-row';
+                
+                // ... остальной код создания строки ...
+                
+                // Добавляем строку в список
+                variablesList.appendChild(row);
+            });
+            
+            // Если нет числовых переменных
+            if (numericColumns.length === 0 || numericColumns.length === 1 && numericColumns[0] === fileData.date_column) {
+                const noVarsMsg = document.createElement('div');
+                noVarsMsg.className = 'text-center p-4 text-muted';
+                noVarsMsg.innerHTML = '<i class="fas fa-exclamation-circle mb-2"></i><p>Нет числовых переменных для преобразования</p>';
+                variablesList.appendChild(noVarsMsg);
+            }
+            
+            // Применяем текущий фильтр
+            filterVariablesList(displayMode);
+        }
+        
+        // Обновляем функцию для чекбокса "Выбрать все", чтобы учитывать видимые элементы
+        function updateSelectAllCheckbox() {
+            const visibleCheckboxes = Array.from(document.querySelectorAll('.variable-row:not([style*="none"]) .transform-checkbox'));
+            const checkedVisibleCheckboxes = visibleCheckboxes.filter(cb => cb.checked && cb.id !== 'selectAllCheckbox');
+            
+            selectAllCheckbox.checked = visibleCheckboxes.length > 0 && 
+                                       checkedVisibleCheckboxes.length === visibleCheckboxes.length;
+            selectAllCheckbox.indeterminate = checkedVisibleCheckboxes.length > 0 && 
+                                             checkedVisibleCheckboxes.length < visibleCheckboxes.length;
+        }
+        
+        // Обновляем обработчик для "Выбрать все"
+        selectAllCheckbox.addEventListener('change', function() {
+            const visibleCheckboxes = document.querySelectorAll('.variable-row:not([style*="none"]) .transform-checkbox');
+            visibleCheckboxes.forEach(checkbox => {
+                if (checkbox.id !== 'selectAllCheckbox') {
+                    checkbox.checked = selectAllCheckbox.checked;
+                }
+            });
+            updateSelectedVariables();
+        });
+        
+        // Обновляем функцию updateSelectedVariables, чтобы учитывать только видимые элементы
+        function updateSelectedVariables() {
+            selectedVariables = [];
+            const visibleCheckboxes = document.querySelectorAll('.variable-row:not([style*="none"]) .transform-checkbox');
+            
+            visibleCheckboxes.forEach(checkbox => {
+                const variable = checkbox.dataset.variable;
+                if (variable && checkbox.id !== 'selectAllCheckbox') {
+                    if (checkbox.checked) {
+                        selectedVariables.push(variable);
+                    }
+                }
+            });
+            
+            // Обновляем состояние кнопки преобразования
+            transformBtn.disabled = selectedVariables.length === 0;
+            previewBtn.disabled = selectedVariables.length === 0;
+            
+            // Обновляем состояние чекбокса "Выбрать все"
+            updateSelectAllCheckbox();
+            
+            console.log('Выбранные переменные:', selectedVariables);
+        }
     
     // Функция для сбора настроек преобразования
     function getTransformationSettings() {
