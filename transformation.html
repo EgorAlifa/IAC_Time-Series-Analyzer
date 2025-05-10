@@ -933,7 +933,35 @@ document.addEventListener('DOMContentLoaded', function() {
     const sidebarToggle = document.getElementById('sidebarToggle');
     const sidebar = document.getElementById('sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
-    
+    const displayModeAll = document.getElementById('displayModeAll');
+    const displayModeTransformed = document.getElementById('displayModeTransformed');
+    const displayModeOriginal = document.getElementById('displayModeOriginal');
+      if (displayModeAll) {
+            displayModeAll.addEventListener('change', function() {
+                if(this.checked) {
+                    displayMode = 'all';
+                    filterVariablesList(displayMode);
+                }
+            });
+        }
+        
+        if (displayModeTransformed) {
+            displayModeTransformed.addEventListener('change', function() {
+                if(this.checked) {
+                    displayMode = 'transformed';
+                    filterVariablesList(displayMode);
+                }
+            });
+        }
+        
+        if (displayModeOriginal) {
+            displayModeOriginal.addEventListener('change', function() {
+                if(this.checked) {
+                    displayMode = 'original';
+                    filterVariablesList(displayMode);
+                }
+            });
+        }   
     sidebarToggle.addEventListener('click', function() {
         sidebar.classList.toggle('active');
         sidebarOverlay.classList.toggle('active');
@@ -1265,7 +1293,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const variableRows = document.querySelectorAll('.variable-row');
             
             variableRows.forEach(row => {
-                const variableName = row.querySelector('.variable-name').textContent;
+                // Находим имя переменной из селекта
+                const selectElement = row.querySelector('.integration-order');
+                if (!selectElement) return;
+                
+                const variableName = selectElement.dataset.variable;
+                if (!variableName) return;
                 
                 // Определяем тип переменной по имени
                 let isTransformed = false;
@@ -1334,8 +1367,11 @@ document.addEventListener('DOMContentLoaded', function() {
             filterVariablesList(displayMode);
         }
         
-        // Обновляем функцию для чекбокса "Выбрать все", чтобы учитывать видимые элементы
+        // Функция для обновления состояния чекбокса "Выбрать все"
         function updateSelectAllCheckbox() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            if (!selectAllCheckbox) return;
+            
             const visibleCheckboxes = Array.from(document.querySelectorAll('.variable-row:not([style*="none"]) .transform-checkbox'));
             const checkedVisibleCheckboxes = visibleCheckboxes.filter(cb => cb.checked && cb.id !== 'selectAllCheckbox');
             
