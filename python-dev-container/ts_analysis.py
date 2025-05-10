@@ -748,21 +748,57 @@ def transform_to_second_order(series, method='simple'):
     # Если не определено, возвращаем исходный ряд
     return series
 
-def format_time_series_for_preview(dates, values):
+def format_time_series_for_preview(original_series, transformed_series, display_mode='all'):
     """
-    Форматирует временной ряд для предпросмотра в формате для JSON
+    Форматирует временной ряд для предпросмотра в формате для JSON с учетом режима отображения
+    
+    Parameters:
+    -----------
+    original_series : pandas.Series
+        Исходный временной ряд
+    transformed_series : pandas.Series
+        Преобразованный временной ряд
+    display_mode : str
+        Режим отображения: 'all', 'transformed', 'original'
     
     Returns:
     --------
-    list: Список словарей {date: str, value: float}
+    list: Список словарей {'date': str, 'original': float, 'transformed': float}
     """
     result = []
-    for date, value in zip(dates, values):
-        if pd.notna(value):  # Исключаем NaN значения
-            result.append({
-                "date": date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date),
-                "value": float(value)
-            })
+    
+    # Получаем индекс для правильного выравнивания данных
+    if hasattr(original_series, 'index'):
+        index = original_series.index
+    else:
+        # Если нет индекса, создаем числовой
+        index = range(len(original_series))
+    
+    # Создаем DataFrame для правильного выравнивания данных
+    df = pd.DataFrame({
+        'original': original_series,
+        'transformed': transformed_series
+    }, index=index)
+    
+    for idx, row in df.iterrows():
+        # Форматируем дату
+        if isinstance(idx, pd.Timestamp):
+            date_str = idx.strftime("%Y-%m-%d")
+        else:
+            date_str = str(idx)
+        
+        # Добавляем данные в зависимости от режима отображения
+        point = {"date": date_str}
+        
+        if display_mode in ['all', 'original'] and pd.notna(row['original']):
+            point['original'] = float(row['original'])
+        
+        if display_mode in ['all', 'transformed'] and pd.notna(row['transformed']):
+            point['transformed'] = float(row['transformed'])
+        
+        # Добавляем точку только если есть хотя бы одно значение
+        if len(point) > 1:  # больше чем просто date
+            result.append(point)
     
     return result
 def build_varx_model(df, endogenous_vars, exogenous_vars=None, lags=1, train_size=0.8):
