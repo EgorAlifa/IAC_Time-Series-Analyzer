@@ -1304,64 +1304,87 @@
            return settings;
        }
        
-       // Функция для удаления преобразованных переменных
-       async function clearTransformedVariables() {
-           if (!confirm('Вы уверены, что хотите удалить все преобразованные переменные? Это действие нельзя отменить.')) {
-               return;
-           }
-           
-           // Показываем модальное окно загрузки
-           loadingMessage.textContent = 'Удаление преобразованных переменных...';
-           loadingDetails.textContent = 'Пожалуйста, подождите...';
-           loadingModal.show();
-           
-           try {
-               // Получаем исходный file_id из localStorage
-               const originalFileId = localStorage.getItem('originalFileId');
-               const originalColumnsData = localStorage.getItem('originalFileColumnsData');
-               
-               if (originalFileId && originalColumnsData) {
-                   // Восстанавливаем исходные данные
-                   localStorage.setItem('fileId', originalFileId);
-                   localStorage.setItem('fileColumnsData', originalColumnsData);
-                   
-                   // Обновляем fileData
-                   fileData = JSON.parse(originalColumnsData);
-                   fileData.fileId = originalFileId;
-                   
-                   // Очищаем данные о преобразовании
-                   transformedData = null;
-                   
-                   // Обновляем информацию о файле
-                   const numericColumns = fileData.numeric_columns || [];
-                   const rowsCount = fileData.rows_count || 0;
-                   fileDetails.textContent = `${numericColumns.length} числовых столбцов, ${rowsCount} наблюдений`;
-                   
-                   // Перезагружаем список переменных
-                   populateVariablesList();
-                   
-                   // Скрываем кнопку удаления и скачивания
-                   clearTransformedBtn.style.display = 'none';
-                   downloadBtn.disabled = true;
-                   
-                   // Показываем сообщение об успехе
-                   transformMessage.textContent = 'Преобразованные переменные успешно удалены.';
-                   transformAlert.className = 'alert alert-success alert-transformation';
-                   transformAlert.style.display = 'block';
-               } else {
-                   throw new Error('Не найдены исходные данные файла');
-               }
-               
-           } catch (error) {
-               console.error('Ошибка при удалении преобразованных переменных:', error);
-               transformMessage.textContent = `Ошибка при удалении преобразованных переменных: ${error.message}`;
-               transformAlert.className = 'alert alert-danger alert-transformation';
-               transformAlert.style.display = 'block';
-           } finally {
-               // Скрываем модальное окно загрузки
-               loadingModal.hide();
-           }
-       }
+        // Функция для удаления преобразованных переменных
+        async function clearTransformedVariables() {
+            if (!confirm('Вы уверены, что хотите удалить все преобразованные переменные? Это действие нельзя отменить.')) {
+                return;
+            }
+            
+            // Показываем модальное окно загрузки
+            loadingMessage.textContent = 'Удаление преобразованных переменных...';
+            loadingDetails.textContent = 'Пожалуйста, подождите...';
+            loadingModal.show();
+            
+            // Автоматическое закрытие через 3 секунды
+            const autoCloseTimeout = setTimeout(() => {
+                loadingModal.hide();
+            }, 3000);
+            
+            try {
+                // Получаем исходный file_id из localStorage
+                const originalFileId = localStorage.getItem('originalFileId');
+                const originalColumnsData = localStorage.getItem('originalFileColumnsData');
+                
+                if (originalFileId && originalColumnsData) {
+                    // Восстанавливаем исходные данные
+                    localStorage.setItem('fileId', originalFileId);
+                    localStorage.setItem('fileColumnsData', originalColumnsData);
+                    
+                    // Обновляем fileData
+                    fileData = JSON.parse(originalColumnsData);
+                    fileData.fileId = originalFileId;
+                    
+                    // Очищаем данные о преобразовании
+                    transformedData = null;
+                    
+                    // Удаляем сохраненные данные о преобразовании
+                    localStorage.removeItem('originalFileId');
+                    localStorage.removeItem('originalFileColumnsData');
+                    
+                    // Обновляем информацию о файле
+                    const numericColumns = fileData.numeric_columns || [];
+                    const rowsCount = fileData.rows_count || 0;
+                    fileDetails.textContent = `${numericColumns.length} числовых столбцов, ${rowsCount} наблюдений`;
+                    
+                    // Перезагружаем список переменных
+                    populateVariablesList();
+                    
+                    // Скрываем кнопку удаления и скачивания
+                    clearTransformedBtn.style.display = 'none';
+                    downloadBtn.disabled = true;
+                    
+                    // Показываем сообщение об успехе
+                    transformMessage.textContent = 'Преобразованные переменные успешно удалены.';
+                    transformAlert.className = 'alert alert-success alert-transformation';
+                    transformAlert.style.display = 'block';
+                    
+                    // Автоматически скрываем сообщение через 5 секунд
+                    setTimeout(() => {
+                        transformAlert.style.display = 'none';
+                    }, 5000);
+                    
+                } else {
+                    throw new Error('Не найдены исходные данные файла');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка при удалении преобразованных переменных:', error);
+                transformMessage.textContent = `Ошибка при удалении преобразованных переменных: ${error.message}`;
+                transformAlert.className = 'alert alert-danger alert-transformation';
+                transformAlert.style.display = 'block';
+                
+                // Автоматически скрываем сообщение об ошибке через 5 секунд
+                setTimeout(() => {
+                    transformAlert.style.display = 'none';
+                }, 5000);
+                
+            } finally {
+                // Очищаем таймаут, если окно еще не закрыто
+                clearTimeout(autoCloseTimeout);
+                // Закрываем модальное окно загрузки
+                loadingModal.hide();
+            }
+        }
        
        // Функция для преобразования данных
        async function transformData() {
