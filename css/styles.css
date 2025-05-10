@@ -420,7 +420,7 @@ ul {
     padding: 20px;
     margin: 0 auto 30px;
     position: relative;
-    max-width: 640px; /* Ограничиваем максимальную ширину всего контейнера */
+    max-width: 1280px; /* Ограничиваем максимальную ширину всего контейнера */
 }
 
 .video-wrapper {
