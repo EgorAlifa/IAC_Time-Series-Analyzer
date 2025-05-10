@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-<style>
+    <style>
         /* Улучшенные стили для страницы преобразования данных */
         .data-table {
             width: 100%;
@@ -344,69 +344,6 @@
             color: #3b82f6;
         }
         
-        .tooltip-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 18px;
-            height: 18px;
-            background-color: #e2e8f0;
-            color: #64748b;
-            border-radius: 50%;
-            font-size: 10px;
-            margin-left: 6px;
-            cursor: help;
-            transition: all 0.2s ease;
-        }
-        
-        .tooltip-icon:hover {
-            background-color: #cbd5e1;
-            color: #334155;
-        }
-        
-        .info-tooltip {
-            position: relative;
-            display: inline-block;
-            margin-left: 6px;
-        }
-        
-        .info-tooltip .tooltip-text {
-            visibility: hidden;
-            width: 280px;
-            background-color: #334155;
-            color: white;
-            text-align: left;
-            border-radius: 6px;
-            padding: 10px 12px;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            transform: translateX(-50%);
-            opacity: 0;
-            transition: opacity 0.3s, visibility 0.3s;
-            font-size: 13px;
-            line-height: 1.5;
-            pointer-events: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-        
-        .info-tooltip .tooltip-text::after {
-            content: "";
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: #334155 transparent transparent transparent;
-        }
-        
-        .info-tooltip:hover .tooltip-text {
-            visibility: visible;
-            opacity: 1;
-        }
-        
         .chart-container {
             background-color: white;
             border-radius: 8px;
@@ -443,76 +380,6 @@
             width: 100%;
         }
         
-        .variable-row.not-numeric {
-            opacity: 0.7;
-        }
-        
-        .variable-row.not-numeric .transformation-options {
-            pointer-events: none;
-        }
-        
-        /* Улучшенный спиннер загрузки */
-        .loading-spinner {
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 3px solid #3b82f6;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-right: 8px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* Стили для легенды графика */
-        .legend {
-            display: flex;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-        
-        .legend-item {
-            display: flex;
-            align-items: center;
-            font-size: 13px;
-            color: #334155;
-        }
-        
-        .legend-color {
-            width: 14px;
-            height: 14px;
-            border-radius: 3px;
-            margin-right: 6px;
-        }
-        
-        /* Улучшенный стиль для вкладки "все переменные" */
-        .select-all-variables {
-            padding: 12px 16px;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            background-color: #f1f5f9;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-        }
-        
-        .select-all-variables:hover {
-            background-color: #e2e8f0;
-        }
-        
-        .select-all-variables label {
-            margin-left: 10px;
-            font-weight: 500;
-            color: #334155;
-            cursor: pointer;
-        }
-        
-        /* Улучшенная информационная панель трансформации */
         .transforms-info {
             background-color: #f8fafc;
             border-radius: 8px;
@@ -560,7 +427,6 @@
             margin-bottom: 0;
         }
         
-        /* Бейджи для методов преобразования */
         .badge-transform {
             background-color: #f1f5f9;
             color: #475569;
@@ -605,7 +471,6 @@
             margin-right: 4px;
         }
         
-        /* Переключатель отображения */
         .display-toggle {
             margin-bottom: 16px;
             padding: 12px 16px;
@@ -639,6 +504,27 @@
         .toggle-option input {
             margin-right: 6px;
             accent-color: #3b82f6;
+        }
+        
+        .select-all-variables {
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            background-color: #f1f5f9;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        
+        .select-all-variables:hover {
+            background-color: #e2e8f0;
+        }
+        
+        .select-all-variables label {
+            margin-left: 10px;
+            font-weight: 500;
+            color: #334155;
+            cursor: pointer;
         }
         
         /* Для адаптивности на мобильных устройствах */
@@ -833,7 +719,7 @@
                     </div>
                 </div>
 
-                <!-- Добавить внутри блока с настройками преобразования -->
+                <!-- Настройки преобразования -->
                 <div class="transformation-card">
                     <div class="transformation-header">
                         <h3><i class="fas fa-magic"></i> Настройки преобразования</h3>
@@ -920,855 +806,772 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script>
-// Функция для проверки и установки значения по умолчанию если элемент не найден
-function getElementOrNull(id) {
-    const element = document.getElementById(id);
-    return element;
-}
-document.addEventListener('DOMContentLoaded', function() {
-    // API URL
-    const API_URL = 'http://37.252.23.30:8000';
-    
-    // Обработка мобильного меню
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    const sidebar = document.getElementById('sidebar');
-    const sidebarOverlay = document.getElementById('sidebarOverlay');
-    const displayModeAll = document.getElementById('displayModeAll');
-    const displayModeTransformed = document.getElementById('displayModeTransformed');
-    const displayModeOriginal = document.getElementById('displayModeOriginal');
-      if (displayModeAll) {
-            displayModeAll.addEventListener('change', function() {
-                if(this.checked) {
-                    displayMode = 'all';
-                    filterVariablesList(displayMode);
-                }
-            });
-        }
+    document.addEventListener('DOMContentLoaded', function() {
+        // API URL
+        const API_URL = 'http://37.252.23.30:8000';
         
-        if (displayModeTransformed) {
-            displayModeTransformed.addEventListener('change', function() {
-                if(this.checked) {
-                    displayMode = 'transformed';
-                    filterVariablesList(displayMode);
-                }
-            });
-        }
-        
-        if (displayModeOriginal) {
-            displayModeOriginal.addEventListener('change', function() {
-                if(this.checked) {
-                    displayMode = 'original';
-                    filterVariablesList(displayMode);
-                }
-            });
-        }   
-    sidebarToggle.addEventListener('click', function() {
-        sidebar.classList.toggle('active');
-        sidebarOverlay.classList.toggle('active');
-        document.body.classList.toggle('sidebar-open');
-    });
-    
-    sidebarOverlay.addEventListener('click', function() {
-        sidebar.classList.remove('active');
-        sidebarOverlay.classList.remove('active');
-        document.body.classList.remove('sidebar-open');
-    });
+        // Обработка мобильного меню
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+       
+       sidebarToggle.addEventListener('click', function() {
+           sidebar.classList.toggle('active');
+           sidebarOverlay.classList.toggle('active');
+           document.body.classList.toggle('sidebar-open');
+       });
+       
+       sidebarOverlay.addEventListener('click', function() {
+           sidebar.classList.remove('active');
+           sidebarOverlay.classList.remove('active');
+           document.body.classList.remove('sidebar-open');
+       });
 
-    // Адаптивность при изменении размера окна
-    window.addEventListener('resize', function() {
-        if (window.innerWidth >= 992) {
-            sidebar.classList.remove('active');
-            sidebarOverlay.classList.remove('active');
-            document.body.classList.remove('sidebar-open');
-        }
-    });
-    
-    // Режим отображения результатов
-    let displayMode = 'all'; // По умолчанию показываем все ряды
-    
-    // Обработчики переключения режима отображения
-    document.getElementById('displayModeAll').addEventListener('change', function() {
-        if(this.checked) displayMode = 'all';
-    });
-    
-    document.getElementById('displayModeTransformed').addEventListener('change', function() {
-        if(this.checked) displayMode = 'transformed';
-    });
-    
-    document.getElementById('displayModeOriginal').addEventListener('change', function() {
-        if(this.checked) displayMode = 'original';
-    });
-    
-    // Модальное окно загрузки
-    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
-    const loadingMessage = document.getElementById('loadingMessage');
-    const loadingDetails = document.getElementById('loadingDetails');
-    
-    // Элементы DOM для отображения информации о файле
-    const fileInfoPanel = document.getElementById('fileInfoPanel');
-    const fileName = document.getElementById('fileName');
-    const fileDetails = document.getElementById('fileDetails');
-    const noDataMessage = document.getElementById('noDataMessage');
-    const transformationContent = document.getElementById('transformationContent');
-    const backToDataBtn = document.getElementById('backToDataBtn');
-    
-    // Элементы DOM для преобразования
-    const variablesList = document.getElementById('variablesList');
-    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-    const transformBtn = document.getElementById('transformBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const previewBtn = document.getElementById('previewBtn');
-    const transformAlert = document.getElementById('transformAlert');
-    const transformMessage = document.getElementById('transformMessage');
-    
-    // Глобальные переменные
-    let fileData = null;
-    let selectedVariables = [];
-    let transformedData = null;
-    let chartColors = [
-        '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
-        '#ec4899', '#6366f1', '#14b8a6', '#f97316', '#a855f7'
-    ];
-    
-    // Проверяем, есть ли загруженный файл
-    checkLoadedFile();
-    
-    // Слушатель для кнопки "К списку данных"
-    backToDataBtn.addEventListener('click', function() {
-        window.location.href = '/data';
-    });
-    
-    // Слушатель для чекбокса "Выбрать все"
-    selectAllCheckbox.addEventListener('change', function() {
-        const checkboxes = document.querySelectorAll('.transform-checkbox');
-        checkboxes.forEach(checkbox => {
-            if (!checkbox.closest('.variable-row')?.classList.contains('not-numeric') && checkbox.id !== 'selectAllCheckbox') {
-                checkbox.checked = selectAllCheckbox.checked;
-            }
-        });
-        updateSelectedVariables();
-    });
-    
-    // Слушатель для кнопки преобразования
-    transformBtn.addEventListener('click', transformData);
-    
-    // Слушатель для кнопки скачивания
-    downloadBtn.addEventListener('click', downloadTransformedData);
-    
-    // Слушатель для кнопки предпросмотра
-    previewBtn.addEventListener('click', previewTransformation);
-    
-    // Функция проверки наличия загруженного файла
-    function checkLoadedFile() {
-        const storedFileId = localStorage.getItem('fileId');
-        const storedFileName = localStorage.getItem('fileName');
-        const storedColumnsData = localStorage.getItem('fileColumnsData');
-        
-        if (storedFileId && storedFileName && storedColumnsData) {
-            // Есть загруженный файл
-            fileInfoPanel.style.display = 'flex';
-            noDataMessage.style.display = 'none';
-            transformationContent.style.display = 'block';
-            
-            // Отображаем информацию о файле
-            fileName.textContent = storedFileName;
-            
-            try {
-                fileData = JSON.parse(storedColumnsData);
-                fileData.fileId = storedFileId;
-                
-                const numericColumns = fileData.numeric_columns || [];
-                const rowsCount = fileData.rows_count || 0;
-                
-                fileDetails.textContent = `${numericColumns.length} числовых столбцов, ${rowsCount} наблюдений`;
-                
-                // Заполняем список переменных
-                populateVariablesList();
-                
-            } catch (error) {
-                console.error('Ошибка при разборе данных о столбцах:', error);
-                fileDetails.textContent = 'Файл загружен';
-            }
-        } else {
-            // Нет загруженного файла
-            fileInfoPanel.style.display = 'none';
-            noDataMessage.style.display = 'block';
-            transformationContent.style.display = 'none';
-        }
-    }
-    
-    // Функция для заполнения списка переменных
-    function populateVariablesList() {
-        variablesList.innerHTML = ''; // Очищаем список
-        
-        const numericColumns = fileData.numeric_columns || [];
-        
-        // Для каждой колонки создаем строку в таблице
-        numericColumns.forEach(column => {
-            // Пропускаем колонку с датами
-            if (column === fileData.date_column) {
-                return;
-            }
-            
-            // Создаем строку с переменной
-            const row = document.createElement('div');
-            row.className = 'variable-row';
-            
-            // Название переменной
-            const nameDiv = document.createElement('div');
-            nameDiv.className = 'variable-name';
-            nameDiv.textContent = column;
-            
-            // Статус переменной (порядок интеграции или тип преобразования)
-            const statusDiv = document.createElement('div');
-            statusDiv.className = 'variable-status';
-            
-            // Определение текущего статуса на основе имени
-            let statusBadge = "";
-            
-            if (column.endsWith("_I0")) {
-                statusBadge = '<span class="status-badge stationary">I(0)</span>';
-            } else if (column.endsWith("_I1")) {
-                statusBadge = '<span class="status-badge non-stationary">I(1)</span>';
-            } else if (column.endsWith("_I2")) {
-                statusBadge = '<span class="status-badge non-stationary">I(2)</span>';
-            } else if (column.includes("_norm") || column.includes("_boxcox") || column.includes("_yeojohnson")) {
-                statusBadge = '<span class="status-badge normalized">Нормализованный</span>';
-            } else {
-                statusBadge = '<span class="text-muted">Исходный</span>';
-            }
-            
-            statusDiv.innerHTML = statusBadge;
-            
-            // Опции преобразования
-            const optionsDiv = document.createElement('div');
-            optionsDiv.className = 'transformation-options';
-            
-            // Селект с типом преобразования
-            const selectWrapper = document.createElement('div');
-            selectWrapper.className = 'select-wrapper';
-            
-            const select = document.createElement('select');
-            select.className = 'integration-order';
-            select.dataset.variable = column;
-            
-            // Опции для селекта с типами преобразования
-            const options = [
-                { value: 'none', text: 'Оставить как есть' },
-                { value: 'I(0)', text: 'Стационаризация - I(0)' },
-                { value: 'I(1)', text: 'Интеграция - I(1)' },
-                { value: 'I(2)', text: 'Интеграция - I(2)' },
-                { value: 'normalize', text: 'Нормализация' }
-            ];
-            
-            options.forEach(opt => {
-                const option = document.createElement('option');
-                option.value = opt.value;
-                option.textContent = opt.text;
-                select.appendChild(option);
-            });
-            
-            // Добавляем селект с методом преобразования
-            const methodWrapper = document.createElement('div');
-            methodWrapper.className = 'select-wrapper diff-method-wrapper';
-            methodWrapper.dataset.variable = column;
-            methodWrapper.style.display = 'none'; // По умолчанию скрыт
-            
-            const methodSelect = document.createElement('select');
-            methodSelect.className = 'diff-method';
-            methodSelect.dataset.variable = column;
-            
-            // Обработчик изменения типа преобразования
-            select.addEventListener('change', function() {
-                const selectedType = this.value;
-                
-                // Показываем селект с методом в зависимости от выбранного типа
-                if (selectedType === 'I(0)' || selectedType === 'normalize') {
-                    methodWrapper.style.display = 'block';
-                    
-                    // Очищаем текущие опции
-                    methodSelect.innerHTML = '';
-                    
-                    // Добавляем подходящие методы в зависимости от выбранного типа преобразования
-                    if (selectedType === 'I(0)') {
-                        // Методы для стационаризации
-                        [
-                            { value: 'simple', text: 'Простое дифференцирование' },
-                            { value: 'percentage', text: 'Процентное изменение' },
-                            { value: 'log', text: 'Логарифмическое изменение' },
-                            { value: 'extreme', text: 'Экстремальное преобразование' }
-                        ].forEach(method => {
-                            const option = document.createElement('option');
-                            option.value = method.value;
-                            option.textContent = method.text;
-                            methodSelect.appendChild(option);
-                        });
-                    } else if (selectedType === 'normalize') {
-                        // Методы для нормализации
-                        [
-                            { value: 'boxcox', text: 'Преобразование Бокса-Кокса' },
-                            { value: 'yeojohnson', text: 'Преобразование Йео-Джонсона' },
-                            { value: 'rank', text: 'Ранговая нормализация' },
-                            { value: 'auto', text: 'Автоматический выбор метода' },
-                            { value: 'extreme', text: 'Экстремальная нормализация' }
-                        ].forEach(method => {
-                            const option = document.createElement('option');
-                            option.value = method.value;
-                            option.textContent = method.text;
-                            methodSelect.appendChild(option);
-                        });
-                    }
-                } else {
-                    methodWrapper.style.display = 'none';
-                }
-            });
-            
-            selectWrapper.appendChild(select);
-            methodWrapper.appendChild(methodSelect);
-            
-            // Чекбокс для выбора
-            const checkboxWrapper = document.createElement('div');
-            checkboxWrapper.className = 'checkbox-wrapper';
-            
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.className = 'transform-checkbox';
-            checkbox.id = `transform_${column}`;
-            checkbox.dataset.variable = column;
-            checkbox.addEventListener('change', updateSelectedVariables);
-            
-            const label = document.createElement('label');
-            label.setAttribute('for', `transform_${column}`);
-            label.textContent = 'Выбрать';
-            
-            checkboxWrapper.appendChild(checkbox);
-            checkboxWrapper.appendChild(label);
-            
-            // Добавляем элементы в строку
-            optionsDiv.appendChild(selectWrapper);
-            optionsDiv.appendChild(methodWrapper);
-            optionsDiv.appendChild(checkboxWrapper);
-            
-            row.appendChild(nameDiv);
-            row.appendChild(statusDiv);
-            row.appendChild(optionsDiv);
-            
-            // Добавляем строку в список
-            variablesList.appendChild(row);
-        });
-        
-        // Если нет числовых переменных
-        if (numericColumns.length === 0 || numericColumns.length === 1 && numericColumns[0] === fileData.date_column) {
-            const noVarsMsg = document.createElement('div');
-            noVarsMsg.className = 'text-center p-4 text-muted';
-            noVarsMsg.innerHTML = '<i class="fas fa-exclamation-circle mb-2"></i><p>Нет числовых переменных для преобразования</p>';
-            variablesList.appendChild(noVarsMsg);
-        }
-    }
-    
-        // Добавляем обработчики для переключателей режима отображения
-        document.getElementById('displayModeAll').addEventListener('change', function() {
-            if(this.checked) {
-                displayMode = 'all';
-                filterVariablesList(displayMode);
-            }
-        });
-        
-        document.getElementById('displayModeTransformed').addEventListener('change', function() {
-            if(this.checked) {
-                displayMode = 'transformed';
-                filterVariablesList(displayMode);
-            }
-        });
-        
-        document.getElementById('displayModeOriginal').addEventListener('change', function() {
-            if(this.checked) {
-                displayMode = 'original';
-                filterVariablesList(displayMode);
-            }
-        });
-        
-        // Функция для фильтрации списка переменных в зависимости от режима отображения
-        function filterVariablesList(mode) {
-            const variableRows = document.querySelectorAll('.variable-row');
-            
-            variableRows.forEach(row => {
-                // Находим имя переменной из селекта
-                const selectElement = row.querySelector('.integration-order');
-                if (!selectElement) return;
-                
-                const variableName = selectElement.dataset.variable;
-                if (!variableName) return;
-                
-                // Определяем тип переменной по имени
-                let isTransformed = false;
-                let isOriginal = true;
-                
-                // Проверяем, является ли переменная преобразованной
-                if (variableName.includes('_I0') || variableName.includes('_I1') || variableName.includes('_I2') ||
-                    variableName.includes('_norm') || variableName.includes('_boxcox') || 
-                    variableName.includes('_yeojohnson') || variableName.includes('_rank')) {
-                    isTransformed = true;
-                    isOriginal = false;
-                }
-                
-                // Показываем/скрываем строку в зависимости от режима
-                switch(mode) {
-                    case 'all':
-                        row.style.display = 'flex';
-                        break;
-                    case 'transformed':
-                        row.style.display = isTransformed ? 'flex' : 'none';
-                        break;
-                    case 'original':
-                        row.style.display = isOriginal ? 'flex' : 'none';
-                        break;
-                    default:
-                        row.style.display = 'flex';
-                }
-            });
-            
-            // Обновляем чекбокс "Выбрать все"
-            updateSelectAllCheckbox();
-        }
-        
-        // Обновляем функцию populateVariablesList, чтобы применять фильтрацию после заполнения списка
-        function populateVariablesList() {
-            variablesList.innerHTML = ''; // Очищаем список
-            
-            const numericColumns = fileData.numeric_columns || [];
-            
-            // Для каждой колонки создаем строку в таблице
-            numericColumns.forEach(column => {
-                // Пропускаем колонку с датами
-                if (column === fileData.date_column) {
-                    return;
-                }
-                
-                // Создаем строку с переменной
-                const row = document.createElement('div');
-                row.className = 'variable-row';
-                
-                // ... остальной код создания строки ...
-                
-                // Добавляем строку в список
-                variablesList.appendChild(row);
-            });
-            
-            // Если нет числовых переменных
-            if (numericColumns.length === 0 || numericColumns.length === 1 && numericColumns[0] === fileData.date_column) {
-                const noVarsMsg = document.createElement('div');
-                noVarsMsg.className = 'text-center p-4 text-muted';
-                noVarsMsg.innerHTML = '<i class="fas fa-exclamation-circle mb-2"></i><p>Нет числовых переменных для преобразования</p>';
-                variablesList.appendChild(noVarsMsg);
-            }
-            
-            // Применяем текущий фильтр
-            filterVariablesList(displayMode);
-        }
-        
-        // Функция для обновления состояния чекбокса "Выбрать все"
-        function updateSelectAllCheckbox() {
-            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-            if (!selectAllCheckbox) return;
-            
-            const visibleCheckboxes = Array.from(document.querySelectorAll('.variable-row:not([style*="none"]) .transform-checkbox'));
-            const checkedVisibleCheckboxes = visibleCheckboxes.filter(cb => cb.checked && cb.id !== 'selectAllCheckbox');
-            
-            selectAllCheckbox.checked = visibleCheckboxes.length > 0 && 
-                                       checkedVisibleCheckboxes.length === visibleCheckboxes.length;
-            selectAllCheckbox.indeterminate = checkedVisibleCheckboxes.length > 0 && 
-                                             checkedVisibleCheckboxes.length < visibleCheckboxes.length;
-        }
-        
-        // Обновляем обработчик для "Выбрать все"
-        selectAllCheckbox.addEventListener('change', function() {
-            const visibleCheckboxes = document.querySelectorAll('.variable-row:not([style*="none"]) .transform-checkbox');
-            visibleCheckboxes.forEach(checkbox => {
-                if (checkbox.id !== 'selectAllCheckbox') {
-                    checkbox.checked = selectAllCheckbox.checked;
-                }
-            });
-            updateSelectedVariables();
-        });
-        
-        // Обновляем функцию updateSelectedVariables, чтобы учитывать только видимые элементы
-        function updateSelectedVariables() {
-            selectedVariables = [];
-            const visibleCheckboxes = document.querySelectorAll('.variable-row:not([style*="none"]) .transform-checkbox');
-            
-            visibleCheckboxes.forEach(checkbox => {
-                const variable = checkbox.dataset.variable;
-                if (variable && checkbox.id !== 'selectAllCheckbox') {
-                    if (checkbox.checked) {
-                        selectedVariables.push(variable);
-                    }
-                }
-            });
-            
-            // Обновляем состояние кнопки преобразования
-            transformBtn.disabled = selectedVariables.length === 0;
-            previewBtn.disabled = selectedVariables.length === 0;
-            
-            // Обновляем состояние чекбокса "Выбрать все"
-            updateSelectAllCheckbox();
-            
-            console.log('Выбранные переменные:', selectedVariables);
-        }
-    
-    // Функция для сбора настроек преобразования
-    function getTransformationSettings() {
-        const settings = {};
-        
-        selectedVariables.forEach(variable => {
-            const selectEl = document.querySelector(`select.integration-order[data-variable="${variable}"]`);
-            if (selectEl) {
-                const transformType = selectEl.value;
-                
-                // Получаем метод преобразования, если доступен
-                const methodEl = document.querySelector(`select.diff-method[data-variable="${variable}"]`);
-                const methodValue = methodEl && methodEl.style.display !== 'none' ? methodEl.value : 'simple';
-                
-                // Если выбрана нормализация, меняем формат данных
-                if (transformType === 'normalize') {
-                    settings[variable] = {
-                        transformTo: 'normalize',
-                        diffMethod: methodValue
-                    };
-                } else {
-                    settings[variable] = {
-                        transformTo: transformType,
-                        diffMethod: methodValue
-                    };
-                }
-            }
-        });
-        
-        return settings;
-    }
-    
-    // Функция для предпросмотра трансформации
-    async function previewTransformation() {
-        if (selectedVariables.length === 0) {
-            alert('Пожалуйста, выберите хотя бы одну переменную для преобразования.');
-            return;
-        }
-        
-        // Показываем модальное окно загрузки
-        loadingMessage.textContent = 'Подготовка предпросмотра...';
-        loadingDetails.textContent = 'Вычисление преобразованных рядов...';
-        loadingModal.show();
-        
-        try {
-            // Получаем настройки преобразования
-            const transformationSettings = getTransformationSettings();
-            
-            // Готовим данные для запроса
-            const fileId = fileData.fileId;
-            const dateColumn = fileData.date_column || 'Дата';
-            
-            // Запрос к API для преобразования
-            const formData = new FormData();
-            formData.append('file_id', fileId);
-            formData.append('date_column', dateColumn);
-            formData.append('transformation_settings', JSON.stringify(transformationSettings));
-            formData.append('preview', 'true');
-            formData.append('display_mode', displayMode);
-            
-            // Вызов API для трансформации данных
-            const response = await fetch(`${API_URL}/transform-integration-order`, {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (!response.ok) {
-                throw new Error('Ошибка при преобразовании данных');
-            }
-            
-            const previewData = await response.json();
-            console.log('Данные предпросмотра:', previewData);
-            
-            // Отображаем график предпросмотра
-            displayPreviewChart(previewData);
-            
-            // Показываем сообщение об успехе
-            transformMessage.textContent = 'Предпросмотр преобразования выполнен успешно.';
-            transformAlert.className = 'alert alert-success alert-transformation';
-            transformAlert.style.display = 'block';
-            
-        } catch (error) {
-            console.error('Ошибка при предпросмотре:', error);
-            alert(`Ошибка при формировании предпросмотра: ${error.message}`);
-        } finally {
-            // Скрываем модальное окно загрузки
-            loadingModal.hide();
-        }
-    }
-    
-    // Функция для отображения графика предпросмотра
-    function displayPreviewChart(previewData) {
-        const chartContainer = document.getElementById('previewChartContainer');
-        const previewLegend = document.getElementById('previewLegend');
-        const canvas = document.getElementById('previewChart');
-        
-        // Очищаем существующую легенду
-        previewLegend.innerHTML = '';
-        
-        // Подготавливаем данные для графика
-        const datasets = [];
-        const chartLabels = [];
-        
-        // Преобразуем данные для графика
-        for (const variable in previewData.transformed_data) {
-            const originalData = [];
-            const transformedData = [];
-            
-            previewData.transformed_data[variable].forEach(point => {
-                if (!chartLabels.includes(point.date)) {
-                    chartLabels.push(point.date);
-                }
-                
-                if (point.original !== undefined) {
-                    originalData.push({
-                        x: point.date,
-                        y: point.original
-                    });
-                }
-                
-                if (point.transformed !== undefined) {
-                    transformedData.push({
-                        x: point.date,
-                        y: point.transformed
-                    });
-                }
-            });
-            
-            // Добавляем исходный ряд
-            if (originalData.length > 0 && (displayMode === 'all' || displayMode === 'original')) {
-                datasets.push({
-                    label: `${variable} (исходный)`,
-                    data: originalData,
-                    borderColor: chartColors[datasets.length % chartColors.length],
-                    backgroundColor: 'transparent',
-                    borderWidth: 2,
-                    tension: 0.1
-                });
-                
-                // Добавляем в легенду
-                const legendItem = document.createElement('div');
-                legendItem.className = 'legend-item';
-                
-                const colorBox = document.createElement('div');
-                colorBox.className = 'legend-color';
-                colorBox.style.backgroundColor = chartColors[datasets.length - 1 % chartColors.length];
-                
-                const legendText = document.createElement('span');
-                legendText.textContent = `${variable} (исходный)`;
-                
-                legendItem.appendChild(colorBox);
-                legendItem.appendChild(legendText);
-                previewLegend.appendChild(legendItem);
-            }
-            
-            // Добавляем преобразованный ряд
-            if (transformedData.length > 0 && (displayMode === 'all' || displayMode === 'transformed')) {
-                datasets.push({
-                    label: `${variable} (преобразованный)`,
-                    data: transformedData,
-                    borderColor: chartColors[(datasets.length) % chartColors.length],
-                    backgroundColor: 'transparent',
-                    borderWidth: 2,
-                    borderDash: [5, 5],
-                    tension: 0.1
-                });
-                
-                // Добавляем в легенду
-                const legendItem = document.createElement('div');
-                legendItem.className = 'legend-item';
-                
-                const colorBox = document.createElement('div');
-                colorBox.className = 'legend-color';
-                colorBox.style.backgroundColor = chartColors[datasets.length - 1 % chartColors.length];
-                
-                const legendText = document.createElement('span');
-                legendText.textContent = `${variable} (преобразованный)`;
-                
-                legendItem.appendChild(colorBox);
-                legendItem.appendChild(legendText);
-                previewLegend.appendChild(legendItem);
-            }
-        }
-        
-        // Создаем график
-        const ctx = canvas.getContext('2d');
-        const chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: chartLabels,
-                datasets: datasets
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        enabled: true,
-                        mode: 'index',
-                        intersect: false
-                    }
-                },
-                scales: {
-                    x: {
-                        type: 'category',
-                        title: {
-                            display: true,
-                            text: 'Дата'
-                        },
-                        ticks: {
-                            maxRotation: 45,
-                            minRotation: 45
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Значение'
-                        },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        }
-                    }
-                }
-            }
-        });
-        
-        // Показываем контейнер с графиком
-        chartContainer.style.display = 'block';
-        
-        // Кнопка закрытия графика
-        document.getElementById('closePreviewBtn').addEventListener('click', function() {
-            chartContainer.style.display = 'none';
-            chart.destroy();
-        });
-    }
-    
-    // Функция для преобразования данных
-    async function transformData() {
-        if (selectedVariables.length === 0) {
-            alert('Пожалуйста, выберите хотя бы одну переменную для преобразования.');
-            return;
-        }
-        
-        // Показываем модальное окно загрузки
-        loadingMessage.textContent = 'Преобразование данных...';
-        loadingDetails.textContent = 'Выполняется преобразование временных рядов...';
-        loadingModal.show();
-        
-        try {
-            // Получаем настройки преобразования
-            const transformationSettings = getTransformationSettings();
-            
-            // Готовим данные для запроса
-            const fileId = fileData.fileId;
-            const dateColumn = fileData.date_column || 'Дата';
-            
-            // Запрос к API для преобразования
-            const formData = new FormData();
-            formData.append('file_id', fileId);
-            formData.append('date_column', dateColumn);
-            formData.append('transformation_settings', JSON.stringify(transformationSettings));
-            formData.append('preview', 'false');
-            formData.append('display_mode', displayMode);
-            
-            // Отправляем запрос на трансформацию
-            const response = await fetch(`${API_URL}/transform-integration-order`, {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (!response.ok) {
-                throw new Error('Ошибка при преобразовании данных');
-            }
-            
-            const result = await response.json();
-            console.log('Результат преобразования:', result);
-            
-            // Сохраняем результат для дальнейшего использования
-            transformedData = result;
-            
-            // Обновляем localStorage с новыми данными
-            if (result.updated_file_id) {
-                // Сохраняем file_id без расширения для дальнейшего использования
-                const cleanFileId = result.updated_file_id.replace('.xlsx', '');
-                localStorage.setItem('fileId', cleanFileId);
-            }
-            
-            if (result.updated_columns_data) {
-                localStorage.setItem('fileColumnsData', JSON.stringify(result.updated_columns_data));
-            }
-            
-            // Активируем кнопку скачивания
-            downloadBtn.disabled = false;
-            
-            // Показываем сообщение об успехе
-            transformMessage.textContent = 'Преобразование успешно выполнено. Вы можете скачать новый файл или продолжить работу с преобразованными данными.';
-            transformAlert.className = 'alert alert-success alert-transformation';
-            transformAlert.style.display = 'block';
-            
-            // Обновляем интерфейс с новыми данными
-            if (result.updated_columns_data) {
-                fileData = result.updated_columns_data;
-                fileData.fileId = result.updated_file_id || fileData.fileId;
-                
-                // Обновляем информацию о файле
-                const numericColumns = fileData.numeric_columns || [];
-                const rowsCount = fileData.rows_count || 0;
-                fileDetails.textContent = `${numericColumns.length} числовых столбцов, ${rowsCount} наблюдений`;
-                
-                // Перезагружаем список переменных
-                populateVariablesList();
-            }
-            
-        } catch (error) {
-            console.error('Ошибка при преобразовании данных:', error);
-            transformMessage.textContent = `Ошибка при преобразовании данных: ${error.message}`;
-            transformAlert.className = 'alert alert-danger alert-transformation';
-            transformAlert.style.display = 'block';
-        } finally {
-            // Скрываем модальное окно загрузки
-            loadingModal.hide();
-        }
-    }
-    
-    // Функция для скачивания преобразованных данных
-    async function downloadTransformedData() {
-        if (!transformedData || !transformedData.download_url) {
-            alert('Нет данных для скачивания. Сначала выполните преобразование.');
-            return;
-        }
-        
-        try {
-            // Создаем ссылку для скачивания
-            const downloadLink = document.createElement('a');
-            downloadLink.href = transformedData.download_url;
-            downloadLink.download = `transformed_${fileName.textContent}`;
-            downloadLink.style.display = 'none';
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-        } catch (error) {
-            console.error('Ошибка при скачивании файла:', error);
-            alert(`Ошибка при скачивании файла: ${error.message}`);
-        }
-    }
-});
-    </script>
+       // Адаптивность при изменении размера окна
+       window.addEventListener('resize', function() {
+           if (window.innerWidth >= 992) {
+               sidebar.classList.remove('active');
+               sidebarOverlay.classList.remove('active');
+               document.body.classList.remove('sidebar-open');
+           }
+       });
+       
+       // Режим отображения результатов
+       let displayMode = 'all'; // По умолчанию показываем все ряды
+       
+       // Модальное окно загрузки
+       const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+       const loadingMessage = document.getElementById('loadingMessage');
+       const loadingDetails = document.getElementById('loadingDetails');
+       
+       // Элементы DOM для отображения информации о файле
+       const fileInfoPanel = document.getElementById('fileInfoPanel');
+       const fileName = document.getElementById('fileName');
+       const fileDetails = document.getElementById('fileDetails');
+       const noDataMessage = document.getElementById('noDataMessage');
+       const transformationContent = document.getElementById('transformationContent');
+       const backToDataBtn = document.getElementById('backToDataBtn');
+       
+       // Элементы DOM для преобразования
+       const variablesList = document.getElementById('variablesList');
+       const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+       const transformBtn = document.getElementById('transformBtn');
+       const downloadBtn = document.getElementById('downloadBtn');
+       const previewBtn = document.getElementById('previewBtn');
+       const transformAlert = document.getElementById('transformAlert');
+       const transformMessage = document.getElementById('transformMessage');
+       
+       // Глобальные переменные
+       let fileData = null;
+       let selectedVariables = [];
+       let transformedData = null;
+       let chartColors = [
+           '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+           '#ec4899', '#6366f1', '#14b8a6', '#f97316', '#a855f7'
+       ];
+       
+       // Обработчики переключения режима отображения
+       document.getElementById('displayModeAll').addEventListener('change', function() {
+           if(this.checked) {
+               displayMode = 'all';
+               filterVariablesList(displayMode);
+           }
+       });
+       
+       document.getElementById('displayModeTransformed').addEventListener('change', function() {
+           if(this.checked) {
+               displayMode = 'transformed';
+               filterVariablesList(displayMode);
+           }
+       });
+       
+       document.getElementById('displayModeOriginal').addEventListener('change', function() {
+           if(this.checked) {
+               displayMode = 'original';
+               filterVariablesList(displayMode);
+           }
+       });
+       
+       // Функция для фильтрации списка переменных в зависимости от режима отображения
+       function filterVariablesList(mode) {
+           const variableRows = document.querySelectorAll('.variable-row');
+           
+           variableRows.forEach(row => {
+               // Находим имя переменной из селекта
+               const selectElement = row.querySelector('.integration-order');
+               if (!selectElement) return;
+               
+               const variableName = selectElement.dataset.variable;
+               if (!variableName) return;
+               
+               // Определяем тип переменной по имени
+               let isTransformed = false;
+               let isOriginal = true;
+               
+               // Проверяем, является ли переменная преобразованной
+               if (variableName.includes('_I0') || variableName.includes('_I1') || variableName.includes('_I2') ||
+                   variableName.includes('_norm') || variableName.includes('_boxcox') || 
+                   variableName.includes('_yeojohnson') || variableName.includes('_rank')) {
+                   isTransformed = true;
+                   isOriginal = false;
+               }
+               
+               // Показываем/скрываем строку в зависимости от режима
+               switch(mode) {
+                   case 'all':
+                       row.style.display = 'flex';
+                       break;
+                   case 'transformed':
+                       row.style.display = isTransformed ? 'flex' : 'none';
+                       break;
+                   case 'original':
+                       row.style.display = isOriginal ? 'flex' : 'none';
+                       break;
+                   default:
+                       row.style.display = 'flex';
+               }
+           });
+           
+           // Обновляем чекбокс "Выбрать все"
+           updateSelectAllCheckbox();
+       }
+       
+       // Функция для обновления состояния чекбокса "Выбрать все"
+       function updateSelectAllCheckbox() {
+           const visibleCheckboxes = Array.from(document.querySelectorAll('.variable-row:not([style*="display: none"]) .transform-checkbox'));
+           const checkedVisibleCheckboxes = visibleCheckboxes.filter(cb => cb.checked && cb.id !== 'selectAllCheckbox');
+           
+           selectAllCheckbox.checked = visibleCheckboxes.length > 0 && 
+                                      checkedVisibleCheckboxes.length === visibleCheckboxes.length;
+           selectAllCheckbox.indeterminate = checkedVisibleCheckboxes.length > 0 && 
+                                            checkedVisibleCheckboxes.length < visibleCheckboxes.length;
+       }
+       
+       // Проверяем, есть ли загруженный файл
+       checkLoadedFile();
+       
+       // Слушатель для кнопки "К списку данных"
+       backToDataBtn.addEventListener('click', function() {
+           window.location.href = '/data';
+       });
+       
+       // Слушатель для чекбокса "Выбрать все"
+       selectAllCheckbox.addEventListener('change', function() {
+           const visibleCheckboxes = document.querySelectorAll('.variable-row:not([style*="display: none"]) .transform-checkbox');
+           visibleCheckboxes.forEach(checkbox => {
+               if (checkbox.id !== 'selectAllCheckbox') {
+                   checkbox.checked = selectAllCheckbox.checked;
+               }
+           });
+           updateSelectedVariables();
+       });
+       
+       // Слушатель для кнопки преобразования
+       transformBtn.addEventListener('click', transformData);
+       
+       // Слушатель для кнопки скачивания
+       downloadBtn.addEventListener('click', downloadTransformedData);
+       
+       // Слушатель для кнопки предпросмотра
+       previewBtn.addEventListener('click', previewTransformation);
+       
+       // Функция проверки наличия загруженного файла
+       function checkLoadedFile() {
+           const storedFileId = localStorage.getItem('fileId');
+           const storedFileName = localStorage.getItem('fileName');
+           const storedColumnsData = localStorage.getItem('fileColumnsData');
+           
+           if (storedFileId && storedFileName && storedColumnsData) {
+               // Есть загруженный файл
+               fileInfoPanel.style.display = 'flex';
+               noDataMessage.style.display = 'none';
+               transformationContent.style.display = 'block';
+               
+               // Отображаем информацию о файле
+               fileName.textContent = storedFileName;
+               
+               try {
+                   fileData = JSON.parse(storedColumnsData);
+                   fileData.fileId = storedFileId;
+                   
+                   const numericColumns = fileData.numeric_columns || [];
+                   const rowsCount = fileData.rows_count || 0;
+                   
+                   fileDetails.textContent = `${numericColumns.length} числовых столбцов, ${rowsCount} наблюдений`;
+                   
+                   // Заполняем список переменных
+                   populateVariablesList();
+                   
+               } catch (error) {
+                   console.error('Ошибка при разборе данных о столбцах:', error);
+                   fileDetails.textContent = 'Файл загружен';
+               }
+           } else {
+               // Нет загруженного файла
+               fileInfoPanel.style.display = 'none';
+               noDataMessage.style.display = 'block';
+               transformationContent.style.display = 'none';
+           }
+       }
+       
+       // Функция для заполнения списка переменных
+       function populateVariablesList() {
+           variablesList.innerHTML = ''; // Очищаем список
+           
+           const numericColumns = fileData.numeric_columns || [];
+           
+           // Для каждой колонки создаем строку в таблице
+           numericColumns.forEach(column => {
+               // Пропускаем колонку с датами
+               if (column === fileData.date_column) {
+                   return;
+               }
+               
+               // Создаем строку с переменной
+               const row = document.createElement('div');
+               row.className = 'variable-row';
+               
+               // Название переменной
+               const nameDiv = document.createElement('div');
+               nameDiv.className = 'variable-name';
+               nameDiv.textContent = column;
+               
+               // Статус переменной (порядок интеграции или тип преобразования)
+               const statusDiv = document.createElement('div');
+               statusDiv.className = 'variable-status';
+               
+               // Определение текущего статуса на основе имени
+               let statusBadge = "";
+               
+               if (column.endsWith("_I0")) {
+                   statusBadge = '<span class="status-badge stationary">I(0)</span>';
+               } else if (column.endsWith("_I1")) {
+                   statusBadge = '<span class="status-badge non-stationary">I(1)</span>';
+               } else if (column.endsWith("_I2")) {
+                   statusBadge = '<span class="status-badge non-stationary">I(2)</span>';
+               } else if (column.includes("_norm") || column.includes("_boxcox") || column.includes("_yeojohnson")) {
+                   statusBadge = '<span class="status-badge normalized">Нормализованный</span>';
+               } else {
+                   statusBadge = '<span class="text-muted">Исходный</span>';
+               }
+               
+               statusDiv.innerHTML = statusBadge;
+               
+               // Опции преобразования
+               const optionsDiv = document.createElement('div');
+               optionsDiv.className = 'transformation-options';
+               
+               // Селект с типом преобразования
+               const selectWrapper = document.createElement('div');
+               selectWrapper.className = 'select-wrapper';
+               
+               const select = document.createElement('select');
+               select.className = 'integration-order';
+               select.dataset.variable = column;
+               
+               // Опции для селекта с типами преобразования
+               const options = [
+                   { value: 'none', text: 'Оставить как есть' },
+                   { value: 'I(0)', text: 'Стационаризация - I(0)' },
+                   { value: 'I(1)', text: 'Интеграция - I(1)' },
+                   { value: 'I(2)', text: 'Интеграция - I(2)' },
+                   { value: 'normalize', text: 'Нормализация' }
+               ];
+               
+               options.forEach(opt => {
+                   const option = document.createElement('option');
+                   option.value = opt.value;
+                   option.textContent = opt.text;
+                   select.appendChild(option);
+               });
+               
+               // Добавляем селект с методом преобразования
+               const methodWrapper = document.createElement('div');
+               methodWrapper.className = 'select-wrapper diff-method-wrapper';
+               methodWrapper.dataset.variable = column;
+               methodWrapper.style.display = 'none'; // По умолчанию скрыт
+               
+               const methodSelect = document.createElement('select');
+               methodSelect.className = 'diff-method';
+               methodSelect.dataset.variable = column;
+               
+               // Обработчик изменения типа преобразования
+               select.addEventListener('change', function() {
+                   const selectedType = this.value;
+                   
+                   // Показываем селект с методом в зависимости от выбранного типа
+                   if (selectedType === 'I(0)' || selectedType === 'normalize') {
+                       methodWrapper.style.display = 'block';
+                       
+                       // Очищаем текущие опции
+                       methodSelect.innerHTML = '';
+                       
+                       // Добавляем подходящие методы в зависимости от выбранного типа преобразования
+                       if (selectedType === 'I(0)') {
+                           // Методы для стационаризации
+                           [
+                               { value: 'simple', text: 'Простое дифференцирование' },
+                               { value: 'percentage', text: 'Процентное изменение' },
+                               { value: 'log', text: 'Логарифмическое изменение' },
+                               { value: 'extreme', text: 'Экстремальное преобразование' }
+                           ].forEach(method => {
+                               const option = document.createElement('option');
+                               option.value = method.value;
+                               option.textContent = method.text;
+                               methodSelect.appendChild(option);
+                           });
+                       } else if (selectedType === 'normalize') {
+                           // Методы для нормализации
+                           [
+                               { value: 'boxcox', text: 'Преобразование Бокса-Кокса' },
+                               { value: 'yeojohnson', text: 'Преобразование Йео-Джонсона' },
+                               { value: 'rank', text: 'Ранговая нормализация' },
+                               { value: 'auto', text: 'Автоматический выбор метода' },
+                               { value: 'extreme', text: 'Экстремальная нормализация' }
+                           ].forEach(method => {
+                               const option = document.createElement('option');
+                               option.value = method.value;
+                               option.textContent = method.text;
+                               methodSelect.appendChild(option);
+                           });
+                       }
+                   } else {
+                       methodWrapper.style.display = 'none';
+                   }
+               });
+               
+               selectWrapper.appendChild(select);
+               methodWrapper.appendChild(methodSelect);
+               
+               // Чекбокс для выбора
+               const checkboxWrapper = document.createElement('div');
+               checkboxWrapper.className = 'checkbox-wrapper';
+               
+               const checkbox = document.createElement('input');
+               checkbox.type = 'checkbox';
+               checkbox.className = 'transform-checkbox';
+               checkbox.id = `transform_${column}`;
+               checkbox.dataset.variable = column;
+               checkbox.addEventListener('change', updateSelectedVariables);
+               
+               const label = document.createElement('label');
+               label.setAttribute('for', `transform_${column}`);
+               label.textContent = 'Выбрать';
+               
+               checkboxWrapper.appendChild(checkbox);
+               checkboxWrapper.appendChild(label);
+               
+               // Добавляем элементы в строку
+               optionsDiv.appendChild(selectWrapper);
+               optionsDiv.appendChild(methodWrapper);
+               optionsDiv.appendChild(checkboxWrapper);
+               
+               row.appendChild(nameDiv);
+               row.appendChild(statusDiv);
+               row.appendChild(optionsDiv);
+               
+               // Добавляем строку в список
+               variablesList.appendChild(row);
+           });
+           
+           // Если нет числовых переменных
+           if (numericColumns.length === 0 || numericColumns.length === 1 && numericColumns[0] === fileData.date_column) {
+               const noVarsMsg = document.createElement('div');
+               noVarsMsg.className = 'text-center p-4 text-muted';
+               noVarsMsg.innerHTML = '<i class="fas fa-exclamation-circle mb-2"></i><p>Нет числовых переменных для преобразования</p>';
+               variablesList.appendChild(noVarsMsg);
+           }
+           
+           // Применяем текущий фильтр
+           filterVariablesList(displayMode);
+       }
+       
+       // Функция для обновления списка выбранных переменных
+       function updateSelectedVariables() {
+           selectedVariables = [];
+           const visibleCheckboxes = document.querySelectorAll('.variable-row:not([style*="display: none"]) .transform-checkbox');
+           
+           visibleCheckboxes.forEach(checkbox => {
+               const variable = checkbox.dataset.variable;
+               if (variable && checkbox.id !== 'selectAllCheckbox') {
+                   if (checkbox.checked) {
+                       selectedVariables.push(variable);
+                   }
+               }
+           });
+           
+           // Обновляем состояние кнопки преобразования
+           transformBtn.disabled = selectedVariables.length === 0;
+           previewBtn.disabled = selectedVariables.length === 0;
+           
+           // Обновляем состояние чекбокса "Выбрать все"
+           updateSelectAllCheckbox();
+           
+           console.log('Выбранные переменные:', selectedVariables);
+       }
+       
+       // Функция для сбора настроек преобразования
+       function getTransformationSettings() {
+           const settings = {};
+           
+           selectedVariables.forEach(variable => {
+               const selectEl = document.querySelector(`select.integration-order[data-variable="${variable}"]`);
+               if (selectEl) {
+                   const transformType = selectEl.value;
+                   
+                   // Получаем метод преобразования, если доступен
+                   const methodEl = document.querySelector(`select.diff-method[data-variable="${variable}"]`);
+                   const methodValue = methodEl && methodEl.style.display !== 'none' ? methodEl.value : 'simple';
+                   
+                   // Если выбрана нормализация, меняем формат данных
+                   if (transformType === 'normalize') {
+                       settings[variable] = {
+                           transformTo: 'normalize',
+                           diffMethod: methodValue
+                       };
+                   } else {
+                       settings[variable] = {
+                           transformTo: transformType,
+                           diffMethod: methodValue
+                       };
+                   }
+               }
+           });
+           
+           return settings;
+       }
+       
+       // Функция для предпросмотра трансформации
+       async function previewTransformation() {
+           if (selectedVariables.length === 0) {
+               alert('Пожалуйста, выберите хотя бы одну переменную для преобразования.');
+               return;
+           }
+           
+           // Показываем модальное окно загрузки
+           loadingMessage.textContent = 'Подготовка предпросмотра...';
+           loadingDetails.textContent = 'Вычисление преобразованных рядов...';
+           loadingModal.show();
+           
+           try {
+               // Получаем настройки преобразования
+               const transformationSettings = getTransformationSettings();
+               
+               // Используем актуальный fileId
+               const currentFileId = fileData.fileId || localStorage.getItem('fileId');
+               const dateColumn = fileData.date_column || 'Дата';
+               
+               // Запрос к API для преобразования
+               const formData = new FormData();
+               formData.append('file_id', currentFileId);
+               formData.append('date_column', dateColumn);
+               formData.append('transformation_settings', JSON.stringify(transformationSettings));
+               formData.append('preview', 'true');
+               formData.append('display_mode', displayMode);
+               
+               // Вызов API для трансформации данных
+               const response = await fetch(`${API_URL}/transform-integration-order`, {
+                   method: 'POST',
+                   body: formData
+               });
+               
+               if (!response.ok) {
+                   throw new Error('Ошибка при преобразовании данных');
+               }
+               
+               const previewData = await response.json();
+               console.log('Данные предпросмотра:', previewData);
+               
+               // Отображаем график предпросмотра
+               displayPreviewChart(previewData);
+               
+               // Показываем сообщение об успехе
+               transformMessage.textContent = 'Предпросмотр преобразования выполнен успешно.';
+               transformAlert.className = 'alert alert-success alert-transformation';
+               transformAlert.style.display = 'block';
+               
+           } catch (error) {
+               console.error('Ошибка при предпросмотре:', error);
+               alert(`Ошибка при формировании предпросмотра: ${error.message}`);
+           } finally {
+               // Скрываем модальное окно загрузки
+               loadingModal.hide();
+           }
+       }
+       
+       // Функция для отображения графика предпросмотра
+       function displayPreviewChart(previewData) {
+           const chartContainer = document.getElementById('previewChartContainer');
+           const previewLegend = document.getElementById('previewLegend');
+           const canvas = document.getElementById('previewChart');
+           
+           // Очищаем существующую легенду
+           previewLegend.innerHTML = '';
+           
+           // Подготавливаем данные для графика
+           const datasets = [];
+           const chartLabels = [];
+           
+           // Преобразуем данные для графика
+           for (const variable in previewData.transformed_data) {
+               const originalData = [];
+               const transformedData = [];
+               
+               previewData.transformed_data[variable].forEach(point => {
+                   if (!chartLabels.includes(point.date)) {
+                       chartLabels.push(point.date);
+                   }
+                   
+                   if (point.original !== undefined) {
+                       originalData.push({
+                           x: point.date,
+                           y: point.original
+                       });
+                   }
+                   
+                   if (point.transformed !== undefined) {
+                       transformedData.push({
+                           x: point.date,
+                           y: point.transformed
+                       });
+                   }
+               });
+               
+               // Добавляем исходный ряд (с учетом режима отображения)
+               if (originalData.length > 0 && (displayMode === 'all' || displayMode === 'original')) {
+                   datasets.push({
+                       label: `${variable} (исходный)`,
+                       data: originalData,
+                       borderColor: chartColors[datasets.length % chartColors.length],
+                       backgroundColor: 'transparent',
+                       borderWidth: 2,
+                       tension: 0.1
+                   });
+                   
+                   // Добавляем в легенду
+                   const legendItem = document.createElement('div');
+                   legendItem.className = 'legend-item';
+                   
+                   const colorBox = document.createElement('div');
+                   colorBox.className = 'legend-color';
+                   colorBox.style.backgroundColor = chartColors[datasets.length - 1 % chartColors.length];
+                   
+                   const legendText = document.createElement('span');
+                   legendText.textContent = `${variable} (исходный)`;
+                   
+                   legendItem.appendChild(colorBox);
+                   legendItem.appendChild(legendText);
+                   previewLegend.appendChild(legendItem);
+               }
+               
+               // Добавляем преобразованный ряд (с учетом режима отображения)
+               if (transformedData.length > 0 && (displayMode === 'all' || displayMode === 'transformed')) {
+                   datasets.push({
+                       label: `${variable} (преобразованный)`,
+                       data: transformedData,
+                       borderColor: chartColors[(datasets.length) % chartColors.length],
+                       backgroundColor: 'transparent',
+                       borderWidth: 2,
+                       borderDash: [5, 5],
+                       tension: 0.1
+                   });
+                   
+                   // Добавляем в легенду
+                   const legendItem = document.createElement('div');
+                   legendItem.className = 'legend-item';
+                   
+                   const colorBox = document.createElement('div');
+                   colorBox.className = 'legend-color';
+                   colorBox.style.backgroundColor = chartColors[datasets.length - 1 % chartColors.length];
+                   
+                   const legendText = document.createElement('span');
+                   legendText.textContent = `${variable} (преобразованный)`;
+                   
+                   legendItem.appendChild(colorBox);
+                   legendItem.appendChild(legendText);
+                   previewLegend.appendChild(legendItem);
+               }
+           }
+           
+           // Создаем график
+           const ctx = canvas.getContext('2d');
+           
+           // Уничтожаем существующий график, если есть
+           if (window.previewChartInstance) {
+               window.previewChartInstance.destroy();
+           }
+           
+           // Создаем новый график
+           window.previewChartInstance = new Chart(ctx, {
+               type: 'line',
+               data: {
+                   labels: chartLabels,
+                   datasets: datasets
+               },
+               options: {
+                   responsive: true,
+                   maintainAspectRatio: false,
+                   interaction: {
+                       mode: 'index',
+                       intersect: false,
+                   },
+                   plugins: {
+                       legend: {
+                           display: false
+                       },
+                       tooltip: {
+                           enabled: true,
+                           mode: 'index',
+                           intersect: false
+                       }
+                   },
+                   scales: {
+                       x: {
+                           type: 'category',
+                           title: {
+                               display: true,
+                               text: 'Дата'
+                           },
+                           ticks: {
+                               maxRotation: 45,
+                               minRotation: 45
+                           }
+                       },
+                       y: {
+                           title: {
+                               display: true,
+                               text: 'Значение'
+                           },
+                           grid: {
+                               color: 'rgba(0, 0, 0, 0.05)'
+                           }
+                       }
+                   }
+               }
+           });
+           
+           // Показываем контейнер с графиком
+           chartContainer.style.display = 'block';
+           
+           // Кнопка закрытия графика
+           document.getElementById('closePreviewBtn').addEventListener('click', function() {
+               chartContainer.style.display = 'none';
+               if (window.previewChartInstance) {
+                   window.previewChartInstance.destroy();
+               }
+           });
+       }
+       
+       // Функция для преобразования данных
+       async function transformData() {
+           if (selectedVariables.length === 0) {
+               alert('Пожалуйста, выберите хотя бы одну переменную для преобразования.');
+               return;
+           }
+           
+           // Показываем модальное окно загрузки
+           loadingMessage.textContent = 'Преобразование данных...';
+           loadingDetails.textContent = 'Выполняется преобразование временных рядов...';
+           loadingModal.show();
+           
+           try {
+               // Получаем настройки преобразования
+               const transformationSettings = getTransformationSettings();
+               
+               // Готовим данные для запроса
+               const fileId = fileData.fileId;
+               const dateColumn = fileData.date_column || 'Дата';
+               
+               // Запрос к API для преобразования
+               const formData = new FormData();
+               formData.append('file_id', fileId);
+               formData.append('date_column', dateColumn);
+               formData.append('transformation_settings', JSON.stringify(transformationSettings));
+               formData.append('preview', 'false');
+               formData.append('display_mode', displayMode);
+               
+               // Отправляем запрос на трансформацию
+               const response = await fetch(`${API_URL}/transform-integration-order`, {
+                   method: 'POST',
+                   body: formData
+               });
+               
+               if (!response.ok) {
+                   throw new Error('Ошибка при преобразовании данных');
+               }
+               
+               const result = await response.json();
+               console.log('Результат преобразования:', result);
+               
+               // Сохраняем результат для дальнейшего использования
+               transformedData = result;
+               
+               // Обновляем localStorage с новыми данными
+               if (result.updated_file_id) {
+                   localStorage.setItem('fileId', result.updated_file_id);
+                   // Обновляем fileData для последующих операций
+                   fileData.fileId = result.updated_file_id;
+               }
+               
+               if (result.updated_columns_data) {
+                   localStorage.setItem('fileColumnsData', JSON.stringify(result.updated_columns_data));
+               }
+               
+               // Активируем кнопку скачивания
+               downloadBtn.disabled = false;
+               
+               // Показываем сообщение об успехе
+               transformMessage.textContent = 'Преобразование успешно выполнено. Вы можете скачать новый файл или продолжить работу с преобразованными данными.';
+               transformAlert.className = 'alert alert-success alert-transformation';
+               transformAlert.style.display = 'block';
+               
+               // Обновляем интерфейс с новыми данными
+               if (result.updated_columns_data) {
+                   fileData = result.updated_columns_data;
+                   fileData.fileId = result.updated_file_id || fileData.fileId;
+                   
+                   // Обновляем информацию о файле
+                   const numericColumns = fileData.numeric_columns || [];
+                   const rowsCount = fileData.rows_count || 0;
+                   fileDetails.textContent = `${numericColumns.length} числовых столбцов, ${rowsCount} наблюдений`;
+                   
+                   // Перезагружаем список переменных
+                   populateVariablesList();
+               }
+               
+           } catch (error) {
+               console.error('Ошибка при преобразовании данных:', error);
+               transformMessage.textContent = `Ошибка при преобразовании данных: ${error.message}`;
+               transformAlert.className = 'alert alert-danger alert-transformation';
+               transformAlert.style.display = 'block';
+           } finally {
+               // Скрываем модальное окно загрузки
+               loadingModal.hide();
+           }
+       }
+       
+       // Функция для скачивания преобразованных данных
+       async function downloadTransformedData() {
+           if (!transformedData || !transformedData.download_url) {
+               alert('Нет данных для скачивания. Сначала выполните преобразование.');
+               return;
+           }
+           
+           try {
+               // Создаем ссылку для скачивания
+               const downloadLink = document.createElement('a');
+               downloadLink.href = transformedData.download_url;
+               downloadLink.download = `transformed_${fileName.textContent}`;
+               downloadLink.style.display = 'none';
+               document.body.appendChild(downloadLink);
+               downloadLink.click();
+               document.body.removeChild(downloadLink);
+           } catch (error) {
+               console.error('Ошибка при скачивании файла:', error);
+               alert(`Ошибка при скачивании файла: ${error.message}`);
+           }
+       }
+   });
+   </script>
 </body>
 </html>
