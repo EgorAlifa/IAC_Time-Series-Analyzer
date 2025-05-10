@@ -712,9 +712,11 @@ async def transform_integration_order(
     
     Возможные значения порядка интеграции:
     - "none": Оставить как есть
-    - "I(0)": Привести к стационарному виду (дифференцирование до стационарности)
     - "I(1)": Привести к первому порядку интеграции
     - "I(2)": Привести к второму порядку интеграции
+    - "I(3)": Привести к третьему порядку интеграции
+    - "I(4)": Привести к четвертому порядку интеграции
+    - "normalize": Применить нормализацию
     
     Возможные методы преобразования:
     - "simple": Обычное дифференцирование (разности)
@@ -724,7 +726,7 @@ async def transform_integration_order(
     - "yeojohnson": Преобразование Йео-Джонсона
     - "rank": Ранговая нормализация
     - "auto": Автоматический выбор метода
-    - "extreme": Экстремальное преобразование для достижения стационарности
+    - "extreme": Экстремальное преобразование
     """
     # Проверяем наличие файла
     file_path = TEMP_FILES_DIR / file_id
@@ -774,7 +776,7 @@ async def transform_integration_order(
         transformed_df = df.copy()
         
         # Импортируем функции для преобразования
-        from ts_analysis import transform_to_stationary, transform_to_first_order, transform_to_second_order
+        from ts_analysis import extreme_transform_to_stationary
         
         # Преобразуем каждую переменную согласно настройкам
         for variable, transform_settings in settings.items():
@@ -800,42 +802,45 @@ async def transform_integration_order(
             series = df[variable].copy()
             
             # Преобразуем согласно выбранному порядку интеграции
-            if transform_to == "I(0)":  # Привести к стационарному виду
-                # Используем стандартные методы или экстремальное преобразование
-                if transform_method == 'extreme':
-                    transformed_series, transform_info = extreme_transform_to_stationary(
-                        series, 
-                        method='auto', 
-                        title=variable
-                    )
-                    # Используем информацию о трансформации
+            if transform_to in ["I(1)", "I(2)", "I(3)", "I(4)"]:
+                # Получаем порядок интеграции
+                order = int(transform_to[2])
+                
+                # Применяем дифференцирование нужное количество раз
+                transformed_series = series
+                for i in range(order):
+                    if transform_method == 'simple':
+                        transformed_series = transformed_series.diff()
+                    elif transform_method == 'percentage':
+                        transformed_series = transformed_series.pct_change()
+                    elif transform_method == 'log':
+                        # Логарифмическое дифференцирование
+                        if transformed_series.min() <= 0:
+                            min_val = transformed_series.min()
+                            offset = abs(min_val) + 1
+                            transformed_series = np.log(transformed_series + offset)
+                        else:
+                            transformed_series = np.log(transformed_series)
+                        transformed_series = transformed_series.diff()
+                
+                # Определяем имя для нового столбца
+                column_name = f"{variable}_I{order}"
+                
+            elif transform_to == "normalize":
+                # Применяем нормализацию
+                transformed_series, transform_info = extreme_transform_to_stationary(
+                    series, 
+                    method=transform_method, 
+                    title=variable
+                )
+                
+                # Определяем имя для нового столбца
+                if transform_method == 'auto':
+                    # Используем информацию о выбранном методе из transform_info
                     method_suffix = transform_info['transform_method'].split(' ')[0].lower()
-                    column_name = f"{variable}_I0_{method_suffix}"
+                    column_name = f"{variable}_norm_{method_suffix}"
                 else:
-                    transformed_series = transform_to_stationary(series, method=transform_method)
-                    column_name = f"{variable}_I0"
-                
-            elif transform_to == "I(1)":  # Привести к первому порядку интеграции
-                transformed_series = transform_to_first_order(series, method=transform_method)
-                
-                # Определяем подходящее имя для нового столбца
-                if variable.endswith("_I0"):
-                    # Если преобразуем от I(0) к I(1), меняем суффикс
-                    column_name = variable.replace("_I0", "_I1")
-                else:
-                    # Иначе просто добавляем суффикс
-                    column_name = f"{variable}_I1"
-                
-            elif transform_to == "I(2)":  # Привести к второму порядку интеграции
-                transformed_series = transform_to_second_order(series, method=transform_method)
-                
-                # Определяем подходящее имя для нового столбца
-                if variable.endswith("_I0"):
-                    column_name = variable.replace("_I0", "_I2")
-                elif variable.endswith("_I1"):
-                    column_name = variable.replace("_I1", "_I2")
-                else:
-                    column_name = f"{variable}_I2"
+                    column_name = f"{variable}_norm_{transform_method}"
             
             else:
                 # Неизвестный тип преобразования, пропускаем
@@ -859,29 +864,12 @@ async def transform_integration_order(
                     display_mode=display_mode
                 )
         
-            # Добавляем преобразованный ряд в DataFrame, только если режим отображения позволяет
-            if display_mode in ['all', 'transformed']:
-                transformed_df[column_name] = transformed_series
-                
-                # В режиме "только преобразованные" удаляем исходный ряд, если он не нужен
-                if display_mode == 'transformed' and column_name != variable:
-                    if variable in transformed_df.columns:
-                        transformed_df = transformed_df.drop(columns=[variable])
-            
-            # Добавляем данные для предпросмотра
-            if is_preview:
-                # Используем функцию форматирования с учетом режима отображения
-                preview_data["transformed_data"][variable] = format_time_series_for_preview(
-                    series, 
-                    transformed_series, 
-                    display_mode=display_mode
-                )
-        
         # Если режим "только оригинальные", удаляем все преобразованные ряды
         if display_mode == 'original':
-            # Находим все столбцы, которые заканчиваются на _I0, _I1, _I2 или содержат суффиксы методов
+            # Находим все столбцы с преобразованиями
             transformed_columns = [col for col in transformed_df.columns if 
-                                  col.endswith(('_I0', '_I1', '_I2', '_rank', '_boxcox', '_yeojohnson', '_log', '_simple', '_percentage'))]
+                                  col.endswith(('_I1', '_I2', '_I3', '_I4', '_norm')) or
+                                  '_norm_' in col]
             if transformed_columns:
                 transformed_df = transformed_df.drop(columns=transformed_columns)
         
