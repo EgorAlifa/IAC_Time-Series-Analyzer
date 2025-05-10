@@ -728,7 +728,14 @@
                         <li><span class="badge-extreme">Экстремальная нормализация</span> - комплексное преобразование с использованием методов Box-Cox, Yeo-Johnson, ранговой нормализации для улучшения статистических свойств.</li>
                     </ul>
                 </div>
-                
+                <div class="transforms-info">
+                    <h4>Методы дифференцирования для интеграции</h4>
+                    <ul>
+                        <li><span class="badge-transform">Простое дифференцирование</span> - вычисление разности между последовательными наблюдениями.</li>
+                        <li><span class="badge-transform">Процентное изменение</span> - относительное изменение в процентах между последовательными значениями.</li>
+                        <li><span class="badge-transform">Логарифмическое изменение</span> - логарифм отношения текущего и предыдущего значений.</li>
+                    </ul>
+                </div>
                 <div class="transforms-info">
                     <h4>Методы преобразования</h4>
                     <ul>
@@ -1133,11 +1140,14 @@
                select.dataset.variable = column;
                
                // Опции для селекта с типами преобразования
-               const options = [
-                   { value: 'none', text: 'Оставить как есть' },
-                   { value: 'I(0)', text: 'Стационаризация - I(0)' },
-                   { value: 'normalize', text: 'Нормализация' }
-               ];
+                const options = [
+                    { value: 'none', text: 'Оставить как есть' },
+                    { value: 'I(1)', text: 'Интеграция 1-го порядка - I(1)' },
+                    { value: 'I(2)', text: 'Интеграция 2-го порядка - I(2)' },
+                    { value: 'I(3)', text: 'Интеграция 3-го порядка - I(3)' },
+                    { value: 'I(4)', text: 'Интеграция 4-го порядка - I(4)' },
+                    { value: 'normalize', text: 'Нормализация' }
+                ];
                
                options.forEach(opt => {
                    const option = document.createElement('option');
@@ -1157,49 +1167,48 @@
                methodSelect.dataset.variable = column;
                
                // Обработчик изменения типа преобразования
-               select.addEventListener('change', function() {
-                   const selectedType = this.value;
-                   
-                   // Показываем селект с методом в зависимости от выбранного типа
-                   if (selectedType === 'I(0)' || selectedType === 'normalize') {
-                       methodWrapper.style.display = 'block';
-                       
-                       // Очищаем текущие опции
-                       methodSelect.innerHTML = '';
-                       
-                       // Добавляем подходящие методы в зависимости от выбранного типа преобразования
-                       if (selectedType === 'I(0)') {
-                           // Методы для стационаризации
-                           [
-                               { value: 'simple', text: 'Простое дифференцирование' },
-                               { value: 'percentage', text: 'Процентное изменение' },
-                               { value: 'log', text: 'Логарифмическое изменение' },
-                               { value: 'extreme', text: 'Экстремальное преобразование' }
-                           ].forEach(method => {
-                               const option = document.createElement('option');
-                               option.value = method.value;
-                               option.textContent = method.text;
-                               methodSelect.appendChild(option);
-                           });
-                       } else if (selectedType === 'normalize') {
-                           // Методы для нормализации
-                           [
-                               { value: 'boxcox', text: 'Преобразование Бокса-Кокса' },
-                               { value: 'yeojohnson', text: 'Преобразование Йео-Джонсона' },
-                               { value: 'rank', text: 'Ранговая нормализация' },
-                               { value: 'auto', text: 'Автоматический выбор метода' },
-                               { value: 'extreme', text: 'Экстремальная нормализация' }
-                           ].forEach(method => {
-                               const option = document.createElement('option');
-                               option.value = method.value;
-                               option.textContent = method.text;
-                               methodSelect.appendChild(option);
-                           });
-                       }
-                   } else {
-                       methodWrapper.style.display = 'none';
-                   }
-               });
+                select.addEventListener('change', function() {
+                    const selectedType = this.value;
+                    
+                    // Показываем селект с методом в зависимости от выбранного типа
+                    if (['I(1)', 'I(2)', 'I(3)', 'I(4)', 'normalize'].includes(selectedType)) {
+                        methodWrapper.style.display = 'block';
+                        
+                        // Очищаем текущие опции
+                        methodSelect.innerHTML = '';
+                        
+                        // Добавляем подходящие методы в зависимости от выбранного типа преобразования
+                        if (['I(1)', 'I(2)', 'I(3)', 'I(4)'].includes(selectedType)) {
+                            // Методы для дифференцирования (интеграции обратно)
+                            [
+                                { value: 'simple', text: 'Простое дифференцирование' },
+                                { value: 'percentage', text: 'Процентное изменение' },
+                                { value: 'log', text: 'Логарифмическое изменение' }
+                            ].forEach(method => {
+                                const option = document.createElement('option');
+                                option.value = method.value;
+                                option.textContent = method.text;
+                                methodSelect.appendChild(option);
+                            });
+                        } else if (selectedType === 'normalize') {
+                            // Методы для нормализации
+                            [
+                                { value: 'boxcox', text: 'Преобразование Бокса-Кокса' },
+                                { value: 'yeojohnson', text: 'Преобразование Йео-Джонсона' },
+                                { value: 'rank', text: 'Ранговая нормализация' },
+                                { value: 'auto', text: 'Автоматический выбор метода' },
+                                { value: 'extreme', text: 'Экстремальная нормализация' }
+                            ].forEach(method => {
+                                const option = document.createElement('option');
+                                option.value = method.value;
+                                option.textContent = method.text;
+                                methodSelect.appendChild(option);
+                            });
+                        }
+                    } else {
+                        methodWrapper.style.display = 'none';
+                    }
+                });
                
                selectWrapper.appendChild(select);
                methodWrapper.appendChild(methodSelect);
