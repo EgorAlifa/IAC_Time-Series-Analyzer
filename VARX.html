@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
     <style>
-        /* Дополнительные стили для страницы VARX */
+        /* Основные стили для страницы VARX */
         .model-container {
             background-color: white;
             border-radius: 8px;
@@ -68,8 +68,8 @@
 
         .numeric-input{
             max-width: 200px;
-            padding: 8px 12px; /* Внутренние отступы (сверху/снизу 8px, слева/справа 12px) */
-            margin: 0 10px;    /* Внешние отступы слева и справа по 15px */
+            padding: 8px 12px;
+            margin: 0 10px;
             border: 1px solid #cbd5e1;
             border-radius: 6px;
             font-size: 14px;
@@ -197,7 +197,7 @@
 
         .forecast-chart {
             width: 100%;
-            height: 300px;
+            height: 400px;
             margin-top: 20px;
             background-color: white;
             border-radius: 8px;
@@ -297,25 +297,6 @@
             font-size: 13px;
             color: #3b82f6;
         }
-        .acf-pacf-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(500px, 1fr)); /* Увеличиваем минимальную ширину с 400px до 500px */
-            gap: 20px;
-            margin-top: 15px;
-        }
-        
-        .acf-pacf-item {
-            background-color: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-        
-        .acf-pacf-item img {
-            height: auto;
-            max-height: 600px; /* Увеличиваем максимальную высоту для графиков */
-            object-fit: contain;
-        }
         
         .selected-item .remove-item {
             margin-left: 5px;
@@ -385,54 +366,90 @@
         .multi-select-toggle i {
             margin-left: 10px;
             color: #64748b;
-        }/* Стили для контейнера с графиками */
+        }
+        
+        /* НОВЫЕ СТИЛИ ДЛЯ ГРАФИКОВ ACF/PACF */
         .acf-pacf-container {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8fafc;
+            border-radius: 8px;
+        }
+        
+        .acf-pacf-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
             margin-top: 20px;
         }
         
-        /* Медиа-запросы для адаптивности */
-        @media (max-width: 767.98px) {
-            .acf-pacf-wrapper {
-                padding: 10px !important;
-            }
-            
-            .scroll-container {
-                margin-bottom: 10px;
-                padding-bottom: 10px;
-                /* Визуальная подсказка о возможности прокрутки */
-                background-image: linear-gradient(to right, #f1f5f9, #ffffff00);
-                background-size: 20px 100%;
-                background-repeat: no-repeat;
-            }
-            
-            .mobile-scroll-hint {
-                display: block !important;
-                font-size: 12px;
-                margin-bottom: 5px;
-                color: #64748b;
-                text-align: center;
-            }
-            
-            /* Улучшение прокрутки на мобильных устройствах */
-            .scroll-container::-webkit-scrollbar {
-                height: 3px;
-            }
-            
-            .scroll-container::-webkit-scrollbar-track {
-                background: #f1f5f9;
-            }
-            
-            .scroll-container::-webkit-scrollbar-thumb {
-                background: #cbd5e1;
-                border-radius: 3px;
+        .acf-pacf-item {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .acf-pacf-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .acf-pacf-item img:hover {
+            transform: scale(1.02);
+        }
+        
+        .acf-pacf-caption {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: 600;
+            color: #334155;
+            font-size: 16px;
+        }
+        
+        /* Адаптивность для одной колонки на мобильных */
+        @media (max-width: 768px) {
+            .acf-pacf-grid {
+                grid-template-columns: 1fr;
             }
         }
         
-        /* Для планшетов */
-        @media (min-width: 768px) and (max-width: 991.98px) {
-            .scroll-container img {
-                max-width: 700px;
-            }
+        /* Модальное окно для увеличения изображений */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-image {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .modal-close:hover {
+            color: #f0f0f0;
         }
 
         /* Медиа-запросы для адаптивности */
@@ -447,7 +464,7 @@
                 grid-template-columns: 1fr 1fr;
             }
             
-            .metrics-table, .lag-selection-table {
+            .metrics-table {
                 display: block;
                 overflow-x: auto;
             }
@@ -460,64 +477,6 @@
             
             .numeric-input, .train-size-slider {
                 max-width: 100%;
-            }
-        }
-        /* Стили для адаптивности графиков ACF/PACF */
-        @media (max-width: 767.98px) {
-            .acf-pacf-item {
-                width: 100% !important;
-                overflow-x: auto;
-                white-space: nowrap;
-                padding: 10px !important;
-            }
-            
-            .acf-pacf-item img {
-                max-width: none;
-                width: 100%;
-                height: auto;
-                max-height: 400px;
-                object-fit: contain;
-            }
-            
-            .acf-pacf-grid {
-                display: block !important;
-                margin-bottom: 20px;
-            }
-            
-            /* Индикатор прокрутки для пользователя */
-            .acf-pacf-item::after {
-                content: '\f07e  Прокрутите для просмотра';
-                font-family: 'Font Awesome 6 Free';
-                font-weight: 900;
-                display: block;
-                text-align: center;
-                font-size: 12px;
-                color: #64748b;
-                margin-top: 8px;
-                white-space: normal;
-            }
-        }
-        
-        /* Для планшетов - графики в две колонки */
-        @media (min-width: 768px) and (max-width: 991.98px) {
-            .acf-pacf-grid {
-                grid-template-columns: repeat(2, 1fr) !important;
-            }
-            
-            .acf-pacf-item img {
-                width: 100%;
-                height: auto;
-            }
-        }
-        
-        /* Для больших экранов */
-        @media (min-width: 992px) {
-            .acf-pacf-item {
-                transition: transform 0.2s;
-            }
-            
-            .acf-pacf-item:hover {
-                transform: scale(1.02);
             }
         }
     </style>
@@ -654,13 +613,12 @@
                     <div class="input-group">
                         <label class="input-label" for="lags-input">Количество лагов:</label>
                         <input type="number" id="lags-input" class="numeric-input" min="1" max="10" value="1">
-                        <div class="input-hint">Количество предыдущих периодов, используемых для прогноза</div>
                     </div>
                     
                     <div class="input-group">
                         <label class="input-label" for="train-size">Доля данных для обучения:</label>
                         <input type="range" id="train-size" class="train-size-slider" min="0.5" max="0.95" step="0.05" value="0.8">
-                        <div class="input-value"><span id="train-size-value">80%</span> данных будет использовано для обучения</div>
+                        <span id="train-size-value">80%</span>
                     </div>
                     
                     <button id="build-model-btn" class="build-model-btn">
@@ -673,12 +631,12 @@
                 <div id="model-results" class="model-results">
                     <div class="results-section">
                         <h3 class="section-title">Информация о модели</h3>
-                        <div class="info-item">
-                                <div class="info-label">Тип модели</div>
-                                <div class="info-value" id="model-type">-</div>
-                            </div>
-                            <div class="card-section">
+                        <div class="card-section">
                             <div class="info-grid">
+                                <div class="info-item">
+                                    <div class="info-label">Тип модели</div>
+                                    <div class="info-value" id="model-type">-</div>
+                                </div>
                                 <div class="info-item">
                                     <div class="info-label">Эндогенные переменные</div>
                                     <div class="info-value" id="model-endog">-</div>
@@ -713,32 +671,12 @@
                                 </div>
                             </div>
                         </div>
-                    </div>           
+                    </div>
                     
                     <div class="results-section">
                         <h3 class="section-title">Анализ оптимального числа лагов</h3>
-                        
-                         <div class="card-section" id="lag-analysis-container">
-                            <p>На основе анализа определено оптимальное количество лагов для модели:</p>
-                            
-                        <table class="metrics-table" id="metrics-table">
-                            <thead>
-                                <tr>
-                                    <th>Переменная</th>
-                                    <th>MSE</th>
-                                    <th>MAE</th>
-                                    <th>RMSE</th>
-                                    <th>MAPE</th>
-                                </tr>
-                            </thead>
-                            <tbody id="metrics-body">
-                                <!-- Данные будут загружены с помощью JavaScript -->
-                            </tbody>
-                        </table>
-                            
-                            <div class="lag-recommendation" id="lag-recommendation">
-                                Рекомендуемое количество лагов: <strong id="recommended-lags">1</strong>
-                            </div>
+                        <div class="card-section" id="lag-analysis-container">
+                            <!-- Анализ лагов будет загружен динамически -->
                         </div>
                     </div>
                     
@@ -754,6 +692,8 @@
                                         <th>Переменная</th>
                                         <th>MSE</th>
                                         <th>MAE</th>
+                                        <th>RMSE</th>
+                                        <th>MAPE</th>
                                     </tr>
                                 </thead>
                                 <tbody id="metrics-body">
@@ -839,6 +779,7 @@
         const errorContainer = document.getElementById('error-container');
         
         // Элементы для отображения результатов
+        const modelType = document.getElementById('model-type');
         const modelEndog = document.getElementById('model-endog');
         const modelExog = document.getElementById('model-exog');
         const modelLags = document.getElementById('model-lags');
@@ -849,10 +790,6 @@
         const modelHqic = document.getElementById('model-hqic');
         
         const lagAnalysisContainer = document.getElementById('lag-analysis-container');
-        
-        const lagSelectionBody = document.getElementById('lag-selection-body');
-        const recommendedLags = document.getElementById('recommended-lags');
-        
         const metricsBody = document.getElementById('metrics-body');
         const forecastChartsContainer = document.getElementById('forecast-charts-container');
         const downloadReportBtn = document.getElementById('download-report-btn');
@@ -921,16 +858,13 @@
             const index = selectedEndogenous.indexOf(value);
             
             if (index === -1) {
-                // Если переменная не выбрана, добавляем её
                 selectedEndogenous.push(value);
             } else {
-                // Если переменная уже выбрана, удаляем её
                 selectedEndogenous.splice(index, 1);
             }
             
             updateEndogenousDisplay();
             
-            // Если переменная добавлена в эндогенные, убираем её из экзогенных
             if (index === -1) {
                 const exoIndex = selectedExogenous.indexOf(value);
                 if (exoIndex !== -1) {
@@ -938,22 +872,18 @@
                     updateExogenousDisplay();
                 }
             }
-            // Закрываем выпадающий список после выбора
             endogenousDropdown.style.display = 'none';
         }
         
         function updateEndogenousDisplay() {
-            // Очищаем текущий список
             endogenousSelected.innerHTML = '';
             
-            // Обновляем текст кнопки
             if (selectedEndogenous.length === 0) {
                 endogenousToggle.querySelector('span').textContent = 'Выберите переменные...';
             } else {
                 endogenousToggle.querySelector('span').textContent = `Выбрано: ${selectedEndogenous.length}`;
             }
             
-            // Добавляем выбранные элементы
             selectedEndogenous.forEach(value => {
                 const item = document.createElement('div');
                 item.className = 'selected-item';
@@ -971,7 +901,6 @@
                 endogenousSelected.appendChild(item);
             });
             
-            // Обновляем стили элементов в выпадающем списке
             const items = endogenousItems.querySelectorAll('.dropdown-item');
             items.forEach(item => {
                 if (selectedEndogenous.includes(item.dataset.value)) {
@@ -995,16 +924,13 @@
             const index = selectedExogenous.indexOf(value);
             
             if (index === -1) {
-                // Если переменная не выбрана, добавляем её
                 selectedExogenous.push(value);
             } else {
-                // Если переменная уже выбрана, удаляем её
                 selectedExogenous.splice(index, 1);
             }
             
             updateExogenousDisplay();
             
-            // Если переменная добавлена в экзогенные, убираем её из эндогенных
             if (index === -1) {
                 const endoIndex = selectedEndogenous.indexOf(value);
                 if (endoIndex !== -1) {
@@ -1012,22 +938,18 @@
                     updateEndogenousDisplay();
                 }
             }
-            // Закрываем выпадающий список после выбора
             exogenousDropdown.style.display = 'none';
         }
         
         function updateExogenousDisplay() {
-            // Очищаем текущий список
             exogenousSelected.innerHTML = '';
             
-            // Обновляем текст кнопки
             if (selectedExogenous.length === 0) {
                 exogenousToggle.querySelector('span').textContent = 'Выберите переменные...';
             } else {
                 exogenousToggle.querySelector('span').textContent = `Выбрано: ${selectedExogenous.length}`;
             }
             
-            // Добавляем выбранные элементы
             selectedExogenous.forEach(value => {
                 const item = document.createElement('div');
                 item.className = 'selected-item';
@@ -1045,7 +967,6 @@
                 exogenousSelected.appendChild(item);
             });
             
-            // Обновляем стили элементов в выпадающем списке
             const items = exogenousItems.querySelectorAll('.dropdown-item');
             items.forEach(item => {
                 if (selectedExogenous.includes(item.dataset.value)) {
@@ -1061,7 +982,6 @@
             if (dropdown.style.display === 'block') {
                 dropdown.style.display = 'none';
             } else {
-                // Закрываем все открытые выпадающие списки
                 const allDropdowns = document.querySelectorAll('.dropdown-container');
                 allDropdowns.forEach(d => {
                     d.style.display = 'none';
@@ -1104,46 +1024,32 @@
         
         // Функция очистки графиков
         function clearCharts() {
-            // Уничтожаем предыдущие экземпляры графиков
             chartInstances.forEach(chart => {
                 if (chart) {
                     chart.destroy();
                 }
             });
             
-            // Очищаем массив графиков
             chartInstances.length = 0;
-            
-            // Очищаем контейнер графиков
             forecastChartsContainer.innerHTML = '';
         }
         
         // Обработка нажатия кнопки "Построить модель"
         buildModelBtn.addEventListener('click', function() {
-            // Проверяем наличие выбранных эндогенных переменных
             if (selectedEndogenous.length === 0) {
                 errorContainer.textContent = 'Выберите хотя бы одну эндогенную переменную для построения модели';
                 errorContainer.style.display = 'block';
                 return;
             }
             
-            // Скрываем ошибки
             errorContainer.style.display = 'none';
-            
-            // Показываем индикатор загрузки
             loadingSpinner.style.display = 'block';
-            
-            // Скрываем результаты, если они были отображены ранее
             modelResults.style.display = 'none';
-            
-            // Очищаем предыдущие графики
             clearCharts();
             
-            // Получаем значения параметров
             const lags = parseInt(lagsInput.value);
             const trainSize = parseFloat(trainSizeSlider.value);
             
-            // Формируем данные для отправки
             const formData = new FormData();
             formData.append('file_id', fileId);
             formData.append('date_column', 'Дата');
@@ -1156,7 +1062,6 @@
             formData.append('lags', lags);
             formData.append('train_size', trainSize);
             
-            // Отправляем запрос на построение модели
             fetch(`${API_URL}/build-varx-model`, {
                 method: 'POST',
                 body: formData
@@ -1170,12 +1075,10 @@
             .then(results => {
                 console.log("Результаты построения модели:", results);
                 
-                // Проверяем успешность построения модели
                 if (!results.success) {
                     throw new Error(results.error || 'Не удалось построить модель');
                 }
                 
-                // Отображаем результаты
                 displayModelResults(results);
             })
             .catch(error => {
@@ -1184,375 +1087,269 @@
                 errorContainer.style.display = 'block';
             })
             .finally(() => {
-                // Скрываем индикатор загрузки
                 loadingSpinner.style.display = 'none';
             });
         });
         
-// Функция для отображения результатов построения модели
-function displayModelResults(results) {
-    const modelInfo = results.model_info;
-    
-    // Заполняем информацию о модели
-    modelEndog.textContent = modelInfo.endogenous_vars.join(', ');
-    modelExog.textContent = modelInfo.exogenous_vars.length > 0 ? modelInfo.exogenous_vars.join(', ') : 'Не используются';
-    modelLags.textContent = modelInfo.lags;
-    modelTrainSize.textContent = `${modelInfo.train_size} наблюдений`;
-    modelTestSize.textContent = `${modelInfo.test_size} наблюдений`;
-    
-    // Добавляем тип модели
-    const modelTypeBadge = document.createElement('span');
-    modelTypeBadge.className = 'model-type-badge';
-    modelTypeBadge.textContent = modelInfo.model_type || 'VARX';
-    modelTypeBadge.style.backgroundColor = modelInfo.model_type === 'ARX' ? '#10b981' : '#3b82f6';
-    modelTypeBadge.style.color = 'white';
-    modelTypeBadge.style.padding = '3px 8px';
-    modelTypeBadge.style.borderRadius = '4px';
-    modelTypeBadge.style.fontSize = '12px';
-    modelTypeBadge.style.marginLeft = '10px';
-    
-    const modelTypeElement = document.getElementById('model-type');
-    modelTypeElement.textContent = modelInfo.model_type || 'Vcalc(var(--bs-border-width';
-    modelTypeElement.appendChild(modelTypeBadge);
-    
-    if (modelInfo.aic !== undefined) modelAic.textContent = modelInfo.aic.toFixed(2);
-    if (modelInfo.bic !== undefined) modelBic.textContent = modelInfo.bic.toFixed(2);
-    if (modelInfo.hqic !== undefined && modelInfo.hqic !== null) modelHqic.textContent = modelInfo.hqic.toFixed(2);
-    
-    // Отображаем информацию об оптимальных лагах из ACF/PACF
-    if (results.diagnostics && results.diagnostics.lag_analysis) {
-        const lagAnalysis = results.diagnostics.lag_analysis;
-        
-        // Очищаем контейнер
-        lagAnalysisContainer.innerHTML = '';
-        
-        // Создаем заголовок
-        const heading = document.createElement('h4');
-        heading.textContent = 'Анализ автокорреляций';
-        lagAnalysisContainer.appendChild(heading);
-        
-        // Создаем таблицу с оптимальными лагами
-        const table = document.createElement('table');
-        table.className = 'lag-analysis-table';
-        
-        // Создаем заголовок таблицы
-        const thead = document.createElement('thead');
-        const headerRow = document.createElement('tr');
-        
-        const headerCell1 = document.createElement('th');
-        headerCell1.textContent = 'Переменная';
-        headerRow.appendChild(headerCell1);
-        
-        const headerCell2 = document.createElement('th');
-        headerCell2.textContent = 'Оптимальное число лагов';
-        headerRow.appendChild(headerCell2);
-        
-        thead.appendChild(headerRow);
-        table.appendChild(thead);
-        
-        // Создаем тело таблицы
-        const tbody = document.createElement('tbody');
-        
-        // Добавляем информацию по каждой переменной
-        Object.entries(lagAnalysis.optimal_lags).forEach(([variable, optimalLag]) => {
-            const row = document.createElement('tr');
+        // Функция для отображения результатов построения модели
+        function displayModelResults(results) {
+            const modelInfo = results.model_info;
             
-            const cell1 = document.createElement('td');
-            cell1.textContent = variable;
-            row.appendChild(cell1);
+            // Заполняем информацию о модели
+            modelType.textContent = modelInfo.model_type || 'VARX';
+            modelEndog.textContent = modelInfo.endogenous_vars.join(', ');
+            modelExog.textContent = modelInfo.exogenous_vars.length > 0 ? modelInfo.exogenous_vars.join(', ') : 'Не используются';
+            modelLags.textContent = modelInfo.lags;
+            modelTrainSize.textContent = `${modelInfo.train_size} наблюдений`;
+            modelTestSize.textContent = `${modelInfo.test_size} наблюдений`;
             
-            const cell2 = document.createElement('td');
-            cell2.textContent = optimalLag;
-            row.appendChild(cell2);
+            if (modelInfo.aic !== undefined) modelAic.textContent = modelInfo.aic.toFixed(2);
+            if (modelInfo.bic !== undefined) modelBic.textContent = modelInfo.bic.toFixed(2);
+            if (modelInfo.hqic !== undefined && modelInfo.hqic !== null) modelHqic.textContent = modelInfo.hqic.toFixed(2);
             
-            tbody.appendChild(row);
-        });
-        
-        table.appendChild(tbody);
-        lagAnalysisContainer.appendChild(table);
-        
-        // Добавляем рекомендацию
-        const recommendationText = document.createElement('div');
-        recommendationText.className = 'lag-recommendation';
-        recommendationText.innerHTML = `Рекомендуемое количество лагов (максимальное из оптимальных): <strong>${lagAnalysis.optimal_lag_final}</strong>`;
-        lagAnalysisContainer.appendChild(recommendationText);
-        
-        // Отображаем графики ACF и PACF, если они есть
-        if (results.plots && results.plots.acf_pacf_plots) {
-            const acfPacfPlots = results.plots.acf_pacf_plots;
-            
-            // Создаем контейнер для графиков
-            const plotsContainer = document.createElement('div');
-            plotsContainer.className = 'acf-pacf-plots';
-            plotsContainer.style.marginTop = '20px';
-            
-            // Добавляем заголовок
-            const plotsHeading = document.createElement('h4');
-            plotsHeading.textContent = 'Графики ACF и PACF';
-            plotsContainer.appendChild(plotsHeading);
-            
-            // Создаем контейнер для графиков
-            const plotsGrid = document.createElement('div');
-            plotsGrid.className = 'acf-pacf-grid';
-            plotsGrid.style.display = 'grid';
-            plotsGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(400px, 1fr))';
-            plotsGrid.style.gap = '20px';
-            plotsGrid.style.marginTop = '15px';
-            
-            // Добавляем каждый график с возможностью увеличения при клике
-            acfPacfPlots.forEach((plot, index) => {
-                const plotItem = document.createElement('div');
-                plotItem.className = 'acf-pacf-item';
+            // Отображаем анализ оптимальных лагов и графики ACF/PACF
+            if (results.diagnostics && results.diagnostics.lag_analysis) {
+                const lagAnalysis = results.diagnostics.lag_analysis;
                 
-                const img = document.createElement('img');
-                img.src = `data:image/png;base64,${plot}`;
-                img.alt = `ACF/PACF График ${index + 1}`;
-                img.style.height = 'auto';
-                img.style.maxHeight = '600px';
-                img.style.cursor = 'pointer'; // Указываем, что на изображение можно кликнуть
+                lagAnalysisContainer.innerHTML = '';
                 
-                // Добавляем обработчик клика для увеличения изображения
-                img.addEventListener('click', function() {
-                    // Создаем модальное окно
-                    const modal = document.createElement('div');
-                    modal.style.position = 'fixed';
-                    modal.style.top = '0';
-                    modal.style.left = '0';
-                    modal.style.width = '100%';
-                    modal.style.height = '100%';
-                    modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
-                    modal.style.display = 'flex';
-                    modal.style.alignItems = 'center';
-                    modal.style.justifyContent = 'center';
-                    modal.style.zIndex = '1000';
+                const heading = document.createElement('h4');
+                heading.textContent = 'Анализ автокорреляций';
+                lagAnalysisContainer.appendChild(heading);
+                
+                // Отображаем графики ACF и PACF
+                if (results.plots && results.plots.acf_pacf_plots) {
+                    const acfPacfPlots = results.plots.acf_pacf_plots;
                     
-                    // Создаем увеличенное изображение
-                    const modalImg = document.createElement('img');
-                    modalImg.src = img.src;
-                    modalImg.style.maxWidth = '90%';
-                    modalImg.style.maxHeight = '90%';
-                    modalImg.style.objectFit = 'contain';
+                    const plotsContainer = document.createElement('div');
+                    plotsContainer.className = 'acf-pacf-container';
                     
-                    // Добавляем кнопку закрытия
-                    const closeBtn = document.createElement('span');
-                    closeBtn.textContent = '×';
-                    closeBtn.style.position = 'absolute';
-                    closeBtn.style.top = '20px';
-                    closeBtn.style.right = '30px';
-                    closeBtn.style.color = 'white';
-                    closeBtn.style.fontSize = '40px';
-                    closeBtn.style.fontWeight = 'bold';
-                    closeBtn.style.cursor = 'pointer';
+                    const plotsHeading = document.createElement('h4');
+                    plotsHeading.textContent = 'Графики ACF и PACF';
+                    plotsContainer.appendChild(plotsHeading);
                     
-                    // Обработчик закрытия модального окна
-                    closeBtn.addEventListener('click', function() {
-                        document.body.removeChild(modal);
-                    });
+                    const plotsGrid = document.createElement('div');
+                    plotsGrid.className = 'acf-pacf-grid';
                     
-                    // Закрытие модального окна при клике вне изображения
-                    modal.addEventListener('click', function(event) {
-                        if (event.target === modal) {
-                            document.body.removeChild(modal);
+                    acfPacfPlots.forEach((plot, index) => {
+                        const plotItem = document.createElement('div');
+                        plotItem.className = 'acf-pacf-item';
+                        
+                        const img = document.createElement('img');
+                        img.src = `data:image/png;base64,${plot}`;
+                        img.alt = `ACF/PACF График ${index + 1}`;
+                        
+                        // Добавляем обработчик клика для увеличения
+                        img.addEventListener('click', function() {
+                            const modal = document.createElement('div');
+                            modal.className = 'modal-overlay';
+                            
+                            const modalImg = document.createElement('img');
+                            modalImg.src = img.src;
+                            modalImg.className = 'modal-image';
+                            
+                            const closeBtn = document.createElement('span');
+                            closeBtn.className = 'modal-close';
+                            closeBtn.innerHTML = '&times;';
+                            
+                            closeBtn.addEventListener('click', function() {
+                                document.body.removeChild(modal);
+                            });
+                            
+                            modal.addEventListener('click', function(event) {
+                                if (event.target === modal) {
+                                    document.body.removeChild(modal);
+                                }
+                            });
+                            
+                            modal.appendChild(modalImg);
+                            modal.appendChild(closeBtn);
+                            document.body.appendChild(modal);
+                        });
+                        
+                        plotItem.appendChild(img);
+                        
+                        // Добавляем подпись
+                        if (index < modelInfo.endogenous_vars.length) {
+                            const caption = document.createElement('div');
+                            caption.className = 'acf-pacf-caption';
+                            caption.textContent = `ACF и PACF для "${modelInfo.endogenous_vars[index]}"`;
+                            plotItem.appendChild(caption);
                         }
+                        
+                        plotsGrid.appendChild(plotItem);
                     });
                     
-                    // Добавляем элементы в модальное окно
-                    modal.appendChild(modalImg);
-                    modal.appendChild(closeBtn);
-                    
-                    // Добавляем модальное окно в body
-                    document.body.appendChild(modal);
-                });
-                
-                // Добавляем подпись с именем переменной
-                if (index < modelInfo.endogenous_vars.length) {
-                    const caption = document.createElement('div');
-                    caption.className = 'acf-pacf-caption';
-                    caption.textContent = `ACF и PACF для "${modelInfo.endogenous_vars[index]}"`;
-                    caption.style.textAlign = 'center';
-                    caption.style.marginTop = '10px';
-                    caption.style.fontWeight = '500';
-                    plotItem.appendChild(caption);
+                    plotsContainer.appendChild(plotsGrid);
+                    lagAnalysisContainer.appendChild(plotsContainer);
                 }
                 
-                plotItem.appendChild(img);
-                plotsGrid.appendChild(plotItem);
-            });
-            
-            plotsContainer.appendChild(plotsGrid);
-            lagAnalysisContainer.appendChild(plotsContainer);
-        }
-    }
-    
-    // Заполняем метрики прогнозирования
-    if (results.forecasts && results.forecasts.metrics) {
-        const metrics = results.forecasts.metrics;
-        
-        // Очищаем существующие строки
-        metricsBody.innerHTML = '';
-        
-        // Заполняем таблицу
-        Object.keys(metrics.mse).forEach(variable => {
-            const row = document.createElement('tr');
-            
-            const varCell = document.createElement('td');
-            varCell.textContent = variable;
-            row.appendChild(varCell);
-            
-            const mseCell = document.createElement('td');
-            mseCell.textContent = metrics.mse[variable].toFixed(4);
-            row.appendChild(mseCell);
-            
-            const maeCell = document.createElement('td');
-            maeCell.textContent = metrics.mae[variable].toFixed(4);
-            row.appendChild(maeCell);
-            
-            // Добавляем RMSE, если есть
-            if (metrics.rmse && metrics.rmse[variable] !== undefined) {
-                const rmseCell = document.createElement('td');
-                rmseCell.textContent = metrics.rmse[variable].toFixed(4);
-                row.appendChild(rmseCell);
+                // Создаем таблицу с информацией об оптимальных лагах
+                const table = document.createElement('table');
+                table.className = 'lag-selection-table';
+                table.style.width = '100%';
+                table.style.marginTop = '20px';
+                
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                headerRow.innerHTML = '<th>Переменная</th><th>Оптимальное число лагов</th>';
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+                
+                const tbody = document.createElement('tbody');
+                
+                Object.entries(lagAnalysis.optimal_lags).forEach(([variable, optimalLag]) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td>${variable}</td><td class="optimal-value">${optimalLag}</td>`;
+                    tbody.appendChild(row);
+                });
+                
+                table.appendChild(tbody);
+                lagAnalysisContainer.appendChild(table);
+                
+                // Добавляем рекомендацию
+                const recommendationText = document.createElement('div');
+                recommendationText.style.marginTop = '20px';
+                recommendationText.style.fontSize = '16px';
+                recommendationText.innerHTML = `<strong>Рекомендуемое количество лагов:</strong> ${lagAnalysis.optimal_lag_final}`;
+                lagAnalysisContainer.appendChild(recommendationText);
             }
             
-            // Добавляем MAPE, если есть
-            if (metrics.mape && metrics.mape[variable] !== undefined) {
-                const mapeCell = document.createElement('td');
-                mapeCell.textContent = !isNaN(metrics.mape[variable]) ? 
-                    metrics.mape[variable].toFixed(2) + '%' : 'N/A';
-                row.appendChild(mapeCell);
+            // Заполняем метрики прогнозирования - ИСПРАВЛЕННАЯ ВЕРСИЯ
+            if (results.forecasts && results.forecasts.metrics) {
+                const metrics = results.forecasts.metrics;
+                
+                metricsBody.innerHTML = '';
+                
+                // Создаем заголовок таблицы динамически
+                const thead = document.getElementById('metrics-table').querySelector('thead');
+                thead.innerHTML = '';
+                const headerRow = document.createElement('tr');
+                
+                // Основные столбцы
+                headerRow.innerHTML = '<th>Переменная</th><th>MSE</th><th>MAE</th>';
+                
+                // Опциональные столбцы
+                if (metrics.rmse) {
+                    headerRow.innerHTML += '<th>RMSE</th>';
+                }
+                if (metrics.mape) {
+                    headerRow.innerHTML += '<th>MAPE</th>';
+                }
+                
+                thead.appendChild(headerRow);
+                
+                // Заполняем тело таблицы
+                Object.keys(metrics.mse).forEach(variable => {
+                    const row = document.createElement('tr');
+                    
+                    let rowContent = `
+                        <td>${variable}</td>
+                        <td>${metrics.mse[variable].toFixed(4)}</td>
+                        <td>${metrics.mae[variable].toFixed(4)}</td>
+                    `;
+                    
+                    if (metrics.rmse && metrics.rmse[variable] !== undefined) {
+                        rowContent += `<td>${metrics.rmse[variable].toFixed(4)}</td>`;
+                    }
+                    
+                    if (metrics.mape && metrics.mape[variable] !== undefined) {
+                        rowContent += `<td>${!isNaN(metrics.mape[variable]) ? metrics.mape[variable].toFixed(2) + '%' : 'N/A'}</td>`;
+                    }
+                    
+                    row.innerHTML = rowContent;
+                    metricsBody.appendChild(row);
+                });
             }
             
-            metricsBody.appendChild(row);
-        });
-        
-        // Создаем графики прогнозов, если есть
-        if (results.forecasts.comparison) {
-            // Очищаем контейнер графиков
-            forecastChartsContainer.innerHTML = '';
-            
-            const comparison = results.forecasts.comparison;
-            
-            Object.keys(comparison).forEach((variable, index) => {
-                const data = comparison[variable];
+            // Создаем графики прогнозов
+            if (results.forecasts && results.forecasts.comparison) {
+                forecastChartsContainer.innerHTML = '';
                 
-                // Создаем контейнер для графика
-                const chartContainer = document.createElement('div');
-                chartContainer.className = 'forecast-chart';
+                const comparison = results.forecasts.comparison;
                 
-                const chartTitle = document.createElement('h4');
-                chartTitle.textContent = `Прогноз для "${variable}"`;
-                chartContainer.appendChild(chartTitle);
-                
-                const canvas = document.createElement('canvas');
-                canvas.id = `forecast-chart-${index}`;
-                chartContainer.appendChild(canvas);
-                
-                forecastChartsContainer.appendChild(chartContainer);
-                
-                // Создаем график
-                const ctx = canvas.getContext('2d');
-                const chart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: data.dates,
-                        datasets: [
-                            {
-                                label: 'Фактические значения',
-                                data: data.actual,
-                                borderColor: '#3b82f6',
-                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                borderWidth: 2,
-                                pointRadius: 3
-                            },
-                            {
-                                label: 'Прогноз',
-                                data: data.predicted,
-                                borderColor: '#ef4444',
-                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                borderWidth: 2,
-                                borderDash: [5, 5],
-                                pointRadius: 3
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            title: {
-                                display: false
-                            },
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false
-                            }
+                Object.keys(comparison).forEach((variable, index) => {
+                    const data = comparison[variable];
+                    
+                    const chartContainer = document.createElement('div');
+                    chartContainer.className = 'forecast-chart';
+                    
+                    const chartTitle = document.createElement('h4');
+                    chartTitle.textContent = `Прогноз для "${variable}"`;
+                    chartContainer.appendChild(chartTitle);
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.id = `forecast-chart-${index}`;
+                    chartContainer.appendChild(canvas);
+                    
+                    forecastChartsContainer.appendChild(chartContainer);
+                    
+                    const ctx = canvas.getContext('2d');
+                    const chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.dates,
+                            datasets: [
+                                {
+                                    label: 'Фактические значения',
+                                    data: data.actual,
+                                    borderColor: '#3b82f6',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                    borderWidth: 2,
+                                    pointRadius: 3
+                                },
+                                {
+                                    label: 'Прогноз',
+                                    data: data.predicted,
+                                    borderColor: '#ef4444',
+                                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                    borderWidth: 2,
+                                    borderDash: [5, 5],
+                                    pointRadius: 3
+                                }
+                            ]
                         },
-                        scales: {
-                            x: {
-                                ticks: {
-                                    maxRotation: 45,
-                                    minRotation: 45
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    ticks: {
+                                        maxRotation: 45,
+                                        minRotation: 45
+                                    }
+                                },
+                                y: {
+                                    beginAtZero: false
                                 }
                             }
                         }
-                    }
+                    });
+                    
+                    chartInstances.push(chart);
                 });
-                
-                // Добавляем экземпляр графика в массив
-                chartInstances.push(chart);
-            });
-        } else if (results.plots && results.plots.forecast_plots) {
-            // Если есть готовые графики в формате base64
-            forecastChartsContainer.innerHTML = '';
+            }
             
-            const plots = results.plots.forecast_plots;
+            // Обработка кнопки скачивания отчета
+            downloadReportBtn.onclick = function() {
+                const reportUrl = `${API_URL}/download-varx-report/${fileId}?endogenous=${encodeURIComponent(JSON.stringify(modelInfo.endogenous_vars))}&exogenous=${encodeURIComponent(JSON.stringify(modelInfo.exogenous_vars))}&lags=${modelInfo.lags}`;
+                window.open(reportUrl, '_blank');
+            };
             
-            plots.forEach((plot, index) => {
-                // Создаем контейнер для графика
-                const chartContainer = document.createElement('div');
-                chartContainer.className = 'forecast-chart';
-                
-                // Добавляем заголовок с именем переменной
-                const chartTitle = document.createElement('h4');
-                if (index < modelInfo.endogenous_vars.length) {
-                    chartTitle.textContent = `Прогноз для "${modelInfo.endogenous_vars[index]}"`;
-                } else {
-                    chartTitle.textContent = `Прогноз ${index + 1}`;
-                }
-                chartContainer.appendChild(chartTitle);
-                
-                // Создаем изображение
-                const img = document.createElement('img');
-                img.src = `data:image/png;base64,${plot}`;
-                img.alt = `Прогноз ${index + 1}`;
-                img.style.width = '100%';
-                img.style.height = 'auto';
-                img.style.maxHeight = '300px';
-                img.style.display = 'block';
-                img.style.margin = '0 auto';
-                
-                chartContainer.appendChild(img);
-                forecastChartsContainer.appendChild(chartContainer);
-            });
+            modelResults.style.display = 'block';
         }
-    }
-    
-    // Обработка кнопки скачивания отчета
-    downloadReportBtn.addEventListener('click', function() {
-        // Создаем URL для скачивания отчета
-        const reportUrl = `${API_URL}/download-varx-report/${fileId}?endogenous=${encodeURIComponent(JSON.stringify(modelInfo.endogenous_vars))}&exogenous=${encodeURIComponent(JSON.stringify(modelInfo.exogenous_vars))}&lags=${modelInfo.lags}`;
-        
-        // Открываем URL в новой вкладке или скачиваем файл
-        window.open(reportUrl, '_blank');
-    });
-    
-    // Показываем результаты
-    modelResults.style.display = 'block';
-}
         
         // Обработка изменения размеров окна для корректного отображения графиков
         window.addEventListener('resize', function() {
-            // Перерисовка всех графиков при изменении размера окна
             chartInstances.forEach(chart => {
                 if (chart) {
                     chart.resize();
