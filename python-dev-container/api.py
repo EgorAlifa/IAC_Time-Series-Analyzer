@@ -926,10 +926,12 @@ async def build_varx_model_endpoint(
     endogenous_vars: Optional[Union[List[str], str]] = Form(None),
     exogenous_vars: Optional[Union[List[str], str]] = Form(None),
     lags: int = Form(1),
-    train_size: float = Form(0.8)
+    train_size: float = Form(0.8),
+    forecast_periods: int = Form(6),
+    forecast_unit: str = Form("months")
 ):
     """
-    Построение VARX/ARX модели на основе загруженных данных
+    Построение VARX модели на основе загруженных данных с прогнозированием в будущее
     
     - **file_id**: Идентификатор файла, полученный при загрузке
     - **date_column**: Имя столбца с датами (по умолчанию "Дата")
@@ -937,6 +939,8 @@ async def build_varx_model_endpoint(
     - **exogenous_vars**: Список имен экзогенных переменных для модели
     - **lags**: Количество лагов для модели (по умолчанию 1)
     - **train_size**: Доля данных для обучения модели (по умолчанию 0.8)
+    - **forecast_periods**: Количество периодов для прогнозирования в будущее (по умолчанию 6)
+    - **forecast_unit**: Единица времени для прогнозирования: months, quarters, years (по умолчанию months)
     """
     # Распаковываем переменные из возможных форматов
     unpacked_endog = unpack_variables(endogenous_vars)
@@ -948,6 +952,8 @@ async def build_varx_model_endpoint(
     print(f"VARX model - exogenous_vars: {unpacked_exog}")
     print(f"VARX model - lags: {lags}")
     print(f"VARX model - train_size: {train_size}")
+    print(f"VARX model - forecast_periods: {forecast_periods}")
+    print(f"VARX model - forecast_unit: {forecast_unit}")
     
     # Проверяем наличие хотя бы одной эндогенной переменной
     if not unpacked_endog:
@@ -1009,15 +1015,17 @@ async def build_varx_model_endpoint(
                 }
             )
         
-        # Строим VARX/ARX модель
-        from ts_analysis import build_varx_model
+        # Строим VARX/ARX модель с прогнозированием в будущее
+        from ts_analysis import build_varx_model_with_future_forecast
         
-        model_results = build_varx_model(
+        model_results = build_varx_model_with_future_forecast(
             df, 
             unpacked_endog, 
             unpacked_exog, 
             lags=lags,
-            train_size=train_size
+            train_size=train_size,
+            forecast_periods=forecast_periods,
+            forecast_unit=forecast_unit
         )
         
         return model_results
@@ -1026,20 +1034,25 @@ async def build_varx_model_endpoint(
         import traceback
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Ошибка при построении модели: {str(e)}")
+
 @app.get("/download-varx-report/{file_id}")
 async def download_varx_report(
     file_id: str,
     endogenous: str,
     exogenous: str = "",
-    lags: int = 1
+    lags: int = 1,
+    forecast_periods: int = 6,
+    forecast_unit: str = "months"
 ):
     """
-    Скачивание отчета по VARX/ARX модели
+    Скачивание отчета по VARX/ARX модели с прогнозированием в будущее
     
     - **file_id**: Идентификатор файла с данными
     - **endogenous**: JSON-строка с именами эндогенных переменных
     - **exogenous**: JSON-строка с именами экзогенных переменных
     - **lags**: Количество лагов модели
+    - **forecast_periods**: Количество периодов для прогнозирования в будущее
+    - **forecast_unit**: Единица времени для прогнозирования
     """
     try:
         # Распаковываем переменные
@@ -1062,13 +1075,15 @@ async def download_varx_report(
             df['Дата'] = pd.to_datetime(df['Дата'])
             df.set_index('Дата', inplace=True)
         
-        # Строим модель
-        from ts_analysis import build_varx_model
-        model_results = build_varx_model(
+        # Строим модель с прогнозированием в будущее
+        from ts_analysis import build_varx_model_with_future_forecast
+        model_results = build_varx_model_with_future_forecast(
             df, 
             endogenous_vars, 
             exogenous_vars, 
-            lags=lags
+            lags=lags,
+            forecast_periods=forecast_periods,
+            forecast_unit=forecast_unit
         )
         
         # Создаем отчет в Word
@@ -1084,7 +1099,7 @@ async def download_varx_report(
         model_type = "ARX" if len(endogenous_vars) == 1 else "VARX"
         
         # Добавляем заголовок
-        doc.add_heading(f'Отчет по {model_type} модели', 0)
+        doc.add_heading(f'Отчет по {model_type} модели с прогнозированием в будущее', 0)
         
         # Добавляем текущую дату
         current_date = datetime.now().strftime("%d.%m.%Y")
@@ -1108,6 +1123,15 @@ async def download_varx_report(
             ('Экзогенные переменные', ', '.join(exogenous_vars) if exogenous_vars else 'Не используются'),
             ('Количество лагов', str(lags))
         ]
+        
+        # Добавляем информацию о прогнозном периоде
+        unit_names = {
+            'months': 'месяцев',
+            'quarters': 'кварталов', 
+            'years': 'лет'
+        }
+        unit_name = unit_names.get(forecast_unit, forecast_unit)
+        params.append(('Период прогнозирования', f'{forecast_periods} {unit_name}'))
         
         # Добавляем параметры, если они есть в результатах
         if 'model_info' in model_results:
@@ -1176,21 +1200,21 @@ async def download_varx_report(
                 except Exception as e:
                     doc.add_paragraph(f'Не удалось добавить изображение графика: {str(e)}')
         
-        # Добавляем метрики прогнозирования, если они есть
-        if 'forecasts' in model_results and 'metrics' in model_results['forecasts']:
-            doc.add_heading('Метрики качества прогноза', 1)
+        # Добавляем метрики прогнозирования на валидационных данных, если они есть
+        if 'validation' in model_results and 'metrics' in model_results['validation']:
+            doc.add_heading('Метрики качества прогноза (на тестовых данных)', 1)
             
-            metrics_table = doc.add_table(rows=1, cols=5)  # Добавляем RMSE и MAPE
+            metrics_table = doc.add_table(rows=1, cols=5)
             metrics_table.style = 'Table Grid'
             
             hdr_cells = metrics_table.rows[0].cells
             hdr_cells[0].text = 'Переменная'
             hdr_cells[1].text = 'MSE'
             hdr_cells[2].text = 'MAE'
-            hdr_cells[3].text = 'RMSE'  # Новая метрика
-            hdr_cells[4].text = 'MAPE'  # Новая метрика
+            hdr_cells[3].text = 'RMSE'
+            hdr_cells[4].text = 'MAPE'
             
-            metrics = model_results['forecasts']['metrics']
+            metrics = model_results['validation']['metrics']
             
             for variable in endogenous_vars:
                 if variable in metrics['mse']:
@@ -1211,9 +1235,35 @@ async def download_varx_report(
                     else:
                         row_cells[4].text = 'N/A'
         
+        # Добавляем раздел с прогнозными значениями
+        if 'forecasts' in model_results and 'future_forecast' in model_results['forecasts']:
+            doc.add_heading('Прогнозные значения в будущее', 1)
+            
+            future_data = model_results['forecasts']['future_forecast']
+            
+            # Создаем таблицу с прогнозными значениями
+            forecast_table = doc.add_table(rows=1, cols=len(endogenous_vars) + 1)
+            forecast_table.style = 'Table Grid'
+            
+            # Заголовки таблицы
+            hdr_cells = forecast_table.rows[0].cells
+            hdr_cells[0].text = 'Дата'
+            for i, var in enumerate(endogenous_vars):
+                hdr_cells[i + 1].text = var
+            
+            # Заполняем таблицу прогнозными значениями
+            for i, date in enumerate(future_data['dates']):
+                row_cells = forecast_table.add_row().cells
+                row_cells[0].text = date
+                for j, var in enumerate(endogenous_vars):
+                    if var in future_data['values'] and i < len(future_data['values'][var]):
+                        row_cells[j + 1].text = f"{future_data['values'][var][i]:.4f}"
+                    else:
+                        row_cells[j + 1].text = 'N/A'
+        
         # Добавляем графики прогнозов, если они есть
         if 'plots' in model_results and 'forecast_plots' in model_results['plots']:
-            doc.add_heading('Графики прогнозов', 1)
+            doc.add_heading('Графики прогнозов с будущими значениями', 1)
             
             plots = model_results['plots']['forecast_plots']
             
@@ -1226,9 +1276,9 @@ async def download_varx_report(
                 try:
                     doc.add_picture(image_stream, width=Inches(6))
                     if i < len(endogenous_vars):
-                        doc.add_paragraph(f'Прогноз для переменной "{endogenous_vars[i]}"')
+                        doc.add_paragraph(f'Прогноз для переменной "{endogenous_vars[i]}" с будущими значениями')
                     else:
-                        doc.add_paragraph(f'Прогноз {i+1}')
+                        doc.add_paragraph(f'Прогноз {i+1} с будущими значениями')
                 except Exception as e:
                     doc.add_paragraph(f'Не удалось добавить изображение графика: {str(e)}')
         
@@ -1240,7 +1290,7 @@ async def download_varx_report(
         # Возвращаем файл для скачивания
         return FileResponse(
             path=temp_path,
-            filename=f"{model_type}_model_report_{current_date.replace('.', '-')}.docx",
+            filename=f"{model_type}_forecast_report_{current_date.replace('.', '-')}.docx",
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
         
