@@ -1883,40 +1883,41 @@ def create_comprehensive_report(df, params):
     
     # Если выбрана модель VARX
     if models.get('varx', False):
-        # ИСПРАВЛЕНО: используем номер раздела в заголовке
         heading = doc.add_heading(f'{section_number}. Модель векторной авторегрессии с экзогенными переменными (VARX)', level=1)
         heading.style = heading1_style
         
-        doc.add_paragraph('Модель VARX представляет собой расширение модели VAR, которая включает также экзогенные переменные. Она позволяет моделировать взаимозависимость между несколькими временными рядами с учетом внешних факторов.', style='NormalCustom')
+        doc.add_paragraph('Модель VARX представляет собой расширение модели VAR, которая включает также экзогенные переменные. Она позволяет моделировать взаимозависимость между несколькими временными рядами с учетом внешних факторов.', style=normal_style)
         
         # Получаем параметры модели VARX
         varx_params = models.get('varx', {})
         lags = varx_params.get('lags', 2)
+        forecast_periods = varx_params.get('forecast_periods', 6)
+        forecast_unit = varx_params.get('forecast_unit', 'months')
         
-        # Получаем эндогенные и экзогенные переменные из параметров модели, если они указаны
+        # Получаем эндогенные и экзогенные переменные из параметров модели
         endogenous_vars = varx_params.get('endogenous_vars', [])
         exogenous_vars = varx_params.get('exogenous_vars', [])
         
         # Если эндогенные переменные не указаны, берем первые две числовые колонки
         if not endogenous_vars:
-            # Берем только первые 2 колонки как эндогенные
             endogenous_vars = numeric_columns[:min(2, len(numeric_columns))]
         
-        # Вызываем существующую функцию построения модели VARX
+        # Вызываем обновленную функцию построения модели VARX
         try:
             # Импорт функции
-            from ts_analysis import build_varx_model
+            from ts_analysis import build_varx_model_with_future_forecast
             
-            # Построение модели VARX
-            model_results = build_varx_model(
+            # Построение модели VARX с прогнозированием в будущее
+            model_results = build_varx_model_with_future_forecast(
                 df, 
                 endogenous_vars, 
                 exogenous_vars, 
-                lags=lags
+                lags=lags,
+                forecast_periods=forecast_periods,
+                forecast_unit=forecast_unit
             )
             
             # Добавляем информацию о модели
-            # ИСПРАВЛЕНО: используем номер подраздела
             heading = doc.add_heading(f'{section_number}.1. Информация о модели', level=2)
             heading.style = heading2_style
             
@@ -1940,6 +1941,15 @@ def create_comprehensive_report(df, params):
                 ('Экзогенные переменные', ', '.join(exogenous_vars) if exogenous_vars else 'Не используются'),
                 ('Количество лагов', str(lags))
             ]
+            
+            # Добавляем информацию о прогнозном периоде
+            unit_names = {
+                'months': 'месяцев',
+                'quarters': 'кварталов', 
+                'years': 'лет'
+            }
+            unit_name = unit_names.get(forecast_unit, forecast_unit)
+            params_items.append(('Период прогнозирования', f'{forecast_periods} {unit_name}'))
             
             # Добавляем параметры, если они есть в результатах
             if 'model_info' in model_results:
@@ -1967,7 +1977,6 @@ def create_comprehensive_report(df, params):
             
             # Добавляем раздел о выборе оптимального числа лагов, если есть
             if 'diagnostics' in model_results and 'lag_analysis' in model_results['diagnostics']:
-                # ИСПРАВЛЕНО: обновляем номер подраздела
                 heading = doc.add_heading(f'{section_number}.2. Анализ оптимального числа лагов', level=2)
                 heading.style = heading2_style
                 
@@ -1993,7 +2002,6 @@ def create_comprehensive_report(df, params):
             
             # Добавляем графики ACF и PACF, если они есть
             if 'plots' in model_results and 'acf_pacf_plots' in model_results['plots']:
-                # ИСПРАВЛЕНО: обновляем номер подраздела
                 heading = doc.add_heading(f'{section_number}.3. Графики автокорреляционных функций', level=2)
                 heading.style = heading2_style
                 
@@ -2007,19 +2015,18 @@ def create_comprehensive_report(df, params):
                     try:
                         doc.add_picture(image_stream, width=Inches(6))
                         if i < len(endogenous_vars):
-                            doc.add_paragraph(f'ACF и PACF для переменной "{endogenous_vars[i]}"', style='NormalCustom')
+                            doc.add_paragraph(f'ACF и PACF для переменной "{endogenous_vars[i]}"', style=normal_style)
                         else:
-                            doc.add_paragraph(f'ACF и PACF график {i+1}', style='NormalCustom')
+                            doc.add_paragraph(f'ACF и PACF график {i+1}', style=normal_style)
                     except Exception as e:
-                        doc.add_paragraph(f'Не удалось добавить изображение графика: {str(e)}', style='NormalCustom')
+                        doc.add_paragraph(f'Не удалось добавить изображение графика: {str(e)}', style=normal_style)
             
-            # Добавляем метрики прогнозирования, если они есть
-            if 'forecasts' in model_results and 'metrics' in model_results['forecasts']:
-                # ИСПРАВЛЕНО: обновляем номер подраздела
-                heading = doc.add_heading(f'{section_number}.4. Метрики качества прогноза', level=2)
+            # Добавляем метрики прогнозирования на валидационных данных, если они есть
+            if 'validation' in model_results and 'metrics' in model_results['validation']:
+                heading = doc.add_heading(f'{section_number}.4. Метрики качества прогноза (на тестовых данных)', level=2)
                 heading.style = heading2_style
                 
-                metrics = model_results['forecasts']['metrics']
+                metrics = model_results['validation']['metrics']
                 
                 # Определяем количество столбцов в таблице метрик
                 metrics_columns = 3  # по умолчанию: Переменная, MSE, MAE
@@ -2070,10 +2077,103 @@ def create_comprehensive_report(df, params):
                             else:
                                 row_cells[col_idx].text = 'N/A'
             
-            # Добавляем графики прогнозов, если они есть
+            # Добавляем раздел с прогнозными значениями в будущее
+            if 'forecasts' in model_results and 'future_forecast' in model_results['forecasts']:
+                heading = doc.add_heading(f'{section_number}.5. Прогнозные значения в будущее', level=2)
+                heading.style = heading2_style
+                
+                future_data = model_results['forecasts']['future_forecast']
+                
+                if 'values' in future_data and 'dates' in future_data and future_data['values']:
+                    # Создаем таблицу с прогнозными значениями
+                    forecast_table = doc.add_table(rows=1, cols=len(endogenous_vars) + 1)
+                    forecast_table.style = 'Table Grid'
+                    
+                    # Заголовки таблицы
+                    hdr_cells = forecast_table.rows[0].cells
+                    hdr_cells[0].text = 'Дата'
+                    for i, var in enumerate(endogenous_vars):
+                        hdr_cells[i + 1].text = var
+                    
+                    # Заполняем таблицу прогнозными значениями
+                    for i, date in enumerate(future_data['dates']):
+                        row_cells = forecast_table.add_row().cells
+                        row_cells[0].text = date
+                        for j, var in enumerate(endogenous_vars):
+                            if var in future_data['values'] and i < len(future_data['values'][var]):
+                                row_cells[j + 1].text = f"{future_data['values'][var][i]:.4f}"
+                            else:
+                                row_cells[j + 1].text = 'N/A'
+                    
+                    # Добавляем пояснение к таблице
+                    doc.add_paragraph(f"Прогнозные значения на {forecast_periods} {unit_name} вперед от последней даты в данных.", style=normal_style)
+                    
+                    # Добавляем статистику по прогнозам
+                    doc.add_paragraph("", style=normal_style)
+                    doc.add_paragraph("Статистика прогнозных значений:", style=normal_style)
+                    
+                    # Создаем таблицу со статистикой
+                    stats_table = doc.add_table(rows=1, cols=len(endogenous_vars) + 1)
+                    stats_table.style = 'Table Grid'
+                    
+                    # Заголовки таблицы статистики
+                    stats_hdr_cells = stats_table.rows[0].cells
+                    stats_hdr_cells[0].text = 'Показатель'
+                    for i, var in enumerate(endogenous_vars):
+                        stats_hdr_cells[i + 1].text = var
+                    
+                    # Рассчитываем и добавляем статистику
+                    stats_metrics = ['Среднее значение', 'Минимум', 'Максимум', 'Стандартное отклонение']
+                    
+                    for metric in stats_metrics:
+                        row_cells = stats_table.add_row().cells
+                        row_cells[0].text = metric
+                        
+                        for j, var in enumerate(endogenous_vars):
+                            if var in future_data['values'] and future_data['values'][var]:
+                                values = future_data['values'][var]
+                                if metric == 'Среднее значение':
+                                    value = np.mean(values)
+                                elif metric == 'Минимум':
+                                    value = np.min(values)
+                                elif metric == 'Максимум':
+                                    value = np.max(values)
+                                elif metric == 'Стандартное отклонение':
+                                    value = np.std(values)
+                                
+                                row_cells[j + 1].text = f"{value:.4f}"
+                            else:
+                                row_cells[j + 1].text = 'N/A'
+                    
+                    # Добавляем интерпретацию результатов
+                    doc.add_paragraph("", style=normal_style)
+                    doc.add_paragraph("Интерпретация прогнозов:", style=normal_style)
+                    
+                    for var in endogenous_vars:
+                        if var in future_data['values'] and future_data['values'][var]:
+                            values = future_data['values'][var]
+                            first_value = values[0]
+                            last_value = values[-1]
+                            trend_direction = "растущий" if last_value > first_value else "снижающийся" if last_value < first_value else "стабильный"
+                            change_percent = ((last_value - first_value) / first_value) * 100 if first_value != 0 else 0
+                            
+                            interpretation = f"• {var}: прогнозируется {trend_direction} тренд с изменением на {change_percent:.2f}% за прогнозный период."
+                            doc.add_paragraph(interpretation, style=normal_style)
+                    
+                    # Добавляем предупреждения и ограничения
+                    doc.add_paragraph("", style=normal_style)
+                    doc.add_paragraph("Важные замечания:", style=normal_style)
+                    doc.add_paragraph("• Прогнозы основаны на исторических данных и предполагают сохранение выявленных закономерностей.", style=normal_style)
+                    doc.add_paragraph("• Точность прогнозов снижается с увеличением горизонта прогнозирования.", style=normal_style)
+                    doc.add_paragraph("• Внешние факторы, не учтенные в модели, могут существенно влиять на фактические значения.", style=normal_style)
+                    doc.add_paragraph("• Рекомендуется регулярно обновлять модель при поступлении новых данных.", style=normal_style)
+                
+                else:
+                    doc.add_paragraph("Прогнозные данные недоступны из-за ошибки в модели или отсутствия данных.", style=normal_style)
+            
+            # Добавляем графики прогнозов с будущими значениями, если они есть
             if 'plots' in model_results and 'forecast_plots' in model_results['plots']:
-                # ИСПРАВЛЕНО: обновляем номер подраздела
-                heading = doc.add_heading(f'{section_number}.5. Графики прогнозов', level=2)
+                heading = doc.add_heading(f'{section_number}.6. Графики прогнозов с будущими значениями', level=2)
                 heading.style = heading2_style
                 
                 plots = model_results['plots']['forecast_plots']
@@ -2088,44 +2188,93 @@ def create_comprehensive_report(df, params):
                     try:
                         doc.add_picture(image_stream, width=Inches(6))
                         if i < len(endogenous_vars):
-                            doc.add_paragraph(f'Прогноз для переменной "{endogenous_vars[i]}"', style='NormalCustom')
+                            doc.add_paragraph(f'Комплексный прогноз для переменной "{endogenous_vars[i]}" включающий исторические данные, валидацию на тестовых данных и прогноз в будущее на {forecast_periods} {unit_name}.', style=normal_style)
                         else:
-                            doc.add_paragraph(f'Прогноз {i+1}', style='NormalCustom')
+                            doc.add_paragraph(f'Комплексный прогноз {i+1} с будущими значениями', style=normal_style)
                     except Exception as e:
-                        doc.add_paragraph(f'Не удалось добавить изображение графика: {str(e)}', style='NormalCustom')
+                        doc.add_paragraph(f'Не удалось добавить изображение графика: {str(e)}', style=normal_style)
+                
+                # Добавляем легенду графиков
+                doc.add_paragraph("Легенда графиков:", style=normal_style)
+                doc.add_paragraph("• Синяя линия - исторические данные (обучающая выборка)", style=normal_style)
+                doc.add_paragraph("• Зеленая линия - фактические значения на тестовых данных", style=normal_style)
+                doc.add_paragraph("• Красная пунктирная линия - прогнозы на тестовых данных", style=normal_style)
+                doc.add_paragraph("• Оранжевая линия с маркерами - прогнозы в будущее", style=normal_style)
+                doc.add_paragraph("• Серая вертикальная линия - конец обучающих данных", style=normal_style)
+                doc.add_paragraph("• Красная вертикальная линия - конец всех исторических данных", style=normal_style)
+            
+            # Добавляем заключение по модели
+            heading = doc.add_heading(f'{section_number}.7. Заключение по модели {model_type}', level=2)
+            heading.style = heading2_style
+            
+            conclusion_text = f"""
+            Модель {model_type} была успешно построена с использованием {len(endogenous_vars)} эндогенных переменных 
+            {'и ' + str(len(exogenous_vars)) + ' экзогенных переменных' if exogenous_vars else 'без экзогенных переменных'}. 
+            Модель обучена на {model_results.get('model_info', {}).get('train_size', 'N/A')} наблюдениях 
+            и протестирована на {model_results.get('model_info', {}).get('test_size', 'N/A')} наблюдениях.
+            
+            Создан прогноз на {forecast_periods} {unit_name} в будущее, который может быть использован 
+            для планирования и принятия управленческих решений. Рекомендуется регулярно обновлять модель 
+            при поступлении новых данных для поддержания точности прогнозов.
+            """
+            
+            doc.add_paragraph(conclusion_text.strip(), style=normal_style)
             
         except Exception as e:
             # В случае ошибки при построении модели, добавляем информацию об этом
             heading = doc.add_heading(f'{section_number}.1. Информация о модели', level=2)
             heading.style = heading2_style
             
-            doc.add_paragraph(f"При построении модели VARX произошла ошибка: {str(e)}", style='NormalCustom')
+            doc.add_paragraph(f"При построении модели VARX произошла ошибка: {str(e)}", style=normal_style)
             
-            doc.add_paragraph('Модель VARX представляет собой расширение модели VAR, которая включает также экзогенные переменные. Она позволяет моделировать взаимозависимость между несколькими временными рядами с учетом внешних факторов.', style='NormalCustom')
+            doc.add_paragraph('Модель VARX представляет собой расширение модели VAR, которая включает также экзогенные переменные. Она позволяет моделировать взаимозависимость между несколькими временными рядами с учетом внешних факторов и создавать прогнозы в будущее.', style=normal_style)
             
             # Добавляем заглушку-пример графика
-            plt.figure(figsize=(10, 6))
-            x = range(10)
-            y1 = [i**2 for i in x]
-            y2 = [i**2 + 10 for i in x]
-            plt.plot(x, y1, label='Переменная 1')
-            plt.plot(x, y2, label='Переменная 2')
-            plt.title('Пример моделирования VARX (иллюстративный)')
-            plt.xlabel('Время')
-            plt.ylabel('Значение')
-            plt.legend()
-            plt.grid(True)
+            plt.figure(figsize=(12, 8))
+            
+            # Создаем пример данных
+            dates = pd.date_range(start='2020-01-01', end='2025-12-01', freq='M')
+            historical_end = len(dates) - 12  # Последние 12 месяцев как "будущее"
+            
+            # Исторические данные
+            np.random.seed(42)
+            trend1 = np.linspace(100, 150, historical_end) + np.random.normal(0, 5, historical_end)
+            trend2 = np.linspace(80, 120, historical_end) + np.random.normal(0, 3, historical_end)
+            
+            # "Прогнозы" в будущее
+            future_trend1 = np.linspace(150, 160, 12) + np.random.normal(0, 3, 12)
+            future_trend2 = np.linspace(120, 125, 12) + np.random.normal(0, 2, 12)
+            
+            # Строим график
+            plt.plot(dates[:historical_end], trend1, 'b-', label='Переменная 1 (исторические)', linewidth=2)
+            plt.plot(dates[:historical_end], trend2, 'g-', label='Переменная 2 (исторические)', linewidth=2)
+            plt.plot(dates[historical_end:], future_trend1, 'orange', linewidth=3, marker='o', 
+                    markersize=6, label='Переменная 1 (прогноз)')
+            plt.plot(dates[historical_end:], future_trend2, 'red', linewidth=3, marker='s', 
+                    markersize=6, label='Переменная 2 (прогноз)')
+            
+            # Добавляем вертикальную линию разделения
+            plt.axvline(x=dates[historical_end-1], color='gray', linestyle=':', alpha=0.7, 
+                       label='Конец исторических данных')
+            
+            plt.title('Пример моделирования VARX с прогнозированием в будущее', fontsize=16, fontweight='bold')
+            plt.xlabel('Дата', fontsize=12)
+            plt.ylabel('Значение', fontsize=12)
+            plt.legend(fontsize=10)
+            plt.grid(True, alpha=0.3)
+            plt.xticks(rotation=45)
+            plt.tight_layout()
             
             # Сохраняем диаграмму в память
             img_stream = io.BytesIO()
-            plt.savefig(img_stream, format='png')
+            plt.savefig(img_stream, format='png', dpi=150, bbox_inches='tight')
             img_stream.seek(0)
             plt.close()
             
             # Добавляем изображение в документ
             doc.add_picture(img_stream, width=Inches(6))
             
-            doc.add_paragraph('Модель VARX может быть особенно полезна, когда некоторые внешние факторы оказывают влияние на систему взаимосвязанных временных рядов. В нормальном режиме работы система строит прогнозы и оценивает их качество по различным метрикам.', style='NormalCustom')
+            doc.add_paragraph('Этот пример показывает, как модель VARX может анализировать взаимосвязи между переменными и создавать прогнозы в будущее. В нормальном режиме работы система строит реальные прогнозы на основе ваших данных и оценивает их качество по различным метрикам.', style=normal_style)
         
         # Добавляем разрыв страницы
         doc.add_page_break()
