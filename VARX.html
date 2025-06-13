@@ -82,6 +82,64 @@
             max-width: 200px;
         }
 
+        /* НОВЫЕ СТИЛИ ДЛЯ ПРОГНОЗНОГО БЛОКА */
+        .forecast-period-group {
+            background-color: #f0f9ff;
+            border: 1px solid #e0f2fe;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .forecast-period-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #0c4a6e;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .forecast-period-title i {
+            margin-right: 8px;
+            color: #0284c7;
+        }
+
+        .period-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .period-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .period-input {
+            width: 80px;
+            padding: 6px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .period-select {
+            padding: 6px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: white;
+        }
+
+        .period-info {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 8px;
+        }
+
         .build-model-btn {
             background: linear-gradient(to right, #3b82f6, #2563eb);
             color: white;
@@ -415,6 +473,12 @@
             .acf-pacf-grid {
                 grid-template-columns: 1fr;
             }
+            
+            .period-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
         }
         
         /* Модальное окно для увеличения изображений */
@@ -621,8 +685,30 @@
                         <span id="train-size-value">80%</span>
                     </div>
                     
+                    <!-- НОВЫЙ БЛОК ДЛЯ НАСТРОЙКИ ПЕРИОДА ПРОГНОЗА -->
+                    <div class="forecast-period-group">
+                        <div class="forecast-period-title">
+                            <i class="fas fa-clock"></i>
+                            Период прогнозирования в будущее
+                        </div>
+                        <div class="period-row">
+                            <div class="period-input-group">
+                                <label for="forecast-periods">Прогнозировать на:</label>
+                                <input type="number" id="forecast-periods" class="period-input" min="1" max="60" value="6">
+                                <select id="forecast-unit" class="period-select">
+                                    <option value="months">месяцев</option>
+                                    <option value="quarters">кварталов</option>
+                                    <option value="years">лет</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="period-info" id="forecast-info">
+                            Будет создан прогноз на 6 месяцев вперед от последней даты в данных
+                        </div>
+                    </div>
+                    
                     <button id="build-model-btn" class="build-model-btn">
-                        <i class="fas fa-cogs"></i> Построить модель
+                        <i class="fas fa-cogs"></i> Построить модель и прогноз
                     </button>
                 </div>
 
@@ -658,6 +744,10 @@
                                     <div class="info-value" id="model-test-size">-</div>
                                 </div>
                                 <div class="info-item">
+                                    <div class="info-label">Период прогноза</div>
+                                    <div class="info-value" id="model-forecast-period">-</div>
+                                </div>
+                                <div class="info-item">
                                     <div class="info-label">AIC</div>
                                     <div class="info-value" id="model-aic">-</div>
                                 </div>
@@ -684,7 +774,7 @@
                         <h3 class="section-title">Результаты прогнозирования</h3>
                         
                         <div class="card-section">
-                            <h4>Метрики качества прогноза</h4>
+                            <h4>Метрики качества прогноза (на тестовых данных)</h4>
                             
                             <table class="metrics-table" id="metrics-table">
                                 <thead>
@@ -778,6 +868,11 @@
         const modelResults = document.getElementById('model-results');
         const errorContainer = document.getElementById('error-container');
         
+        // НОВЫЕ ЭЛЕМЕНТЫ ДЛЯ ПРОГНОЗНОГО ПЕРИОДА
+        const forecastPeriods = document.getElementById('forecast-periods');
+        const forecastUnit = document.getElementById('forecast-unit');
+        const forecastInfo = document.getElementById('forecast-info');
+        
         // Элементы для отображения результатов
         const modelType = document.getElementById('model-type');
         const modelEndog = document.getElementById('model-endog');
@@ -785,6 +880,7 @@
         const modelLags = document.getElementById('model-lags');
         const modelTrainSize = document.getElementById('model-train-size');
         const modelTestSize = document.getElementById('model-test-size');
+        const modelForecastPeriod = document.getElementById('model-forecast-period');
         const modelAic = document.getElementById('model-aic');
         const modelBic = document.getElementById('model-bic');
         const modelHqic = document.getElementById('model-hqic');
@@ -844,6 +940,31 @@
             console.error('Не удалось найти список колонок или данные о колонках отсутствуют');
             errorContainer.style.display = 'block';
         }
+        
+        // ОБНОВЛЕНИЕ ИНФОРМАЦИИ О ПРОГНОЗНОМ ПЕРИОДЕ
+        function updateForecastInfo() {
+            const periods = parseInt(forecastPeriods.value);
+            const unit = forecastUnit.value;
+            
+            let unitText = '';
+            switch(unit) {
+                case 'months':
+                    unitText = periods === 1 ? 'месяц' : (periods < 5 ? 'месяца' : 'месяцев');
+                    break;
+                case 'quarters':
+                    unitText = periods === 1 ? 'квартал' : (periods < 5 ? 'квартала' : 'кварталов');
+                    break;
+                case 'years':
+                    unitText = periods === 1 ? 'год' : (periods < 5 ? 'года' : 'лет');
+                    break;
+            }
+            
+            forecastInfo.textContent = `Будет создан прогноз на ${periods} ${unitText} вперед от последней даты в данных`;
+        }
+        
+        // Слушатели для обновления информации о прогнозном периоде
+        forecastPeriods.addEventListener('input', updateForecastInfo);
+        forecastUnit.addEventListener('change', updateForecastInfo);
         
         // Функции для работы с мультиселектом эндогенных переменных
         endogenousToggle.addEventListener('click', function() {
@@ -1050,6 +1171,10 @@
             const lags = parseInt(lagsInput.value);
             const trainSize = parseFloat(trainSizeSlider.value);
             
+            // ПОЛУЧАЕМ ПАРАМЕТРЫ ПРОГНОЗНОГО ПЕРИОДА
+            const forecastPeriodsValue = parseInt(forecastPeriods.value);
+            const forecastUnitValue = forecastUnit.value;
+            
             const formData = new FormData();
             formData.append('file_id', fileId);
             formData.append('date_column', 'Дата');
@@ -1061,6 +1186,10 @@
             
             formData.append('lags', lags);
             formData.append('train_size', trainSize);
+            
+            // ДОБАВЛЯЕМ ПАРАМЕТРЫ ПРОГНОЗНОГО ПЕРИОДА
+            formData.append('forecast_periods', forecastPeriodsValue);
+            formData.append('forecast_unit', forecastUnitValue);
             
             fetch(`${API_URL}/build-varx-model`, {
                 method: 'POST',
@@ -1102,6 +1231,11 @@
             modelLags.textContent = modelInfo.lags;
             modelTrainSize.textContent = `${modelInfo.train_size} наблюдений`;
             modelTestSize.textContent = `${modelInfo.test_size} наблюдений`;
+            
+            // ОТОБРАЖАЕМ ИНФОРМАЦИЮ О ПРОГНОЗНОМ ПЕРИОДЕ
+            if (modelInfo.forecast_info) {
+                modelForecastPeriod.textContent = modelInfo.forecast_info.description;
+            }
             
             if (modelInfo.aic !== undefined) modelAic.textContent = modelInfo.aic.toFixed(2);
             if (modelInfo.bic !== undefined) modelBic.textContent = modelInfo.bic.toFixed(2);
@@ -1216,8 +1350,8 @@
             }
             
             // Заполняем метрики прогнозирования - ИСПРАВЛЕННАЯ ВЕРСИЯ
-            if (results.forecasts && results.forecasts.metrics) {
-                const metrics = results.forecasts.metrics;
+            if (results.validation && results.validation.metrics) {
+                const metrics = results.validation.metrics;
                 
                 metricsBody.innerHTML = '';
                 
@@ -1262,7 +1396,7 @@
                 });
             }
             
-            // Создаем графики прогнозов
+            // СОЗДАЕМ ГРАФИКИ ПРОГНОЗОВ С БУДУЩИМИ ДАННЫМИ
             if (results.forecasts && results.forecasts.comparison) {
                 forecastChartsContainer.innerHTML = '';
                 
@@ -1285,29 +1419,66 @@
                     forecastChartsContainer.appendChild(chartContainer);
                     
                     const ctx = canvas.getContext('2d');
+                    
+                    // ОБНОВЛЕННАЯ ЛОГИКА ДЛЯ ОТОБРАЖЕНИЯ ИСТОРИЧЕСКИХ ДАННЫХ, ТЕСТОВЫХ И БУДУЩИХ ПРОГНОЗОВ
+                    const datasets = [];
+                    
+                    // Исторические данные (обучающая выборка)
+                    if (data.historical && data.historical.length > 0) {
+                        datasets.push({
+                            label: 'Исторические данные',
+                            data: data.historical_values || data.historical,
+                            borderColor: '#64748b',
+                            backgroundColor: 'rgba(100, 116, 139, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 1
+                        });
+                    }
+                    
+                    // Фактические значения на тестовой выборке
+                    if (data.actual && data.actual.length > 0) {
+                        datasets.push({
+                            label: 'Фактические значения (тест)',
+                            data: data.actual,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 3
+                        });
+                    }
+                    
+                    // Прогноз на тестовой выборке
+                    if (data.predicted && data.predicted.length > 0) {
+                        datasets.push({
+                            label: 'Прогноз (тест)',
+                            data: data.predicted,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 3
+                        });
+                    }
+                    
+                    // Прогноз в будущее
+                    if (data.future_forecast && data.future_forecast.length > 0) {
+                        datasets.push({
+                            label: 'Прогноз в будущее',
+                            data: data.future_forecast,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            borderDash: [10, 5],
+                            pointRadius: 4,
+                            pointBackgroundColor: '#10b981'
+                        });
+                    }
+                    
                     const chart = new Chart(ctx, {
                         type: 'line',
                         data: {
-                            labels: data.dates,
-                            datasets: [
-                                {
-                                    label: 'Фактические значения',
-                                    data: data.actual,
-                                    borderColor: '#3b82f6',
-                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                    borderWidth: 2,
-                                    pointRadius: 3
-                                },
-                                {
-                                    label: 'Прогноз',
-                                    data: data.predicted,
-                                    borderColor: '#ef4444',
-                                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                    borderWidth: 2,
-                                    borderDash: [5, 5],
-                                    pointRadius: 3
-                                }
-                            ]
+                            labels: data.all_dates || data.dates,
+                            datasets: datasets
                         },
                         options: {
                             responsive: true,
@@ -1341,7 +1512,10 @@
             
             // Обработка кнопки скачивания отчета
             downloadReportBtn.onclick = function() {
-                const reportUrl = `${API_URL}/download-varx-report/${fileId}?endogenous=${encodeURIComponent(JSON.stringify(modelInfo.endogenous_vars))}&exogenous=${encodeURIComponent(JSON.stringify(modelInfo.exogenous_vars))}&lags=${modelInfo.lags}`;
+                const forecastPeriodsValue = parseInt(forecastPeriods.value);
+                const forecastUnitValue = forecastUnit.value;
+                
+                const reportUrl = `${API_URL}/download-varx-report/${fileId}?endogenous=${encodeURIComponent(JSON.stringify(modelInfo.endogenous_vars))}&exogenous=${encodeURIComponent(JSON.stringify(modelInfo.exogenous_vars))}&lags=${modelInfo.lags}&forecast_periods=${forecastPeriodsValue}&forecast_unit=${forecastUnitValue}`;
                 window.open(reportUrl, '_blank');
             };
             
