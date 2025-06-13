@@ -1050,10 +1050,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            // Получаем параметры прогнозирования
+            const forecastPeriods = parseInt(document.getElementById('varx-forecast-periods').value);
+            const forecastUnit = document.getElementById('varx-forecast-unit').value;
+            
             reportParams.models.varx = {
                 lags: parseInt(document.getElementById('varx-lags').value),
                 endogenous_vars: selectedEndogenous,
-                exogenous_vars: selectedExogenous
+                exogenous_vars: selectedExogenous,
+                forecast_periods: forecastPeriods,
+                forecast_unit: forecastUnit
             };
         }
         
