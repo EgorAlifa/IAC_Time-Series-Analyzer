@@ -1082,7 +1082,7 @@ def build_varx_model(df, endogenous_vars, exogenous_vars=None, lags=1, train_siz
 def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=None, lags=1, train_size=0.8, forecast_periods=6, forecast_unit='months'):
     """
     Обучение VARX модели на данных и создание прогнозов как на тестовых данных, так и в будущее.
-    РАБОТАЕТ БЕЗ SKLEARN - только с statsmodels и numpy!
+    СПЕЦИАЛЬНО АДАПТИРОВАНО ДЛЯ РАБОТЫ С МИНИМАЛЬНЫМИ ДАННЫМИ (даже 9 наблюдений)!
     """
     import statsmodels.api as sm
     import pickle
@@ -1094,6 +1094,8 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
     import pandas as pd
     from datetime import datetime, timedelta
     from dateutil.relativedelta import relativedelta
+    from sklearn.linear_model import LinearRegression
+    from sklearn.preprocessing import StandardScaler
     
     print(f"=== НАЧАЛО ОБРАБОТКИ VARX ===")
     print(f"Исходные данные: {df.shape}")
@@ -1108,15 +1110,15 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
     # КРИТИЧЕСКИ ВАЖНО: При малом количестве данных используем упрощенный подход
     available_obs = len(df_clean)
     
-    if available_obs < 20:
-        print(f"МАЛО ДАННЫХ ({available_obs} наблюдений): используем максимально упрощенную модель")
+    if available_obs < 15:
+        print(f"МАЛО ДАННЫХ ({available_obs} наблюдений): используем упрощенную модель")
         use_simple_model = True
         model_lags = 0  # Никаких лагов при малых данных
         train_size_ratio = 1.0  # Используем все данные для обучения
     else:
         use_simple_model = False
         # Адаптивное ограничение лагов
-        model_lags = min(lags, max(1, available_obs // 6))
+        model_lags = min(lags, max(1, available_obs // 5))
         train_size_ratio = train_size
     
     print(f"Режим работы: {'Упрощенная модель' if use_simple_model else 'Стандартная модель'}")
@@ -1145,8 +1147,8 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
                 final_exogenous_vars = existing_exog
                 
                 # При малых данных ограничиваем количество экзогенных переменных
-                if use_simple_model and len(final_exogenous_vars) > 1:
-                    final_exogenous_vars = final_exogenous_vars[:1]  # Только 1 экзогенная при малых данных
+                if use_simple_model and len(final_exogenous_vars) > 2:
+                    final_exogenous_vars = final_exogenous_vars[:2]
                     exog = exog[final_exogenous_vars]
                     print(f"Ограничили экзогенные переменные до: {final_exogenous_vars}")
         
@@ -1184,14 +1186,14 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
         acf_pacf_plots = []
         optimal_lags = {}
         
-        if not use_simple_model and len(train_endog) >= 15:
-            for var in endogenous_vars[:2]:  # Максимум 2 графика
+        if not use_simple_model and len(train_endog) >= 10:
+            for var in endogenous_vars:
                 try:
                     series = train_endog[var].dropna()
-                    if len(series) >= 15:
+                    if len(series) >= 10:
                         fig, axes = plt.subplots(2, 1, figsize=(10, 8))
                         
-                        max_lags_plot = min(8, len(series) // 3)
+                        max_lags_plot = min(5, len(series) // 2)
                         plot_acf(series, lags=max_lags_plot, ax=axes[0], title=f'ACF для {var}')
                         plot_pacf(series, lags=max_lags_plot, ax=axes[1], title=f'PACF для {var}')
                         
@@ -1208,7 +1210,6 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
                 except Exception as e:
                     print(f"Ошибка при создании графика для {var}: {str(e)}")
                     optimal_lags[var] = model_lags
-                    plt.close()
         else:
             # Для упрощенной модели создаем заглушку
             for var in endogenous_vars:
@@ -1219,187 +1220,90 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
         model_type = "ARX" if len(endogenous_vars) == 1 else "VARX"
         
         if use_simple_model:
-            # УПРОЩЕННАЯ МОДЕЛЬ БЕЗ SKLEARN - только numpy
-            print("Используем простую линейную модель без sklearn...")
+            # УПРОЩЕННАЯ МОДЕЛЬ ДЛЯ МАЛЫХ ДАННЫХ
+            print("Используем упрощенную регрессионную модель...")
             
             try:
-                # Подготавливаем данные для простой регрессии
+                # Подготавливаем данные для регрессии
                 y = train_endog[endogenous_vars[0]].values
-                n = len(y)
                 
                 if train_exog is not None and len(final_exogenous_vars) > 0:
-                    # Простая линейная регрессия с экзогенными переменными
                     X = train_exog[final_exogenous_vars].values
                     
-                    # Нормализация данных (вручную)
-                    X_mean = np.mean(X, axis=0)
-                    X_std = np.std(X, axis=0)
-                    X_std[X_std == 0] = 1  # Избегаем деления на ноль
-                    X_normalized = (X - X_mean) / X_std
+                    # Нормализация данных
+                    scaler_X = StandardScaler()
+                    scaler_y = StandardScaler()
                     
-                    y_mean = np.mean(y)
-                    y_std = np.std(y)
-                    if y_std == 0:
-                        y_std = 1
-                    y_normalized = (y - y_mean) / y_std
+                    X_scaled = scaler_X.fit_transform(X)
+                    y_scaled = scaler_y.fit_transform(y.reshape(-1, 1)).ravel()
                     
-                    # Добавляем константу
-                    X_with_const = np.column_stack([np.ones(n), X_normalized])
+                    # Обучаем линейную регрессию
+                    reg_model = LinearRegression()
+                    reg_model.fit(X_scaled, y_scaled)
                     
-                    # Вычисляем коэффициенты методом наименьших квадратов: β = (X'X)^(-1)X'y
-                    try:
-                        XtX = np.dot(X_with_const.T, X_with_const)
-                        XtY = np.dot(X_with_const.T, y_normalized)
-                        coefficients = np.linalg.solve(XtX, XtY)
+                    print(f"✓ Упрощенная регрессия обучена! R² = {reg_model.score(X_scaled, y_scaled):.4f}")
+                    
+                    # Создаем псевдо-statsmodels объект для совместимости
+                    class SimpleRegressionWrapper:
+                        def __init__(self, reg_model, scaler_X, scaler_y, feature_names):
+                            self.reg_model = reg_model
+                            self.scaler_X = scaler_X
+                            self.scaler_y = scaler_y
+                            self.feature_names = feature_names
+                            self.aic = np.nan
+                            self.bic = np.nan
+                            self.hqic = np.nan
                         
-                        # Вычисляем R²
-                        y_pred_norm = np.dot(X_with_const, coefficients)
-                        y_pred = y_pred_norm * y_std + y_mean  # Денормализация
-                        ss_res = np.sum((y - y_pred) ** 2)
-                        ss_tot = np.sum((y - np.mean(y)) ** 2)
-                        r_squared = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
-                        
-                        print(f"✓ Простая регрессия обучена! R² = {r_squared:.4f}")
-                        print(f"Коэффициенты: {coefficients}")
-                        
-                        # Создаем простой класс-обертку
-                        class SimpleLinearModel:
-                            def __init__(self, coefficients, feature_names, X_mean, X_std, y_mean, y_std, last_X):
-                                self.coefficients = coefficients
-                                self.feature_names = feature_names
-                                self.X_mean = X_mean
-                                self.X_std = X_std
-                                self.y_mean = y_mean
-                                self.y_std = y_std
-                                self.last_X = last_X
-                                self.aic = np.nan
-                                self.bic = np.nan
-                                self.hqic = np.nan
-                            
-                            def forecast(self, steps, exog=None):
-                                if exog is None:
-                                    # Используем последние значения экзогенных переменных
-                                    forecasts = []
-                                    last_exog_values = self.last_X
-                                    for _ in range(steps):
-                                        # Нормализация
-                                        X_norm = (last_exog_values - self.X_mean) / self.X_std
-                                        X_pred = np.concatenate([[1], X_norm])  # Добавляем константу
-                                        y_pred_norm = np.dot(X_pred, self.coefficients)
-                                        # Денормализация
-                                        y_pred = y_pred_norm * self.y_std + self.y_mean
-                                        forecasts.append(y_pred)
-                                    return np.array(forecasts)
-                                else:
-                                    # Используем переданные экзогенные переменные
-                                    X_forecast = exog[self.feature_names].values
-                                    # Нормализация
-                                    X_norm = (X_forecast - self.X_mean) / self.X_std
-                                    X_with_const = np.column_stack([np.ones(len(X_norm)), X_norm])
-                                    y_pred_norm = np.dot(X_with_const, self.coefficients)
-                                    # Денормализация
-                                    return y_pred_norm * self.y_std + self.y_mean
-                        
-                        fitted_model = SimpleLinearModel(coefficients, final_exogenous_vars, X_mean, X_std, y_mean, y_std, X[-1])
-                        
-                    except np.linalg.LinAlgError:
-                        print("Сингулярная матрица, используем модель только с константой")
-                        # Модель только с константой (среднее значение)
-                        mean_y = np.mean(y)
-                        
-                        class ConstantModel:
-                            def __init__(self, constant_value):
-                                self.constant_value = constant_value
-                                self.aic = np.nan
-                                self.bic = np.nan
-                                self.hqic = np.nan
-                            
-                            def forecast(self, steps, exog=None):
-                                return np.full(steps, self.constant_value)
-                        
-                        fitted_model = ConstantModel(mean_y)
-                        final_exogenous_vars = []
-                        print(f"✓ Константная модель создана (значение = {mean_y:.4f})")
-                
+                        def forecast(self, steps, exog=None):
+                            if exog is None:
+                                # Используем последние значения
+                                last_X = X[-1:].copy()
+                                forecasts = []
+                                for _ in range(steps):
+                                    X_scaled = self.scaler_X.transform(last_X)
+                                    y_scaled_pred = self.reg_model.predict(X_scaled)
+                                    y_pred = self.scaler_y.inverse_transform(y_scaled_pred.reshape(-1, 1)).ravel()
+                                    forecasts.append(y_pred[0])
+                                return np.array(forecasts)
+                            else:
+                                X_forecast = exog[self.feature_names].values
+                                X_scaled = self.scaler_X.transform(X_forecast)
+                                y_scaled_pred = self.reg_model.predict(X_scaled)
+                                y_pred = self.scaler_y.inverse_transform(y_scaled_pred.reshape(-1, 1)).ravel()
+                                return y_pred
+                    
+                    fitted_model = SimpleRegressionWrapper(reg_model, scaler_X, scaler_y, final_exogenous_vars)
+                    
                 else:
                     # Модель только с трендом
-                    print("Используем модель только с линейным трендом...")
+                    print("Используем модель только с трендом...")
                     
-                    # Простая линейная регрессия с трендом: y = a + b*t
-                    t = np.arange(n).astype(float)
+                    # Простая линейная регрессия с трендом
+                    X_trend = np.arange(len(y)).reshape(-1, 1)
+                    reg_model = LinearRegression()
+                    reg_model.fit(X_trend, y)
                     
-                    # Вычисляем коэффициенты линейной регрессии
-                    t_mean = np.mean(t)
-                    y_mean = np.mean(y)
+                    class TrendOnlyWrapper:
+                        def __init__(self, reg_model, last_index):
+                            self.reg_model = reg_model
+                            self.last_index = last_index
+                            self.aic = np.nan
+                            self.bic = np.nan
+                            self.hqic = np.nan
+                        
+                        def forecast(self, steps, exog=None):
+                            future_indices = np.arange(self.last_index + 1, self.last_index + 1 + steps).reshape(-1, 1)
+                            return self.reg_model.predict(future_indices)
                     
-                    numerator = np.sum((t - t_mean) * (y - y_mean))
-                    denominator = np.sum((t - t_mean) ** 2)
-                    
-                    if denominator > 0:
-                        slope = numerator / denominator
-                        intercept = y_mean - slope * t_mean
-                        
-                        # Вычисляем R²
-                        y_pred = intercept + slope * t
-                        ss_res = np.sum((y - y_pred) ** 2)
-                        ss_tot = np.sum((y - y_mean) ** 2)
-                        r_squared = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
-                        
-                        print(f"✓ Трендовая модель: y = {intercept:.4f} + {slope:.4f}*t, R² = {r_squared:.4f}")
-                        
-                        class TrendModel:
-                            def __init__(self, intercept, slope, last_t):
-                                self.intercept = intercept
-                                self.slope = slope
-                                self.last_t = last_t
-                                self.aic = np.nan
-                                self.bic = np.nan
-                                self.hqic = np.nan
-                            
-                            def forecast(self, steps, exog=None):
-                                future_t = np.arange(self.last_t + 1, self.last_t + 1 + steps)
-                                return self.intercept + self.slope * future_t
-                        
-                        fitted_model = TrendModel(intercept, slope, n - 1)
-                        
-                    else:
-                        # Если тренда нет, используем константную модель
-                        mean_y = np.mean(y)
-                        
-                        class ConstantModel:
-                            def __init__(self, constant_value):
-                                self.constant_value = constant_value
-                                self.aic = np.nan
-                                self.bic = np.nan
-                                self.hqic = np.nan
-                            
-                            def forecast(self, steps, exog=None):
-                                return np.full(steps, self.constant_value)
-                        
-                        fitted_model = ConstantModel(mean_y)
-                        print(f"✓ Константная модель создана (значение = {mean_y:.4f})")
-                    
+                    fitted_model = TrendOnlyWrapper(reg_model, len(y) - 1)
                     final_exogenous_vars = []
                 
             except Exception as e:
                 print(f"Ошибка в упрощенной модели: {str(e)}")
-                # Резервная константная модель
-                y = train_endog[endogenous_vars[0]].values
-                mean_y = np.mean(y)
-                
-                class ConstantModel:
-                    def __init__(self, constant_value):
-                        self.constant_value = constant_value
-                        self.aic = np.nan
-                        self.bic = np.nan
-                        self.hqic = np.nan
-                    
-                    def forecast(self, steps, exog=None):
-                        return np.full(steps, self.constant_value)
-                
-                fitted_model = ConstantModel(mean_y)
-                final_exogenous_vars = []
-                print(f"✓ Резервная константная модель создана (значение = {mean_y:.4f})")
+                return {
+                    "success": False,
+                    "error": f"Не удалось обучить упрощенную модель: {str(e)}"
+                }
         
         else:
             # СТАНДАРТНАЯ МОДЕЛЬ STATSMODELS
@@ -1501,9 +1405,9 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
         # Сохраняем информацию о модели
         results["model_info"] = {
             "model_type": f"{model_type} {'(упрощенная)' if use_simple_model else ''}",
-            "aic": fitted_model.aic if hasattr(fitted_model, 'aic') and not np.isnan(fitted_model.aic) else None,
-            "bic": fitted_model.bic if hasattr(fitted_model, 'bic') and not np.isnan(fitted_model.bic) else None,
-            "hqic": fitted_model.hqic if hasattr(fitted_model, 'hqic') and not np.isnan(fitted_model.hqic) else None,
+            "aic": fitted_model.aic if hasattr(fitted_model, 'aic') else np.nan,
+            "bic": fitted_model.bic if hasattr(fitted_model, 'bic') else np.nan,
+            "hqic": fitted_model.hqic if hasattr(fitted_model, 'hqic') else np.nan,
             "lags": model_lags,
             "optimal_lags": optimal_lags,
             "optimal_lag_final": model_lags,
@@ -1685,80 +1589,6 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
             print(f"Ошибка при подготовке полных данных: {str(e)}")
             full_comparison = {}
         
-        # Создание графиков прогнозов
-        forecast_plots = []
-        try:
-            for i, var in enumerate(endogenous_vars):
-                plt.figure(figsize=(12, 8))
-                
-                if var in full_comparison:
-                    data = full_comparison[var]
-                    dates_str = data['all_dates']
-                    
-                    # Преобразуем строки дат в datetime объекты для правильной сортировки
-                    try:
-                        dates = pd.to_datetime(dates_str)
-                    except:
-                        dates = range(len(dates_str))  # Если не получается парсить даты
-                    
-                    # Исторические данные
-                    historical_data = [v for v in data['historical'] if v is not None]
-                    if historical_data:
-                        historical_dates = dates[:len(historical_data)]
-                        plt.plot(historical_dates, historical_data, 'b-', label='Исторические данные', linewidth=2, alpha=0.7)
-                    
-                    # Фактические тестовые данные
-                    if len(test_endog) > 0:
-                        test_start_idx = len(historical_data)
-                        test_end_idx = test_start_idx + len(test_endog)
-                        test_dates_plot = dates[test_start_idx:test_end_idx]
-                        plt.plot(test_dates_plot, test_endog[var], 'g-', label='Фактические значения (тест)', linewidth=2)
-                        
-                        # Прогнозы на тестовых данных
-                        if 'comparison' in validation_results and var in validation_results['comparison']:
-                            plt.plot(test_dates_plot, validation_results['comparison'][var]['predicted'], 
-                                   'r--', label='Прогноз (тест)', linewidth=2)
-                    
-                    # Будущие прогнозы
-                    if 'values' in future_forecast_results and var in future_forecast_results['values']:
-                        future_start_idx = len(historical_data) + len(test_endog)
-                        future_dates_plot = dates[future_start_idx:]
-                        plt.plot(future_dates_plot, future_forecast_results['values'][var], 
-                               'orange', linewidth=3, marker='o', markersize=6, 
-                               label=f'Прогноз в будущее ({forecast_periods} {forecast_unit})')
-                
-                plt.title(f'Полный прогноз для переменной "{var}"', fontsize=16, fontweight='bold')
-                plt.xlabel('Дата', fontsize=12)
-                plt.ylabel('Значение', fontsize=12)
-                plt.legend(fontsize=10)
-                plt.grid(True, alpha=0.3)
-                
-                # Поворачиваем подписи дат только если это datetime объекты
-                if isinstance(dates, pd.DatetimeIndex):
-                    plt.xticks(rotation=45)
-                
-                # Добавляем вертикальные линии для разделения данных
-                if len(test_endog) > 0 and isinstance(dates, pd.DatetimeIndex):
-                    train_end_date = train_endog.index[-1]
-                    plt.axvline(x=train_end_date, color='gray', linestyle=':', alpha=0.7, label='Конец обучающих данных')
-                
-                    last_data_date = df_clean.index[-1]
-                    plt.axvline(x=last_data_date, color='red', linestyle=':', alpha=0.7, label='Конец всех данных')
-                
-                plt.tight_layout()
-                
-                # Сохраняем график в base64
-                buf = io.BytesIO()
-                plt.savefig(buf, format='png', dpi=150, bbox_inches='tight')
-                buf.seek(0)
-                img_str = base64.b64encode(buf.read()).decode('utf-8')
-                forecast_plots.append(img_str)
-                plt.close()
-        
-        except Exception as e:
-            print(f"Ошибка при создании графиков: {str(e)}")
-            plt.close()
-        
         # Сохраняем результаты
         results["validation"] = validation_results
         results["forecasts"] = {
@@ -1766,7 +1596,6 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
             "future_forecast": future_forecast_results
         }
         results["plots"]["acf_pacf_plots"] = acf_pacf_plots
-        results["plots"]["forecast_plots"] = forecast_plots
         
         # Добавляем информацию об оптимальных лагах
         results["diagnostics"]["lag_analysis"] = {
@@ -1774,19 +1603,6 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
             "optimal_lag_final": model_lags,
             "chosen_lag": model_lags
         }
-        
-        # Сериализуем модель в base64 для возможного сохранения (только для statsmodels моделей)
-        if not use_simple_model:
-            try:
-                model_bytes = io.BytesIO()
-                pickle.dump(fitted_model, model_bytes)
-                model_bytes.seek(0)
-                results["model_base64"] = base64.b64encode(model_bytes.read()).decode('utf-8')
-            except Exception as e:
-                print(f"Не удалось сериализовать модель: {str(e)}")
-                results["model_base64"] = None
-        else:
-            results["model_base64"] = None
         
         print("✓ ВСЕ ОПЕРАЦИИ ЗАВЕРШЕНЫ УСПЕШНО!")
         
