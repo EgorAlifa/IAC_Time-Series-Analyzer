@@ -22,29 +22,41 @@ from ts_analysis import analyze_data, create_word_report, test_cointegration, jo
 app = FastAPI(title="Анализ стационарности временных рядов")
 from fastapi.middleware.cors import CORSMiddleware
 
+@app.middleware("http")
+async def add_cors_headers(request: Request, call_next):
+    if request.method == "OPTIONS":
+        # Обработка preflight запросов
+        response = Response()
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Max-Age"] = "3600"
+        return response
+    
+    try:
+        response = await call_next(request)
+    except Exception as e:
+        # Даже при ошибке отправляем CORS заголовки
+        response = JSONResponse(
+            status_code=500,
+            content={"error": f"Internal server error: {str(e)}"}
+        )
+    
+    # Добавляем CORS заголовки ко всем ответам
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    
+    return response
+
+# ТАКЖЕ оставьте стандартный CORS middleware:
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # Frontend в режиме разработки
-        "https://egoralifa.github.io",  # GitHub Pages
-        "https://egoralifa.github.io/IAC_Time-Series-Analyzer",  # Полный путь репозитория
-        "http://37.252.23.30:8000",  # API сервер
-        "https://iac-time-series-analyzer.ru",  # Ваш новый домен с HTTPS
-        "http://iac-time-series-analyzer.ru",  # Ваш новый домен с HTTP
-        "null",  # Для локальных файлов
-        "file://*",  # Файловый протокол
-        "*"  # Максимально открытый вариант для отладки
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=[
-        "Content-Type",
-        "Authorization", 
-        "Access-Control-Allow-Headers", 
-        "Access-Control-Allow-Origin",
-    ],
-    expose_headers=["*"],  # Открываем все заголовки ответа
-    max_age=3600,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Создаем директорию для временного хранения файлов, если ее нет
