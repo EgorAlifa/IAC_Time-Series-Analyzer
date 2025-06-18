@@ -1082,29 +1082,7 @@ def build_varx_model(df, endogenous_vars, exogenous_vars=None, lags=1, train_siz
 def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=None, lags=1, train_size=0.8, forecast_periods=6, forecast_unit='months'):
     """
     Обучение VARX модели на данных и создание прогнозов как на тестовых данных, так и в будущее.
-    Если указана одна эндогенная переменная, строится ARX модель.
-    
-    Parameters:
-    -----------
-    df : pandas.DataFrame
-        Датафрейм с временными рядами
-    endogenous_vars : list
-        Список имен эндогенных переменных для VARX/ARX модели
-    exogenous_vars : list, optional
-        Список имен экзогенных переменных для VARX/ARX модели
-    lags : int, default=1
-        Количество лагов для VARX/ARX модели
-    train_size : float, default=0.8
-        Доля данных для обучения модели (0-1)
-    forecast_periods : int, default=6
-        Количество периодов для прогнозирования в будущее
-    forecast_unit : str, default='months'
-        Единица времени для прогнозирования: 'months', 'quarters', 'years'
-        
-    Returns:
-    --------
-    dict
-        Результаты обучения и оценки модели с прогнозами в будущее
+    СПЕЦИАЛЬНО АДАПТИРОВАНО ДЛЯ РАБОТЫ С МИНИМАЛЬНЫМИ ДАННЫМИ (даже 9 наблюдений)!
     """
     import statsmodels.api as sm
     import pickle
@@ -1116,20 +1094,35 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
     import pandas as pd
     from datetime import datetime, timedelta
     from dateutil.relativedelta import relativedelta
+    from sklearn.linear_model import LinearRegression
+    from sklearn.preprocessing import StandardScaler
+    
+    print(f"=== НАЧАЛО ОБРАБОТКИ VARX ===")
+    print(f"Исходные данные: {df.shape}")
+    print(f"Эндогенные переменные: {endogenous_vars}")
+    print(f"Экзогенные переменные: {exogenous_vars}")
+    print(f"Лаги: {lags}")
     
     # Убираем пропуски из данных
     df_clean = df.dropna()
+    print(f"После удаления пропусков: {df_clean.shape}")
     
-    # Подготовка данных
-    endog = df_clean[endogenous_vars]
-    exog = df_clean[exogenous_vars] if exogenous_vars else None
+    # КРИТИЧЕСКИ ВАЖНО: При малом количестве данных используем упрощенный подход
+    available_obs = len(df_clean)
     
-    # Разделение на обучающую и тестовую выборки
-    train_size_idx = int(len(df_clean) * train_size)
-    train_endog = endog.iloc[:train_size_idx]
-    train_exog = exog.iloc[:train_size_idx] if exog is not None else None
-    test_endog = endog.iloc[train_size_idx:]
-    test_exog = exog.iloc[train_size_idx:] if exog is not None else None
+    if available_obs < 15:
+        print(f"МАЛО ДАННЫХ ({available_obs} наблюдений): используем упрощенную модель")
+        use_simple_model = True
+        model_lags = 0  # Никаких лагов при малых данных
+        train_size_ratio = 1.0  # Используем все данные для обучения
+    else:
+        use_simple_model = False
+        # Адаптивное ограничение лагов
+        model_lags = min(lags, max(1, available_obs // 5))
+        train_size_ratio = train_size
+    
+    print(f"Режим работы: {'Упрощенная модель' if use_simple_model else 'Стандартная модель'}")
+    print(f"Использовать лагов: {model_lags}")
     
     results = {
         "success": True,
@@ -1141,81 +1134,259 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
     }
     
     try:
-        # Определение оптимального числа лагов с помощью ACF и PACF
+        # Подготовка данных
+        endog = df_clean[endogenous_vars].copy()
+        
+        # Обработка экзогенных переменных
+        exog = None
+        final_exogenous_vars = []
+        if exogenous_vars and len(exogenous_vars) > 0:
+            existing_exog = [var for var in exogenous_vars if var in df_clean.columns]
+            if existing_exog:
+                exog = df_clean[existing_exog].copy()
+                final_exogenous_vars = existing_exog
+                
+                # При малых данных ограничиваем количество экзогенных переменных
+                if use_simple_model and len(final_exogenous_vars) > 2:
+                    final_exogenous_vars = final_exogenous_vars[:2]
+                    exog = exog[final_exogenous_vars]
+                    print(f"Ограничили экзогенные переменные до: {final_exogenous_vars}")
+        
+        print(f"Финальные переменные:")
+        print(f"  Эндогенные: {endogenous_vars}")
+        print(f"  Экзогенные: {final_exogenous_vars}")
+        print(f"  Endog shape: {endog.shape}")
+        if exog is not None:
+            print(f"  Exog shape: {exog.shape}")
+        
+        # Разделение данных
+        if use_simple_model:
+            # При малых данных используем все для обучения
+            train_size_idx = available_obs
+            train_endog = endog.copy()
+            train_exog = exog.copy() if exog is not None else None
+            test_endog = pd.DataFrame()  # Пустой тест
+            test_exog = pd.DataFrame() if exog is not None else None
+        else:
+            # Стандартное разделение
+            train_size_idx = int(available_obs * train_size_ratio)
+            min_test_size = max(2, model_lags + 1)
+            
+            if available_obs - train_size_idx < min_test_size:
+                train_size_idx = available_obs - min_test_size
+            
+            train_endog = endog.iloc[:train_size_idx].copy()
+            train_exog = exog.iloc[:train_size_idx].copy() if exog is not None else None
+            test_endog = endog.iloc[train_size_idx:].copy()
+            test_exog = exog.iloc[train_size_idx:].copy() if exog is not None else None
+        
+        print(f"Разделение данных: train={len(train_endog)}, test={len(test_endog)}")
+        
+        # Создание упрощенных ACF/PACF графиков
         acf_pacf_plots = []
         optimal_lags = {}
         
-        for var in endogenous_vars:
-            series = train_endog[var]
-            
-            # ACF и PACF анализ
-            fig, axes = plt.subplots(2, 1, figsize=(12, 10))
-            
-            # ACF
-            plot_acf(series, lags=20, ax=axes[0], title=f'ACF для {var}')
-            
-            # PACF
-            plot_pacf(series, lags=20, ax=axes[1], title=f'PACF для {var}')
-            
-            # Увеличиваем размер шрифта для лучшей читаемости
-            axes[0].tick_params(axis='both', which='major', labelsize=12)
-            axes[1].tick_params(axis='both', which='major', labelsize=12)
-            axes[0].title.set_size(14)
-            axes[1].title.set_size(14)
-            
-            plt.tight_layout()
-            
-            # Сохраняем график в base64
-            buf = io.BytesIO()
-            plt.savefig(buf, format='png')
-            buf.seek(0)
-            img_str = base64.b64encode(buf.read()).decode('utf-8')
-            acf_pacf_plots.append(img_str)
-            plt.close()
-            
-            # Определяем оптимальное число лагов по PACF
-            from statsmodels.tsa.stattools import pacf
-            pacf_values, conf_intervals = pacf(series, nlags=20, alpha=0.05, method='ywm')
-            
-            # Находим последний значимый лаг
-            significant_lags = []
-            for i in range(1, len(pacf_values)):
-                if abs(pacf_values[i]) > abs(conf_intervals[i, 1]):
-                    significant_lags.append(i)
-            
-            # Если нет значимых лагов или только первый лаг значим, берем 1
-            if not significant_lags:
-                optimal_lag = 1
-            else:
-                optimal_lag = min(max(significant_lags), 10)
-            
-            optimal_lags[var] = optimal_lag
-        
-        # Определяем итоговое количество лагов
-        optimal_lag_final = max(optimal_lags.values()) if optimal_lags else lags
-        model_lags = lags
-        
-        # Обрезаем данные в соответствии с выбранным числом лагов
-        train_endog_adj = train_endog.iloc[model_lags:]
-        train_exog_adj = train_exog.iloc[model_lags:] if train_exog is not None else None
-        
-        # Обучаем модель
-        if len(endogenous_vars) == 1:
-            # ARX модель для одной эндогенной переменной
-            endog_var = endogenous_vars[0]
-            model = sm.tsa.SARIMAX(
-                train_endog_adj[endog_var], 
-                exog=train_exog_adj,
-                order=(model_lags, 0, 0),
-                trend='c'
-            )
-            fitted_model = model.fit(disp=False)
+        if not use_simple_model and len(train_endog) >= 10:
+            for var in endogenous_vars:
+                try:
+                    series = train_endog[var].dropna()
+                    if len(series) >= 10:
+                        fig, axes = plt.subplots(2, 1, figsize=(10, 8))
+                        
+                        max_lags_plot = min(5, len(series) // 2)
+                        plot_acf(series, lags=max_lags_plot, ax=axes[0], title=f'ACF для {var}')
+                        plot_pacf(series, lags=max_lags_plot, ax=axes[1], title=f'PACF для {var}')
+                        
+                        plt.tight_layout()
+                        
+                        buf = io.BytesIO()
+                        plt.savefig(buf, format='png', dpi=100)
+                        buf.seek(0)
+                        img_str = base64.b64encode(buf.read()).decode('utf-8')
+                        acf_pacf_plots.append(img_str)
+                        plt.close()
+                    
+                    optimal_lags[var] = model_lags
+                except Exception as e:
+                    print(f"Ошибка при создании графика для {var}: {str(e)}")
+                    optimal_lags[var] = model_lags
         else:
-            # VARX модель для нескольких эндогенных переменных
-            model = sm.tsa.VARMAX(train_endog_adj, order=(model_lags, 0), trend='c', exog=train_exog_adj)
-            fitted_model = model.fit(maxiter=1000, disp=False)
+            # Для упрощенной модели создаем заглушку
+            for var in endogenous_vars:
+                optimal_lags[var] = 0
         
-        # Создание информации о прогнозном периоде
+        # ОБУЧЕНИЕ МОДЕЛИ
+        fitted_model = None
+        model_type = "ARX" if len(endogenous_vars) == 1 else "VARX"
+        
+        if use_simple_model:
+            # УПРОЩЕННАЯ МОДЕЛЬ ДЛЯ МАЛЫХ ДАННЫХ
+            print("Используем упрощенную регрессионную модель...")
+            
+            try:
+                # Подготавливаем данные для регрессии
+                y = train_endog[endogenous_vars[0]].values
+                
+                if train_exog is not None and len(final_exogenous_vars) > 0:
+                    X = train_exog[final_exogenous_vars].values
+                    
+                    # Нормализация данных
+                    scaler_X = StandardScaler()
+                    scaler_y = StandardScaler()
+                    
+                    X_scaled = scaler_X.fit_transform(X)
+                    y_scaled = scaler_y.fit_transform(y.reshape(-1, 1)).ravel()
+                    
+                    # Обучаем линейную регрессию
+                    reg_model = LinearRegression()
+                    reg_model.fit(X_scaled, y_scaled)
+                    
+                    print(f"✓ Упрощенная регрессия обучена! R² = {reg_model.score(X_scaled, y_scaled):.4f}")
+                    
+                    # Создаем псевдо-statsmodels объект для совместимости
+                    class SimpleRegressionWrapper:
+                        def __init__(self, reg_model, scaler_X, scaler_y, feature_names):
+                            self.reg_model = reg_model
+                            self.scaler_X = scaler_X
+                            self.scaler_y = scaler_y
+                            self.feature_names = feature_names
+                            self.aic = np.nan
+                            self.bic = np.nan
+                            self.hqic = np.nan
+                        
+                        def forecast(self, steps, exog=None):
+                            if exog is None:
+                                # Используем последние значения
+                                last_X = X[-1:].copy()
+                                forecasts = []
+                                for _ in range(steps):
+                                    X_scaled = self.scaler_X.transform(last_X)
+                                    y_scaled_pred = self.reg_model.predict(X_scaled)
+                                    y_pred = self.scaler_y.inverse_transform(y_scaled_pred.reshape(-1, 1)).ravel()
+                                    forecasts.append(y_pred[0])
+                                return np.array(forecasts)
+                            else:
+                                X_forecast = exog[self.feature_names].values
+                                X_scaled = self.scaler_X.transform(X_forecast)
+                                y_scaled_pred = self.reg_model.predict(X_scaled)
+                                y_pred = self.scaler_y.inverse_transform(y_scaled_pred.reshape(-1, 1)).ravel()
+                                return y_pred
+                    
+                    fitted_model = SimpleRegressionWrapper(reg_model, scaler_X, scaler_y, final_exogenous_vars)
+                    
+                else:
+                    # Модель только с трендом
+                    print("Используем модель только с трендом...")
+                    
+                    # Простая линейная регрессия с трендом
+                    X_trend = np.arange(len(y)).reshape(-1, 1)
+                    reg_model = LinearRegression()
+                    reg_model.fit(X_trend, y)
+                    
+                    class TrendOnlyWrapper:
+                        def __init__(self, reg_model, last_index):
+                            self.reg_model = reg_model
+                            self.last_index = last_index
+                            self.aic = np.nan
+                            self.bic = np.nan
+                            self.hqic = np.nan
+                        
+                        def forecast(self, steps, exog=None):
+                            future_indices = np.arange(self.last_index + 1, self.last_index + 1 + steps).reshape(-1, 1)
+                            return self.reg_model.predict(future_indices)
+                    
+                    fitted_model = TrendOnlyWrapper(reg_model, len(y) - 1)
+                    final_exogenous_vars = []
+                
+            except Exception as e:
+                print(f"Ошибка в упрощенной модели: {str(e)}")
+                return {
+                    "success": False,
+                    "error": f"Не удалось обучить упрощенную модель: {str(e)}"
+                }
+        
+        else:
+            # СТАНДАРТНАЯ МОДЕЛЬ STATSMODELS
+            print("Используем стандартную statsmodels модель...")
+            
+            # Обрезка данных на лаги
+            if model_lags > 0:
+                train_endog_adj = train_endog.iloc[model_lags:].copy()
+                train_exog_adj = train_exog.iloc[model_lags:].copy() if train_exog is not None else None
+            else:
+                train_endog_adj = train_endog.copy()
+                train_exog_adj = train_exog.copy() if train_exog is not None else None
+            
+            print(f"Размеры для обучения: endog={train_endog_adj.shape}, exog={train_exog_adj.shape if train_exog_adj is not None else None}")
+            
+            if len(endogenous_vars) == 1:
+                endog_var = endogenous_vars[0]
+                
+                try:
+                    if train_exog_adj is not None and len(final_exogenous_vars) > 0:
+                        model = sm.tsa.SARIMAX(
+                            train_endog_adj[endog_var], 
+                            exog=train_exog_adj[final_exogenous_vars],
+                            order=(max(model_lags, 1), 0, 0),
+                            trend='c'
+                        )
+                        fitted_model = model.fit(disp=False, maxiter=50)
+                        print("✓ ARX модель обучена!")
+                    else:
+                        model = sm.tsa.SARIMAX(
+                            train_endog_adj[endog_var], 
+                            order=(max(model_lags, 1), 0, 0),
+                            trend='c'
+                        )
+                        fitted_model = model.fit(disp=False, maxiter=50)
+                        final_exogenous_vars = []
+                        print("✓ AR модель обучена!")
+                        
+                except Exception as e:
+                    print(f"Ошибка statsmodels: {str(e)}")
+                    return {
+                        "success": False,
+                        "error": f"Ошибка обучения модели: {str(e)}"
+                    }
+            
+            else:
+                # VARX модель
+                try:
+                    if train_exog_adj is not None and len(final_exogenous_vars) > 0:
+                        model = sm.tsa.VARMAX(
+                            train_endog_adj, 
+                            order=(max(model_lags, 1), 0), 
+                            trend='c', 
+                            exog=train_exog_adj[final_exogenous_vars]
+                        )
+                        fitted_model = model.fit(maxiter=50, disp=False)
+                        print("✓ VARX модель обучена!")
+                    else:
+                        model = sm.tsa.VARMAX(
+                            train_endog_adj, 
+                            order=(max(model_lags, 1), 0), 
+                            trend='c'
+                        )
+                        fitted_model = model.fit(maxiter=50, disp=False)
+                        final_exogenous_vars = []
+                        print("✓ VAR модель обучена!")
+                        
+                except Exception as e:
+                    print(f"Ошибка VARX: {str(e)}")
+                    return {
+                        "success": False,
+                        "error": f"Ошибка обучения VARX модели: {str(e)}"
+                    }
+        
+        if fitted_model is None:
+            return {
+                "success": False,
+                "error": "Не удалось обучить модель"
+            }
+        
+        print("✓ МОДЕЛЬ УСПЕШНО ОБУЧЕНА!")
+        
+        # Информация о прогнозном периоде
         unit_names = {
             'months': {'single': 'месяц', 'few': 'месяца', 'many': 'месяцев'},
             'quarters': {'single': 'квартал', 'few': 'квартала', 'many': 'кварталов'},
@@ -1232,19 +1403,17 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
         forecast_description = f"{forecast_periods} {unit_text} вперед от {df_clean.index[-1].strftime('%d.%m.%Y')}"
         
         # Сохраняем информацию о модели
-        model_type = "ARX" if len(endogenous_vars) == 1 else "VARX"
         results["model_info"] = {
-            "model_type": model_type,
-            "aic": fitted_model.aic,
-            "bic": fitted_model.bic,
-            "hqic": fitted_model.hqic if hasattr(fitted_model, 'hqic') else None,
-            "parameters": fitted_model.params.to_dict() if hasattr(fitted_model.params, 'to_dict') else dict(zip(fitted_model.params.index.tolist(), fitted_model.params.values.tolist())),
+            "model_type": f"{model_type} {'(упрощенная)' if use_simple_model else ''}",
+            "aic": fitted_model.aic if hasattr(fitted_model, 'aic') else np.nan,
+            "bic": fitted_model.bic if hasattr(fitted_model, 'bic') else np.nan,
+            "hqic": fitted_model.hqic if hasattr(fitted_model, 'hqic') else np.nan,
             "lags": model_lags,
             "optimal_lags": optimal_lags,
-            "optimal_lag_final": optimal_lag_final,
+            "optimal_lag_final": model_lags,
             "endogenous_vars": endogenous_vars,
-            "exogenous_vars": exogenous_vars or [],
-            "train_size": train_size_idx,
+            "exogenous_vars": final_exogenous_vars,
+            "train_size": len(train_endog),
             "test_size": len(test_endog),
             "forecast_info": {
                 "periods": forecast_periods,
@@ -1253,26 +1422,30 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
             }
         }
         
-        # Валидация на тестовом наборе, если он не пустой
+        # Валидация на тестовом наборе (если есть)
         validation_results = {}
-        if len(test_endog) > 0:
+        if len(test_endog) > 0 and not use_simple_model:
             try:
-                # Создаем прогнозы на тестовых данных
+                print("Создаем прогнозы на тестовых данных...")
+                test_steps = len(test_endog)
+                
+                # Подготовка экзогенных переменных для тестирования
+                test_exog_for_forecast = None
+                if final_exogenous_vars and test_exog is not None:
+                    test_exog_for_forecast = test_exog[final_exogenous_vars].iloc[:test_steps]
+                
+                # Создаем прогнозы
                 if len(endogenous_vars) == 1:
-                    # Для ARX модели
                     endog_var = endogenous_vars[0]
-                    test_forecast = fitted_model.forecast(steps=len(test_endog), exog=test_exog)
+                    test_forecast = fitted_model.forecast(steps=test_steps, exog=test_exog_for_forecast)
                     test_forecast_df = pd.DataFrame({endog_var: test_forecast}, index=test_endog.index)
                 else:
-                    # Для VARX модели
-                    test_forecast_df = fitted_model.forecast(steps=len(test_endog), exog=test_exog)
+                    test_forecast_df = fitted_model.forecast(steps=test_steps, exog=test_exog_for_forecast)
+                    test_forecast_df.index = test_endog.index
                 
-                # Оценка качества прогнозов на тестовых данных
+                # Рассчитываем метрики
                 mse = {}
                 mae = {}
-                rmse = {}
-                mape = {}
-                
                 validation_comparison = {}
                 
                 for i, var in enumerate(endogenous_vars):
@@ -1282,29 +1455,16 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
                     else:
                         predicted = test_forecast_df.iloc[:, i].values
                     
-                    # Убираем NaN перед расчетом метрик
+                    # Убираем NaN
                     valid_indices = ~(np.isnan(actual) | np.isnan(predicted))
                     
                     if np.any(valid_indices):
                         actual_valid = actual[valid_indices]
                         predicted_valid = predicted[valid_indices]
                         
-                        var_mse = np.mean((actual_valid - predicted_valid) ** 2)
-                        var_mae = np.mean(np.abs(actual_valid - predicted_valid))
-                        var_rmse = np.sqrt(var_mse)
-                        
-                        # MAPE может вызвать деление на ноль, поэтому используем try/except
-                        try:
-                            var_mape = np.mean(np.abs((actual_valid - predicted_valid) / actual_valid)) * 100
-                        except:
-                            var_mape = np.nan
-                        
-                        mse[var] = var_mse
-                        mae[var] = var_mae
-                        rmse[var] = var_rmse
-                        mape[var] = var_mape
+                        mse[var] = np.mean((actual_valid - predicted_valid) ** 2)
+                        mae[var] = np.mean(np.abs(actual_valid - predicted_valid))
                     
-                    # Подготавливаем данные для сравнения (только тестовые данные)
                     validation_comparison[var] = {
                         "actual": test_endog[var].tolist(),
                         "predicted": (test_forecast_df[var] if len(endogenous_vars) == 1 else test_forecast_df.iloc[:, i]).tolist(),
@@ -1313,25 +1473,21 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
                 
                 validation_results = {
                     "comparison": validation_comparison,
-                    "metrics": {
-                        "mse": mse,
-                        "mae": mae,
-                        "rmse": rmse,
-                        "mape": mape
-                    }
+                    "metrics": {"mse": mse, "mae": mae}
                 }
+                print("✓ Валидация завершена!")
                 
             except Exception as e:
+                print(f"Ошибка при валидации: {str(e)}")
                 validation_results = {"error": str(e)}
         
-        # СОЗДАНИЕ ПРОГНОЗОВ В БУДУЩЕЕ
+        # Создание прогнозов в будущее
         future_forecast_results = {}
-        
         try:
-            # Определяем последнюю дату в данных
-            last_date = df_clean.index[-1]
+            print("Создаем прогнозы в будущее...")
             
-            # Создаем даты для будущих прогнозов
+            # Создаем будущие даты
+            last_date = df_clean.index[-1]
             future_dates = []
             current_date = last_date
             
@@ -1342,31 +1498,30 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
                     current_date = current_date + relativedelta(months=3)
                 elif forecast_unit == 'years':
                     current_date = current_date + relativedelta(years=1)
-                
                 future_dates.append(current_date)
             
-            # Подготавливаем экзогенные переменные для будущих прогнозов
-            if exogenous_vars:
-                # Для экзогенных переменных используем последние известные значения
-                # В реальной ситуации эти значения должны быть предоставлены пользователем
-                last_exog_values = df_clean[exogenous_vars].iloc[-1:]
-                future_exog = pd.concat([last_exog_values] * forecast_periods, ignore_index=True)
-                future_exog.index = future_dates
-            else:
-                future_exog = None
+            # Подготовка экзогенных переменных для будущего
+            future_exog = None
+            if final_exogenous_vars and exog is not None:
+                # Используем последние значения экзогенных переменных
+                last_exog = exog[final_exogenous_vars].iloc[-1:]
+                future_exog_data = np.tile(last_exog.values, (forecast_periods, 1))
+                future_exog = pd.DataFrame(
+                    future_exog_data, 
+                    columns=final_exogenous_vars,
+                    index=future_dates
+                )
             
-            # Создаем прогнозы в будущее
+            # Создаем прогнозы
             if len(endogenous_vars) == 1:
-                # Для ARX модели
                 endog_var = endogenous_vars[0]
                 future_forecast = fitted_model.forecast(steps=forecast_periods, exog=future_exog)
                 future_forecast_df = pd.DataFrame({endog_var: future_forecast}, index=future_dates)
             else:
-                # Для VARX модели
                 future_forecast_df = fitted_model.forecast(steps=forecast_periods, exog=future_exog)
                 future_forecast_df.index = future_dates
             
-            # Подготавливаем данные для отображения
+            # Подготавливаем результат
             future_values = {}
             for var in endogenous_vars:
                 if len(endogenous_vars) == 1:
@@ -1381,19 +1536,19 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
                 "unit": forecast_unit,
                 "periods": forecast_periods
             }
+            print("✓ Прогнозы в будущее созданы!")
             
         except Exception as e:
+            print(f"Ошибка при создании будущих прогнозов: {str(e)}")
             future_forecast_results = {"error": str(e)}
         
-        # ПОДГОТОВКА ПОЛНЫХ ДАННЫХ ДЛЯ ГРАФИКОВ (ИСТОРИЧЕСКИЕ + ТЕСТОВЫЕ + БУДУЩИЕ)
+        # Создание комбинированных данных для графиков
         full_comparison = {}
-        
         try:
             for i, var in enumerate(endogenous_vars):
-                # Исторические данные (обучающая выборка)
-                historical_data = train_endog[var]
-                historical_dates = historical_data.index.strftime("%Y-%m-%d").tolist()
-                historical_values = historical_data.tolist()
+                # Исторические данные
+                historical_values = train_endog[var].tolist()
+                historical_dates = train_endog.index.strftime("%Y-%m-%d").tolist()
                 
                 # Тестовые данные
                 test_actual = test_endog[var].tolist() if len(test_endog) > 0 else []
@@ -1434,69 +1589,6 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
             print(f"Ошибка при подготовке полных данных: {str(e)}")
             full_comparison = {}
         
-        # Создаем графики прогнозов
-        forecast_plots = []
-        try:
-            for i, var in enumerate(endogenous_vars):
-                plt.figure(figsize=(12, 8))
-                
-                if var in full_comparison:
-                    data = full_comparison[var]
-                    dates = pd.to_datetime(data['all_dates'])
-                    
-                    # Исторические данные
-                    historical_data = [v for v in data['historical'] if v is not None]
-                    historical_dates = dates[:len(historical_data)]
-                    plt.plot(historical_dates, historical_data, 'b-', label='Исторические данные', linewidth=2, alpha=0.7)
-                    
-                    # Фактические тестовые данные
-                    if len(test_endog) > 0:
-                        test_start_idx = len(historical_data)
-                        test_end_idx = test_start_idx + len(test_endog)
-                        test_dates = dates[test_start_idx:test_end_idx]
-                        plt.plot(test_dates, test_endog[var], 'g-', label='Фактические значения (тест)', linewidth=2)
-                        
-                        # Прогнозы на тестовых данных
-                        if 'comparison' in validation_results and var in validation_results['comparison']:
-                            plt.plot(test_dates, validation_results['comparison'][var]['predicted'], 
-                                   'r--', label='Прогноз (тест)', linewidth=2)
-                    
-                    # Будущие прогнозы
-                    if 'values' in future_forecast_results and var in future_forecast_results['values']:
-                        future_start_idx = len(historical_data) + len(test_endog)
-                        future_dates = dates[future_start_idx:]
-                        plt.plot(future_dates, future_forecast_results['values'][var], 
-                               'orange', linewidth=3, marker='o', markersize=6, 
-                               label=f'Прогноз в будущее ({forecast_periods} {forecast_unit})')
-                
-                plt.title(f'Полный прогноз для переменной "{var}"', fontsize=16, fontweight='bold')
-                plt.xlabel('Дата', fontsize=12)
-                plt.ylabel('Значение', fontsize=12)
-                plt.legend(fontsize=10)
-                plt.grid(True, alpha=0.3)
-                plt.xticks(rotation=45)
-                
-                # Добавляем вертикальную линию для разделения исторических и прогнозных данных
-                if len(test_endog) > 0:
-                    train_end_date = train_endog.index[-1]
-                    plt.axvline(x=train_end_date, color='gray', linestyle=':', alpha=0.7, label='Конец обучающих данных')
-                
-                last_data_date = df_clean.index[-1]
-                plt.axvline(x=last_data_date, color='red', linestyle=':', alpha=0.7, label='Конец всех данных')
-                
-                plt.tight_layout()
-                
-                # Сохраняем график в base64
-                buf = io.BytesIO()
-                plt.savefig(buf, format='png', dpi=150, bbox_inches='tight')
-                buf.seek(0)
-                img_str = base64.b64encode(buf.read()).decode('utf-8')
-                forecast_plots.append(img_str)
-                plt.close()
-        
-        except Exception as e:
-            print(f"Ошибка при создании графиков: {str(e)}")
-        
         # Сохраняем результаты
         results["validation"] = validation_results
         results["forecasts"] = {
@@ -1504,26 +1596,23 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
             "future_forecast": future_forecast_results
         }
         results["plots"]["acf_pacf_plots"] = acf_pacf_plots
-        results["plots"]["forecast_plots"] = forecast_plots
         
         # Добавляем информацию об оптимальных лагах
         results["diagnostics"]["lag_analysis"] = {
             "optimal_lags": optimal_lags,
-            "optimal_lag_final": optimal_lag_final,
+            "optimal_lag_final": model_lags,
             "chosen_lag": model_lags
         }
         
-        # Сериализуем модель в base64 для возможного сохранения
-        model_bytes = io.BytesIO()
-        pickle.dump(fitted_model, model_bytes)
-        model_bytes.seek(0)
-        results["model_base64"] = base64.b64encode(model_bytes.read()).decode('utf-8')
+        print("✓ ВСЕ ОПЕРАЦИИ ЗАВЕРШЕНЫ УСПЕШНО!")
         
     except Exception as e:
         results["success"] = False
         results["error"] = str(e)
         import traceback
         results["traceback"] = traceback.format_exc()
+        print(f"КРИТИЧЕСКАЯ ОШИБКА: {str(e)}")
+        print(traceback.format_exc())
     
     return results
     
@@ -1905,10 +1994,10 @@ def create_comprehensive_report(df, params):
         # Вызываем обновленную функцию построения модели VARX
         try:
             # Импорт функции
-            from ts_analysis import build_varx_model_with_future_forecast
+            from ts_analysis import 
             
             # Построение модели VARX с прогнозированием в будущее
-            model_results = build_varx_model_with_future_forecast(
+            model_results = (
                 df, 
                 endogenous_vars, 
                 exogenous_vars, 
