@@ -2504,3 +2504,8 @@ def extreme_transform_to_stationary(series, method='auto', title='', debug=False
         'original_status': original_status,
         'final_status': final_status
     }
+# Добавьте в конец ts_analysis.py для проверки:
+if __name__ == "__main__":
+    print("ts_analysis.py loaded successfully")
+    print("build_varx_model_with_future_forecast function available:", 
+          'build_varx_model_with_future_forecast' in globals())
