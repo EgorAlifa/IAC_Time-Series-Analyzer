@@ -199,7 +199,65 @@ def check_stationarity(series, title=''):
     output.append(detailed_results)
 
     return status, output
-
+def make_json_safe(obj):
+    """
+    Рекурсивно очищает объект от значений, которые не могут быть сериализованы в JSON
+    """
+    import numpy as np
+    import pandas as pd
+    import math
+    
+    if isinstance(obj, dict):
+        return {key: make_json_safe(value) for key, value in obj.items()}
+    
+    elif isinstance(obj, list):
+        return [make_json_safe(item) for item in obj]
+    
+    elif isinstance(obj, tuple):
+        return tuple(make_json_safe(item) for item in obj)
+    
+    elif isinstance(obj, (np.integer, np.int32, np.int64)):
+        return int(obj)
+    
+    elif isinstance(obj, (np.floating, np.float32, np.float64)):
+        val = float(obj)
+        # Проверяем на бесконечность и NaN
+        if math.isnan(val) or math.isinf(val):
+            return None
+        # Проверяем на очень большие числа
+        if abs(val) > 1e308:
+            return None
+        return val
+    
+    elif isinstance(obj, np.ndarray):
+        return make_json_safe(obj.tolist())
+    
+    elif isinstance(obj, pd.Series):
+        return make_json_safe(obj.tolist())
+    
+    elif isinstance(obj, pd.DataFrame):
+        return make_json_safe(obj.to_dict())
+    
+    elif isinstance(obj, (int, float)):
+        if isinstance(obj, float):
+            if math.isnan(obj) or math.isinf(obj):
+                return None
+            if abs(obj) > 1e308:
+                return None
+        return obj
+    
+    elif obj is None:
+        return None
+    
+    elif isinstance(obj, (str, bool)):
+        return obj
+    
+    else:
+        # Для всех остальных типов пытаемся преобразовать в строку
+        try:
+            return str(obj)
+        except:
+            return None
 # Функция для проверки коинтеграции
 def test_cointegration(series1, series2, name1, name2):
     """
@@ -1555,6 +1613,10 @@ def build_varx_model_with_future_forecast(df, endogenous_vars, exogenous_vars=No
             }
         }
         
+        print(f"Очищаем результаты для JSON...")
+        results = make_json_safe(results)
+        print(f"✓ Результаты очищены для JSON")
+
         print(f"✓ ВСЕ ЗАВЕРШЕНО УСПЕШНО!")
         return results
         
