@@ -645,11 +645,10 @@ async def analyze_columns(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Ошибка при анализе столбцов: {str(e)}")
 
 @app.get("/api/egrul")
-async def get_company_by_inn(inn: str):
+async def get_egrul_data():
     """
-    Получение информации о компании по ИНН
+    Получение данных ЕГРЮЛ
     """
-    # Мокаем данные из скриншота
     return {
         "content": [{
             "dataSved": "2025-02-11",
