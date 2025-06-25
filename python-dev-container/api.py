@@ -644,58 +644,64 @@ async def analyze_columns(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка при анализе столбцов: {str(e)}")
 
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+
 @app.get("/api/egrul")
 async def get_egrul_data():
     """
-    Получение данных ЕГРЮЛ
+    Получение данных ЕГРЮЛ для Apache Drill
     """
-    return {
-        "content": [{
-            "dataSved": "2025-02-11",
-            "OGRN": "1027700251754",
-            "dateOGRN": "2002-09-26",
-            "INN": "7710044140",
-            "KPP": "770501001",
-            "sprOPF": "ОКОНХ",
-            "codeOPF": "12300",
-            "nameOPF": "Общества с ограниченной ответственностью",
-            "fullOrgName": "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ \"СИСТЕМА ПБО\"",
-            "shortOrgName": "ООО \"СИСТЕМА ПБО\"",
-            "region": "77",
-            "adres": "115054, Г.МОСКВА , УЛ ВАЛОВАЯ, Д. Д. 26",
-            "email": "",
-            "statusCode": "",
-            "statusName": "",
-            "dateClose": "",
-            "codeClose": "",
-            "causeClose": "",
-            "codeNO": "7705",
-            "nameNO": "Инспекция Федеральной налоговой службы № 5 по г. Москве",
-            "codePF": "",
-            "namePF": "",
-            "codeFSS": "",
-            "nameFSS": "",
-            "capitalKind": "УСТАВНЫЙ КАПИТАЛ",
-            "capitalAmount": "10694064934.33",
-            "ulOGRN": "",
-            "ulINN": "",
-            "nameUl": "",
-            "dirFIO": "ПАРОБЕВ ОЛЕГ МРЬЕВИЧ",
-            "dirINN": "774331952837",
-            "director": "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР",
-            "osnovidKVED": "56.10",
-            "nameOKVED": "Деятельность ресторанов и услуги по доставке продуктов питания",
-            "verOKVED": "2014",
-            "uchreditel": [{
-                "OGRN": "1027700251754",
-                "uchGRN": "2227705232346",
-                "uchINN": "4252003977",
-                "uchName": "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ \"КЛУБ ОТЕЛЬ\"",
-                "uchType": "ULR",
-                "neddan": ""
-            }]
-        }]
-    }
+    # Возвращаем массив объектов напрямую (без обертки "content")
+    data = [{
+        "dataSved": "2025-02-11",
+        "OGRN": "1027700251754",
+        "dateOGRN": "2002-09-26", 
+        "INN": "7710044140",
+        "KPP": "770501001",
+        "sprOPF": "ОКОНХ",
+        "codeOPF": "12300",
+        "nameOPF": "Общества с ограниченной ответственностью",
+        "fullOrgName": "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ \"СИСТЕМА ПБО\"",
+        "shortOrgName": "ООО \"СИСТЕМА ПБО\"",
+        "region": "77",
+        "adres": "115054, Г.МОСКВА , УЛ ВАЛОВАЯ, Д. Д. 26",
+        "email": None,  # null вместо пустой строки
+        "statusCode": None,
+        "statusName": None,
+        "dateClose": None,
+        "codeClose": None, 
+        "causeClose": None,
+        "codeNO": "7705",
+        "nameNO": "Инспекция Федеральной налоговой службы № 5 по г. Москве",
+        "codePF": None,
+        "namePF": None,
+        "codeFSS": None,
+        "nameFSS": None,
+        "capitalKind": "УСТАВНЫЙ КАПИТАЛ",
+        "capitalAmount": 10694064934.33,  # Число, а не строка
+        "ulOGRN": None,
+        "ulINN": None,
+        "nameUl": None,
+        "dirFIO": "ПАРОБЕВ ОЛЕГ МРЬЕВИЧ",
+        "dirINN": "774331952837",
+        "director": "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР",
+        "osnovidKVED": "56.10",
+        "nameOKVED": "Деятельность ресторанов и услуги по доставке продуктов питания",
+        "verOKVED": "2014",
+        # Убираем сложные вложенные объекты для начала
+        "uchreditel_count": 1,  # Или разворачиваем в отдельные поля
+        "uchreditel_name": "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ \"КЛУБ ОТЕЛЬ\""
+    }]
+    
+    return JSONResponse(
+        content=data,
+        headers={
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Cache-Control": "no-cache"
+        }
+    )
 @app.get("/health")
 async def health_check():
     """
